@@ -35,14 +35,14 @@ window.AtharAuth = (function () {
 
   function setLockout(email, untilTs, attempts) {
     let data = {};
-    try { data = JSON.parse(localStorage.getItem(LOCKOUT_KEY) || "{}"); } catch {}
+    try { data = JSON.parse(localStorage.getItem(LOCKOUT_KEY) || "{}"); } catch { }
     data[email.toLowerCase()] = { until: untilTs, attempts };
     localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data));
   }
 
   function clearLockout(email) {
     let data = {};
-    try { data = JSON.parse(localStorage.getItem(LOCKOUT_KEY) || "{}"); } catch {}
+    try { data = JSON.parse(localStorage.getItem(LOCKOUT_KEY) || "{}"); } catch { }
     delete data[email.toLowerCase()];
     localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data));
   }
@@ -88,7 +88,7 @@ window.AtharAuth = (function () {
       return true;
     } catch (e) {
       // Token invalid or expired beyond refresh — clean up
-      try { window.AtharAPI.clearTokens(); } catch {}
+      try { window.AtharAPI.clearTokens(); } catch { }
       currentUser = null;
       return false;
     }
@@ -155,8 +155,8 @@ window.AtharAuth = (function () {
   // =========================================================================
   function bindActivityListeners() {
     if (activityBound) return;
-    const onActivity = function() { lastActivity = Date.now(); };
-    ["click", "keydown", "mousemove", "touchstart"].forEach(function(evt) {
+    const onActivity = function () { lastActivity = Date.now(); };
+    ["click", "keydown", "mousemove", "touchstart"].forEach(function (evt) {
       document.addEventListener(evt, onActivity, { passive: true });
     });
     activityBound = true;
@@ -167,14 +167,14 @@ window.AtharAuth = (function () {
     lastActivity = Date.now();
     bindActivityListeners();
 
-    sessionTimer = setInterval(function() {
+    sessionTimer = setInterval(function () {
       if (!currentUser) return;
       // Read idle timeout from local settings (fallback 15 min)
       let timeoutMin = 15;
       try {
         const state = window.AtharStore.getState();
         timeoutMin = Number(state.settings.session_timeout_minutes) || 15;
-      } catch {}
+      } catch { }
 
       const idleMs = Date.now() - lastActivity;
       if (idleMs > timeoutMin * 60 * 1000) {
@@ -202,7 +202,7 @@ window.AtharAuth = (function () {
     document.documentElement.setAttribute("lang", lang);
     document.documentElement.setAttribute("dir", isAr ? "rtl" : "ltr");
 
-    const setText = function(id, txt) {
+    const setText = function (id, txt) {
       const el = document.getElementById(id);
       if (el) el.textContent = txt;
     };
@@ -225,7 +225,7 @@ window.AtharAuth = (function () {
     const app = document.getElementById("app");
     if (app) app.style.display = "none";
     applyLoginTranslations();
-    setTimeout(function() {
+    setTimeout(function () {
       const emailInput = document.getElementById("login-email");
       if (emailInput) emailInput.focus();
     }, 100);
@@ -249,14 +249,14 @@ window.AtharAuth = (function () {
     if (!form) return;
 
     if (toggleBtn) {
-      toggleBtn.onclick = function() {
+      toggleBtn.onclick = function () {
         const pw = document.getElementById("login-password");
         pw.type = pw.type === "password" ? "text" : "password";
       };
     }
 
     if (langBtn) {
-      langBtn.onclick = function() {
+      langBtn.onclick = function () {
         const current = (window.AtharApp && window.AtharApp.getLang && window.AtharApp.getLang()) || "ar";
         const next = current === "ar" ? "en" : "ar";
         if (window.AtharApp && window.AtharApp.setLanguageOnly) {
@@ -266,7 +266,7 @@ window.AtharAuth = (function () {
       };
     }
 
-    form.onsubmit = async function(e) {
+    form.onsubmit = async function (e) {
       e.preventDefault();
       if (errorBox) errorBox.style.display = "none";
 
@@ -311,7 +311,7 @@ window.AtharAuth = (function () {
   // =========================================================================
   return {
     checkSession: checkSession,
-    getCurrentUser: function() { return currentUser; },
+    getCurrentUser: function () { return currentUser; },
     login: login,
     logout: logout,
     showLoginScreen: showLoginScreen,

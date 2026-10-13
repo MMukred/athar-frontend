@@ -32,22 +32,13 @@
     } else if (window.AtharAuth) {
       App.currentUser = window.AtharAuth.getCurrentUser();
     }
+
     if (!App.currentUser) {
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
       return;
     }
 
-    // ---- 2. Load data from API (before rendering) ----
-    try {
-      await window.AtharStore.loadAll();
-    } catch (e) {
-      console.error("[boot] loadAll failed", e);
-      if (showToast) showToast("Could not load data from server. Using demo cache.", "warning");
-    }
-
-    const state = window.AtharStore.getState();
-
-    // ---- 3. Language ----
+    // Load all data from API before rendering
     try {
       await window.AtharStore.loadAll();
     } catch (e) {
@@ -55,9 +46,8 @@
     }
 
     const state = window.AtharStore.getState();
-    App.currentLang = App.currentUser.preferred_language
-      || state.settings.default_language
-      || "ar";
+
+    App.currentLang = App.currentUser.preferred_language || state.settings.default_language || "ar";
     setLanguage(App.currentLang);
 
     // ---- 4. Global guards (unsaved changes, ESC) ----
