@@ -27,13 +27,11 @@
   // Initial Boot (called after successful login)
   // =========================================================================
   async function boot(user) {
-    // ---- 1. Set current user ----
     if (user) {
       App.currentUser = user;
     } else if (window.AtharAuth) {
       App.currentUser = window.AtharAuth.getCurrentUser();
     }
-
     if (!App.currentUser) {
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
       return;
@@ -50,6 +48,13 @@
     const state = window.AtharStore.getState();
 
     // ---- 3. Language ----
+    try {
+      await window.AtharStore.loadAll();
+    } catch (e) {
+      console.error("[boot] loadAll failed", e);
+    }
+
+    const state = window.AtharStore.getState();
     App.currentLang = App.currentUser.preferred_language
       || state.settings.default_language
       || "ar";
@@ -57,7 +62,7 @@
 
     // ---- 4. Global guards (unsaved changes, ESC) ----
     if (!window._atharBeforeUnloadBound) {
-      window.addEventListener("beforeunload", function(e) {
+      window.addEventListener("beforeunload", function (e) {
         if (window.AtharDirty && window.AtharDirty.isDirty()) {
           e.preventDefault();
           e.returnValue = "";
@@ -68,7 +73,7 @@
     }
 
     if (!window._atharEscBound) {
-      window.addEventListener("keydown", function(e) {
+      window.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;
         const slideover = document.querySelector("#slideover-container .slide-over");
         const modal = document.querySelector("#modal-container .modal-dialog");
@@ -90,19 +95,19 @@
     const userBtn = document.getElementById("user-profile-btn");
     const searchInput = document.getElementById("global-search-input");
 
-    if (sidebarBtn) sidebarBtn.onclick = function() {
+    if (sidebarBtn) sidebarBtn.onclick = function () {
       App.sidebarCollapsed = !App.sidebarCollapsed;
       document.getElementById("app-sidebar").classList.toggle("collapsed", App.sidebarCollapsed);
     };
-    if (brandBtn) brandBtn.onclick = function() { navigateTo("dashboard"); };
-    if (langBtn) langBtn.onclick = function() { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
-    if (roleBtn) roleBtn.onclick = function() { window.AtharModals.openRoleSimulatorModal(); };
-    if (qaBtn) qaBtn.onclick = function() { navigateTo("qa-suite"); };
-    if (userBtn) userBtn.onclick = function() { window.AtharModals.openUserMenuModal(); };
+    if (brandBtn) brandBtn.onclick = function () { navigateTo("dashboard"); };
+    if (langBtn) langBtn.onclick = function () { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
+    if (roleBtn) roleBtn.onclick = function () { window.AtharModals.openRoleSimulatorModal(); };
+    if (qaBtn) qaBtn.onclick = function () { navigateTo("qa-suite"); };
+    if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
     // ---- 6. Global search ----
     if (searchInput) {
-      searchInput.onkeydown = function(e) {
+      searchInput.onkeydown = function (e) {
         if (e.key === "Enter") {
           App.searchQuery = searchInput.value;
           navigateTo("volunteers");
@@ -111,7 +116,7 @@
     }
 
     if (!window._atharSearchBound) {
-      window.addEventListener("keydown", function(e) {
+      window.addEventListener("keydown", function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === "k") {
           e.preventDefault();
           const si = document.getElementById("global-search-input");
@@ -235,13 +240,13 @@
     // Volunteer actions
     archiveVolunteer: function (volId) {
       const state = window.AtharStore.getState();
-      const v = state.volunteers.find(function(x) { return x.id === volId; });
+      const v = state.volunteers.find(function (x) { return x.id === volId; });
       if (!v) return;
       window.AtharCore.showConfirmModal({
         title: t("confirm_destructive"),
         message: "Archive " + v.full_name + "? Record hidden but preserved for history and certificates.",
         confirmText: t("archive"),
-        onConfirm: async function() {
+        onConfirm: async function () {
           try {
             await window.AtharAPI.volunteers.archive(volId);
             await window.AtharStore.refreshVolunteers();
@@ -312,9 +317,9 @@
       const tmpl = state.whatsapp_templates.find(t => t.name.includes("Certificate") && t.language === cert.language) || state.whatsapp_templates[2];
       let msg = tmpl ? tmpl.body : "Your certificate is ready!";
       msg = msg.replace("{name}", vol.full_name)
-               .replace("{certificate_no}", cert.certificate_no)
-               .replace("{hours}", cert.total_hours)
-               .replace("{verify_url}", cert.qr_code || `https://athar.org/verify/${cert.certificate_no}`);
+        .replace("{certificate_no}", cert.certificate_no)
+        .replace("{hours}", cert.total_hours)
+        .replace("{verify_url}", cert.qr_code || `https://athar.org/verify/${cert.certificate_no}`);
       window.open(`https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, "_blank");
     },
 
