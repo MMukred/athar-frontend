@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Athar (أثر) - RTL Stylesheet for Arabic Localization
+   Implements full right-to-left layout flipping, typography, and mirror rules
+   ========================================================================== */
+
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+  font-family: var(--font-ar);
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-ar);
+}
+
+/* Sidebar Mirrored to Right */
+[dir="rtl"] .sidebar {
+  left: auto;
+  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--neutral-300);
+}
+
+[dir="rtl"] .content-area {
+  margin-left: 0;
+  margin-right: var(--sidebar-width);
+}
+
+[dir="rtl"] .sidebar.collapsed ~ .content-area {
+  margin-left: 0;
+  margin-right: var(--sidebar-collapsed-width);
+}
+
+/* Search Input Mirroring */
+[dir="rtl"] .search-icon {
+  left: auto;
+  right: 12px;
+}
+
+[dir="rtl"] .search-input {
+  padding: 8px 36px 8px 12px;
+}
+
+[dir="rtl"] .search-kbd {
+  right: auto;
+  left: 10px;
+}
+
+/* Table Text Alignment */
+[dir="rtl"] .data-table {
+  text-align: right;
+}
+
+[dir="rtl"] .data-table th {
+  text-align: right;
+}
+
+[dir="rtl"] .row-actions-cell {
+  justify-content: flex-start;
+}
+
+/* Directional Icons Flipping */
+[dir="rtl"] .icon-flip-rtl,
+[dir="rtl"] .bi-chevron-right,
+[dir="rtl"] .bi-arrow-right,
+[dir="rtl"] .bi-arrow-left {
+  transform: scaleX(-1);
+}
+
+/* Numbers and Time stay strictly LTR */
+[dir="rtl"] .num-ltr,
+[dir="rtl"] .kpi-value,
+[dir="rtl"] .badge-number,
+[dir="rtl"] .stat-box-value,
+[dir="rtl"] .cert-no-label,
+[dir="rtl"] code,
+[dir="rtl"] .diff-table {
+  direction: ltr !important;
+  unicode-bidi: embed !important;
+  display: inline-block;
+}
+
+/* Form Controls */
+[dir="rtl"] select.form-control {
+  padding-right: 12px;
+  padding-left: 28px;
+  background-position: left 10px center;
+}
+
+/* Toasts positioned on bottom-left */
+[dir="rtl"] #toast-container {
+  right: auto;
+  left: 24px;
+}
+
+[dir="rtl"] .toast {
+  border-left: none;
+  border-right: 4px solid var(--primary);
+}
+[dir="rtl"] .toast.toast-success { border-right-color: var(--success); }
+[dir="rtl"] .toast.toast-error   { border-right-color: var(--danger); }
+[dir="rtl"] .toast.toast-warning { border-right-color: var(--warning); }
+
+/* Slide-over Drawer */
+[dir="rtl"] .slide-over {
+  right: auto;
+  left: 0;
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* KPI Card Border Top Accent */
+[dir="rtl"] .kpi-card::before {
+  left: 0;
+  right: 0;
+}

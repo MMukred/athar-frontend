@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أثر | نظام إدارة المتطوعين واللجان - Athar Management System</title>
+  <meta name="description" content="نظام مركزي لإدارة المتطوعين، اللجان، الاجتماعات، التقييمات، الساعات التطوعية، والشهادات التقديرية ثنائي اللغة">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  
+  <!-- Modern Google Fonts: Inter for EN, Cairo & Tajawal for AR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/rtl.css">
+</head>
+<body>
+  <!-- Login Screen (shown when not authenticated) -->
+  <div id="login-screen" class="login-screen" style="display:none;">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="assets/logo.svg" alt="Athar Logo" class="login-logo">
+        <h1 class="login-title" id="login-title">أثر</h1>
+        <p class="login-subtitle" id="login-subtitle">نظام إدارة المتطوعين واللجان</p>
+      </div>
+
+      <form id="login-form" class="login-form" autocomplete="on">
+        <div class="login-field">
+          <label for="login-email" id="login-email-label">البريد الإلكتروني</label>
+          <input type="email" id="login-email" required autocomplete="username" dir="ltr">
+        </div>
+
+        <div class="login-field">
+          <label for="login-password" id="login-password-label">كلمة المرور</label>
+          <div class="password-wrapper">
+            <input type="password" id="login-password" required autocomplete="current-password" dir="ltr">
+            <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle password visibility">👁</button>
+          </div>
+        </div>
+
+        <div class="login-row">
+          <label class="login-remember">
+            <input type="checkbox" id="login-remember">
+            <span id="login-remember-label">تذكرني</span>
+          </label>
+        </div>
+
+        <div id="login-error" class="login-error" style="display:none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-lg login-submit" id="login-submit-btn">
+          تسجيل الدخول
+        </button>
+      </form>
+
+      <details class="login-demo">
+        <summary id="login-demo-summary">بيانات تجريبية للدخول</summary>
+        <ul>
+          <li><code>admin@athar.org</code> / <code>admin123</code> — Super Admin</li>
+          <li><code>ahmed@athar.org</code> / <code>ahmed123</code> — Coordinator</li>
+          <li><code>sara@athar.org</code> / <code>sara123</code> — Hours Approver</li>
+          <li><code>omar@athar.org</code> / <code>omar123</code> — Attendance Officer</li>
+        </ul>
+      </details>
+
+      <div class="login-footer">
+        <button type="button" id="login-lang-toggle" class="lang-toggle-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="login-lang-text">English</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="brand-container" id="brand-home-btn">
+          <img src="assets/logo.svg" alt="Athar Logo" class="brand-logo">
+          <div class="brand-text">
+            <span class="brand-name">
+              <span id="txt-app-name">أثر</span>
+              <span class="brand-badge">PRO v1.0</span>
+            </span>
+            <span class="brand-subname" id="txt-app-subname">نظام إدارة المتطوعين واللجان</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Global Search -->
+      <div class="top-bar-search">
+        <div class="search-input-wrapper">
+          <span class="search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input type="text" id="global-search-input" class="search-input" placeholder="بحث عن متطوعين، لجان، اجتماعات..." autocomplete="off">
+          <span class="search-kbd">Ctrl+K</span>
+        </div>
+      </div>
+
+      <!-- Top Bar Actions -->
+      <div class="top-bar-right">
+        <!-- Interactive Role Switcher for RBAC Testing -->
+        <button id="role-switcher-btn" class="role-simulator-pill" title="تبديل الدور لاختبار الصلاحيات">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span id="current-user-role-label">المدير العام (Super Admin)</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+
+        <!-- QA Test Runner Button -->
+        <button id="qa-suite-btn" class="qa-pill-btn" title="Run full QA verification suite">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span>QA Suite</span>
+        </button>
+
+        <!-- Bilingual Instant Toggle -->
+        <button id="lang-toggle-btn" class="lang-toggle-btn" title="تبديل اللغة / Toggle Language">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="lang-toggle-text">English</span>
+        </button>
+
+        <!-- User Menu Dropdown Trigger -->
+        <div class="user-menu-btn" id="user-profile-btn">
+          <div class="user-avatar" id="user-avatar-badge">M</div>
+          <span class="user-name-text" id="user-display-name">محمد (Super Admin)</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Shell -->
+    <div class="main-layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar" id="app-sidebar">
+        <nav class="sidebar-nav" id="sidebar-nav-container">
+          <!-- Dynamically populated according to active role permissions -->
+        </nav>
+        <div class="sidebar-footer">
+          <div class="org-name-text" style="font-size:11px; color:var(--neutral-500); text-align:center;">
+            مؤسسة أثر للعمل المجتمعي &bull; 2026
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Dynamic View Area -->
+      <main class="content-area" id="main-content">
+        <!-- Injected dynamically by app.js router -->
+      </main>
+    </div>
+
+    <!-- Modals & Slide-over Containers -->
+    <div id="modal-container"></div>
+    <div id="slideover-container"></div>
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- Application Logic & Utilities -->
+  <script src="js/translations.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/utils/qr.js"></script>
+  <script src="js/utils/diff.js"></script>
+  <script src="js/utils/export.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dirty.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/modals.js"></script>
+
+  <!-- Views -->
+  <script src="js/views/index.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/volunteers.js"></script>
+  <script src="js/views/committees.js"></script>
+  <script src="js/views/meetings.js"></script>
+  <script src="js/views/evaluations.js"></script>
+  <script src="js/views/hours.js"></script>
+  <script src="js/views/certificates.js"></script>
+  <script src="js/views/reports.js"></script>
+  <script src="js/views/whatsapp.js"></script>
+  <script src="js/views/users.js"></script>
+  <script src="js/views/audit.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script src="js/views/qa.js"></script>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
