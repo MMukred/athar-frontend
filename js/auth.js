@@ -14,7 +14,7 @@ window.AtharAuth = (function () {
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_MINUTES = 15;
 
-  let currentUser = null;           // normalized to frontend shape
+  let currentUser = null;
   let sessionTimer = null;
   let activityBound = false;
   let lastActivity = Date.now();
@@ -59,8 +59,7 @@ window.AtharAuth = (function () {
 
   // =========================================================================
   // User shape adapter
-  // The API returns camelCase ({ fullName, preferredLanguage, ... }).
-  // The frontend expects snake_case ({ full_name, preferred_language, ... }).
+  // API returns camelCase — frontend expects snake_case
   // =========================================================================
   function normalizeUser(apiUser) {
     if (!apiUser) return null;
@@ -87,7 +86,6 @@ window.AtharAuth = (function () {
       currentUser = normalizeUser(apiUser);
       return true;
     } catch (e) {
-      // Token invalid or expired beyond refresh — clean up
       try { window.AtharAPI.clearTokens(); } catch { }
       currentUser = null;
       return false;
@@ -100,7 +98,6 @@ window.AtharAuth = (function () {
   async function login(email, password, remember) {
     const normEmail = String(email || "").trim().toLowerCase();
 
-    // Client-side lockout
     const lock = getLockout(normEmail);
     if (lock && lock.until > Date.now()) {
       const mins = Math.ceil((lock.until - Date.now()) / 60000);
@@ -113,7 +110,6 @@ window.AtharAuth = (function () {
       clearLockout(normEmail);
       return { success: true, user: currentUser };
     } catch (e) {
-      // Map API errors to user-friendly messages
       if (e.status === 401 || e.code === "INVALID_CREDENTIALS") {
         registerFailedAttempt(normEmail);
         return { success: false, error: "Invalid email or password." };
@@ -137,7 +133,7 @@ window.AtharAuth = (function () {
   async function logout(silent) {
     try {
       await window.AtharAPI.auth.logout();
-    } catch { /* ignore — we clear tokens regardless */ }
+    } catch { }
 
     currentUser = null;
     stopSessionWatcher();
@@ -151,7 +147,7 @@ window.AtharAuth = (function () {
   }
 
   // =========================================================================
-  // Session watcher — idle timeout (activity-based)
+  // Session watcher — idle timeout
   // =========================================================================
   function bindActivityListeners() {
     if (activityBound) return;
@@ -169,7 +165,6 @@ window.AtharAuth = (function () {
 
     sessionTimer = setInterval(function () {
       if (!currentUser) return;
-      // Read idle timeout from local settings (fallback 15 min)
       let timeoutMin = 15;
       try {
         const state = window.AtharStore.getState();
@@ -194,7 +189,7 @@ window.AtharAuth = (function () {
   }
 
   // =========================================================================
-  // Login screen rendering
+  // Login screen
   // =========================================================================
   function applyLoginTranslations() {
     const lang = (window.AtharApp && window.AtharApp.getLang && window.AtharApp.getLang()) || "ar";
@@ -213,7 +208,6 @@ window.AtharAuth = (function () {
     setText("login-password-label", isAr ? "كلمة المرور" : "Password");
     setText("login-remember-label", isAr ? "تذكرني" : "Remember me");
     setText("login-submit-btn", isAr ? "تسجيل الدخول" : "Sign In");
-    setText("login-demo-summary", isAr ? "بيانات تجريبية للدخول" : "Demo credentials");
     setText("login-lang-text", isAr ? "English" : "العربية");
   }
 
@@ -306,9 +300,6 @@ window.AtharAuth = (function () {
     };
   }
 
-  // =========================================================================
-  // Public API
-  // =========================================================================
   return {
     checkSession: checkSession,
     getCurrentUser: function () { return currentUser; },
