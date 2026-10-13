@@ -1,6 +1,6 @@
 /**
  * Athar Bilingual Dictionary (English & Arabic)
- * Full RTL & LTR localization for all 24 modules, actions, and messages
+ * Full RTL & LTR localization
  */
 
 window.Translations = {
@@ -18,13 +18,13 @@ window.Translations = {
     trusted_admin: "Trusted Admin",
     logged_in_as: "Active Account:",
     switch_user: "Switch User / Test Role",
-    
+
     // Nav Groups & Modules
     group_operations: "Operations",
     group_performance: "Performance",
     group_insights: "Insights",
     group_admin: "Administration",
-    
+
     nav_dashboard: "Dashboard",
     nav_volunteers: "Volunteers",
     nav_committees: "Committees",
@@ -79,7 +79,7 @@ window.Translations = {
     select_all: "Select All",
     bulk_actions: "Bulk Actions",
     apply: "Apply",
-    
+
     // Statuses
     active: "Active",
     suspended: "Suspended",
@@ -102,12 +102,9 @@ window.Translations = {
 
     // Dashboard
     kpi_volunteers: "Volunteers",
-    kpi_volunteers_trend: "+4 this month",
     kpi_committees: "Committees",
     kpi_total_hours: "Total Hours",
-    kpi_hours_trend: "+80 this month",
     kpi_certificates: "Certificates",
-    kpi_certs_trend: "+5 this month",
     upcoming_meetings: "Upcoming Meetings",
     pending_approvals: "Pending Approvals",
     hours_awaiting_approval: "hours awaiting approval",
@@ -166,9 +163,9 @@ window.Translations = {
     committees_title: "Committees Directory",
     add_committee: "+ Add Committee",
     committee_name_en: "Committee Name (English)",
-    committee_name_ar: "اسم اللجنة (بالعربية)",
+    committee_name_ar: "Committee Name (Arabic)",
     committee_desc_en: "Description (English)",
-    committee_desc_ar: "الوصف (بالعربية)",
+    committee_desc_ar: "Description (Arabic)",
     manager: "Committee Manager",
     select_manager: "Select Manager",
     members_count: "Members",
@@ -187,7 +184,7 @@ window.Translations = {
     meetings_title: "Meetings & Attendance",
     add_meeting: "+ New Meeting",
     meeting_title_en: "Meeting Title (English)",
-    meeting_title_ar: "عنوان الاجتماع (بالعربية)",
+    meeting_title_ar: "Meeting Title (Arabic)",
     meeting_date: "Date",
     start_time: "Start Time",
     end_time: "End Time",
@@ -216,7 +213,7 @@ window.Translations = {
     criteria_settings_title: "Evaluation Criteria Configuration",
     add_criterion: "+ Add Criterion",
     criterion_name_en: "Criterion Name (English)",
-    criterion_name_ar: "اسم المعيار (بالعربية)",
+    criterion_name_ar: "Criterion Name (Arabic)",
     display_order: "Order",
 
     // Hours
@@ -305,13 +302,11 @@ window.Translations = {
     // Settings
     settings_title: "System & Organization Settings",
     org_name_en: "Organization Name (English)",
-    org_name_ar: "اسم المنظمة (بالعربية)",
+    org_name_ar: "Organization Name (Arabic)",
     org_logo: "Organization Logo URL",
     cert_prefix: "Certificate Prefix",
     default_lang: "Default System Language",
     session_timeout: "Session Inactivity Timeout (Minutes)",
-    reset_data: "Reset / Re-seed Demo Test Data",
-    data_reset_confirm: "Are you sure? This will reload the test dataset with 3 committees, 30 volunteers, and seed records.",
 
     // Toasts & Messages
     saved_successfully: "Saved successfully",
@@ -349,13 +344,13 @@ window.Translations = {
     trusted_admin: "مسؤول موثوق (Trusted Admin)",
     logged_in_as: "الحساب النشط:",
     switch_user: "تبديل المستخدم / فحص الصلاحيات",
-    
+
     // Nav Groups & Modules
     group_operations: "العمليات التشغيلية",
     group_performance: "الأداء والتقدير",
     group_insights: "التقارير والمؤشرات",
     group_admin: "إدارة النظام",
-    
+
     nav_dashboard: "لوحة التحكم",
     nav_volunteers: "المتطوعون",
     nav_committees: "اللجان",
@@ -433,12 +428,9 @@ window.Translations = {
 
     // Dashboard
     kpi_volunteers: "إجمالي المتطوعين",
-    kpi_volunteers_trend: "+4 هذا الشهر",
     kpi_committees: "اللجان العاملة",
     kpi_total_hours: "الساعات التطوعية المعتمدة",
-    kpi_hours_trend: "+80 هذا الشهر",
     kpi_certificates: "الشهادات الصادرة",
-    kpi_certs_trend: "+5 هذا الشهر",
     upcoming_meetings: "الاجتماعات القادمة",
     pending_approvals: "بانتظار الاعتماد والموافقة",
     hours_awaiting_approval: "ساعات بانتظار الاعتماد",
@@ -641,8 +633,6 @@ window.Translations = {
     cert_prefix: "رمز ترقيم الشهادات (Prefix)",
     default_lang: "اللغة الافتراضية للواجهة",
     session_timeout: "مدة انتهاء الجلسة التلقائي (بالدقائق)",
-    reset_data: "إعادة تحميل وتغذية بيانات الاختبار (Seed Data)",
-    data_reset_confirm: "هل أنت متأكد؟ سيتم استعادة بيانات التجربة المعيارية (3 لجان، 30 متطوعاً، وسجلات كاملة).",
 
     // Toasts & Messages
     saved_successfully: "تم الحفظ بنجاح",

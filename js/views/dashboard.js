@@ -20,6 +20,31 @@
     const upcomingMeetings = state.meetings.filter(m => m.status === "scheduled").slice(0, 3);
     const recentAudit = state.audit_logs.slice(0, 5);
 
+    // -------- Dynamic "this month" trends --------
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const newVolsThisMonth = state.volunteers.filter(v => {
+      if (v.status === "archived" || !v.join_date) return false;
+      const d = new Date(v.join_date);
+      return !isNaN(d) && d >= monthStart;
+    }).length;
+
+    const hoursThisMonth = state.volunteer_hours
+      .filter(h => h.status === "approved" && h.date)
+      .filter(h => {
+        const d = new Date(h.date);
+        return !isNaN(d) && d >= monthStart;
+      })
+      .reduce((sum, h) => sum + Number(h.hours), 0);
+
+    const certsThisMonth = state.certificates.filter(c => {
+      if (c.status !== "issued" || !c.issue_date) return false;
+      const d = new Date(c.issue_date);
+      return !isNaN(d) && d >= monthStart;
+    }).length;
+    // --------------------------------------------
+
     const volunteerHoursMap = {};
     state.volunteer_hours.filter(h => h.status === "approved").forEach(h => {
       volunteerHoursMap[h.volunteer_id] = (volunteerHoursMap[h.volunteer_id] || 0) + Number(h.hours);
@@ -30,6 +55,14 @@
       .filter(item => item.vol)
       .sort((a, b) => b.hours - a.hours)
       .slice(0, 4);
+
+    // Reusable trend renderer
+    const trend = (count, unit) => {
+      if (count > 0) {
+        return `<div class="kpi-trend">${ic("trending_up", 12)} +${count}${unit} this month</div>`;
+      }
+      return `<div class="kpi-trend" style="color:var(--neutral-500);">0 this month</div>`;
+    };
 
     container.innerHTML = `
       <div class="view-header">
@@ -59,7 +92,7 @@
             <div class="kpi-icon-badge">${ic("users", 20, { strokeWidth: 2 })}</div>
           </div>
           <div class="kpi-value num-ltr">${totalVolunteers}</div>
-          <div class="kpi-trend">${ic("trending_up", 12)} ${t("kpi_volunteers_trend")}</div>
+          ${trend(newVolsThisMonth, "")}
         </div>
 
         <div class="kpi-card kpi-committees" id="kpi-card-comms">
@@ -68,7 +101,7 @@
             <div class="kpi-icon-badge">${ic("building", 20, { strokeWidth: 2 })}</div>
           </div>
           <div class="kpi-value num-ltr">${totalCommittees}</div>
-          <div class="kpi-trend" style="color:var(--neutral-500);">${totalCommittees} active units</div>
+          <div class="kpi-trend" style="color:var(--neutral-500);">${totalCommittees === 1 ? '1 active unit' : `${totalCommittees} active units`}</div>
         </div>
 
         <div class="kpi-card kpi-hours" id="kpi-card-hours">
@@ -77,7 +110,7 @@
             <div class="kpi-icon-badge">${ic("clock", 20, { strokeWidth: 2 })}</div>
           </div>
           <div class="kpi-value num-ltr">${totalHours.toLocaleString()} h</div>
-          <div class="kpi-trend">${ic("trending_up", 12)} ${t("kpi_hours_trend")}</div>
+          ${trend(hoursThisMonth, " h")}
         </div>
 
         <div class="kpi-card kpi-certs" id="kpi-card-certs">
@@ -86,7 +119,7 @@
             <div class="kpi-icon-badge">${ic("award", 20, { strokeWidth: 2 })}</div>
           </div>
           <div class="kpi-value num-ltr">${totalCerts}</div>
-          <div class="kpi-trend">${ic("trending_up", 12)} ${t("kpi_certs_trend")}</div>
+          ${trend(certsThisMonth, "")}
         </div>
       </div>
 
@@ -140,21 +173,24 @@
             <div class="card-title">${ic("building", 18)} ${t("volunteers_per_committee")}</div>
           </div>
           <div style="display:flex; flex-direction:column; gap:16px;">
-            ${state.committees.map(c => {
-              const count = state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length;
-              const percent = Math.min(100, Math.round((count / totalVolunteers) * 100)) || 0;
-              return `
-                <div>
-                  <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;">
-                    <span>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
-                    <span class="num-ltr">${count} vols (${percent}%)</span>
+            ${state.committees.length === 0
+        ? `<p style="color:var(--neutral-500); font-size:13px;">No committees yet.</p>`
+        : state.committees.map(c => {
+          const count = state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length;
+          const percent = totalVolunteers > 0 ? Math.min(100, Math.round((count / totalVolunteers) * 100)) : 0;
+          return `
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;">
+                      <span>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+                      <span class="num-ltr">${count} vols (${percent}%)</span>
+                    </div>
+                    <div style="height:10px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
+                      <div style="width:${percent}%; height:100%; background:linear-gradient(90deg, var(--primary), #8A3FFC); border-radius:var(--radius-full);"></div>
+                    </div>
                   </div>
-                  <div style="height:10px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
-                    <div style="width:${percent}%; height:100%; background:linear-gradient(90deg, var(--primary), #8A3FFC); border-radius:var(--radius-full);"></div>
-                  </div>
-                </div>
-              `;
-            }).join('')}
+                `;
+        }).join('')
+      }
           </div>
         </div>
 
@@ -163,19 +199,22 @@
             <div class="card-title">${ic("award", 18)} ${t("top_active_volunteers")}</div>
           </div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            ${topVols.map((item, idx) => `
-              <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${item.vol.id}'})">
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <span style="font-weight:800; font-size:14px; color:${idx === 0 ? '#F59E0B' : idx === 1 ? '#94A3B8' : '#B45309'};">#${idx + 1}</span>
-                  <div class="user-avatar" style="width:28px; height:28px; font-size:11px;">${item.vol.full_name.charAt(0)}</div>
-                  <div>
-                    <div style="font-weight:700; color:var(--neutral-900); font-size:13px;">${App.currentLang === 'ar' ? (item.vol.full_name_ar || item.vol.full_name) : item.vol.full_name}</div>
-                    <div style="font-size:11px; color:var(--neutral-500);">${item.vol.skills ? item.vol.skills.slice(0, 2).join(', ') : ''}</div>
+            ${topVols.length === 0
+        ? `<p style="color:var(--neutral-500); font-size:13px;">No approved hours yet.</p>`
+        : topVols.map((item, idx) => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${item.vol.id}'})">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-weight:800; font-size:14px; color:${idx === 0 ? '#F59E0B' : idx === 1 ? '#94A3B8' : '#B45309'};">#${idx + 1}</span>
+                    <div class="user-avatar" style="width:28px; height:28px; font-size:11px;">${item.vol.full_name.charAt(0)}</div>
+                    <div>
+                      <div style="font-weight:700; color:var(--neutral-900); font-size:13px;">${App.currentLang === 'ar' ? (item.vol.full_name_ar || item.vol.full_name) : item.vol.full_name}</div>
+                      <div style="font-size:11px; color:var(--neutral-500);">${item.vol.skills ? item.vol.skills.slice(0, 2).join(', ') : ''}</div>
+                    </div>
                   </div>
+                  <div style="font-weight:800; color:var(--success); font-size:14px;" class="num-ltr">${item.hours} h</div>
                 </div>
-                <div style="font-weight:800; color:var(--success); font-size:14px;" class="num-ltr">${item.hours} h</div>
-              </div>
-            `).join('')}
+              `).join('')
+      }
           </div>
         </div>
 
@@ -185,24 +224,28 @@
             <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('audit-logs')">${t("view")}</button>
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
-            ${recentAudit.map(al => `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--neutral-200); font-size:13px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <span class="badge ${al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' ? 'badge-danger' : 'badge-neutral'}">${al.action}</span>
-                  <span style="font-weight:600; color:var(--neutral-900);">${al.details}</span>
+            ${recentAudit.length === 0
+        ? `<p style="color:var(--neutral-500); font-size:13px; padding:12px 0;">No activity recorded yet.</p>`
+        : recentAudit.map(al => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--neutral-200); font-size:13px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="badge ${al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' ? 'badge-danger' : 'badge-neutral'}">${al.action}</span>
+                    <span style="font-weight:600; color:var(--neutral-900);">${al.details}</span>
+                  </div>
+                  <div style="font-size:12px; color:var(--neutral-500);" class="num-ltr">
+                    ${al.user_name} &bull; ${al.created_at}
+                  </div>
                 </div>
-                <div style="font-size:12px; color:var(--neutral-500);" class="num-ltr">
-                  ${al.user_name} &bull; ${al.created_at}
-                </div>
-              </div>
-            `).join('')}
+              `).join('')
+      }
           </div>
         </div>
       </div>
     `;
 
-    document.getElementById("btn-dash-refresh").onclick = () => {
-      showToast(t("refresh") + "...", "success");
+    document.getElementById("btn-dash-refresh").onclick = async () => {
+      try { await window.AtharStore.loadAll(); } catch (e) { console.warn(e); }
+      showToast(t("refresh"), "success");
       renderDashboard(container);
     };
 
