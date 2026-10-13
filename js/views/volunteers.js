@@ -38,7 +38,7 @@
         if (search) {
           const q = search.toLowerCase();
           const matchName = (v.full_name && v.full_name.toLowerCase().includes(q)) ||
-                            (v.full_name_ar && v.full_name_ar.includes(q));
+            (v.full_name_ar && v.full_name_ar.includes(q));
           const matchId = v.national_id && v.national_id.includes(q);
           const matchPhone = v.phone && v.phone.includes(q);
           if (!matchName && !matchId && !matchPhone) return false;
@@ -137,10 +137,10 @@
                   </td>
                 </tr>
               ` : pagedVols.map(v => {
-                const comm = state.committees.find(c => c.id === v.committee_id);
-                const stats = window.AtharStore.getVolunteerStats(v.id);
-                const isSelected = App.selectedVolunteerIds.has(v.id);
-                return `
+      const comm = state.committees.find(c => c.id === v.committee_id);
+      const stats = window.AtharStore.getVolunteerStats(v.id);
+      const isSelected = App.selectedVolunteerIds.has(v.id);
+      return `
                   <tr class="${isSelected ? 'row-selected' : ''}">
                     <td class="col-cb">
                       <input type="checkbox" class="vol-row-cb" data-id="${v.id}" ${isSelected ? 'checked' : ''}>
@@ -189,7 +189,7 @@
                     </td>
                   </tr>
                 `;
-              }).join('')}
+    }).join('')}
             </tbody>
           </table>
         </div>
@@ -276,21 +276,30 @@
     const bulkArchive = document.getElementById("btn-bulk-archive");
     if (bulkArchive) {
       bulkArchive.onclick = () => {
+        const count = App.selectedVolunteerIds.size;
         showConfirmModal({
           title: t("confirm_destructive"),
-          message: `Are you sure you want to archive ${App.selectedVolunteerIds.size} volunteers?`,
-          onConfirm: () => {
-            const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-            App.selectedVolunteerIds.forEach(id => {
-              const v = state.volunteers.find(x => x.id === id);
-              if (v) { v.status = "archived"; v.archived_at = now; }
-            });
-            window.AtharStore.save();
-            window.AtharStore.logAudit(App.currentUser, "delete", "volunteer", null, `Bulk archived ${App.selectedVolunteerIds.size} volunteers`, null, null);
+          message: `Archive ${count} volunteer${count > 1 ? 's' : ''}? Records preserved.`,
+          onConfirm: async () => {
+            const ids = Array.from(App.selectedVolunteerIds);
+            const results = await Promise.allSettled(
+              ids.map((id) => window.AtharAPI.volunteers.archive(id)),
+            );
+            const ok = results.filter((r) => r.status === "fulfilled").length;
+            const fail = results.length - ok;
+
             App.selectedVolunteerIds.clear();
-            showToast("Volunteers archived successfully");
+            await window.AtharStore.refreshVolunteers();
+
+            if (fail === 0) {
+              showToast(`Archived ${ok} volunteer${ok > 1 ? 's' : ''}`, "success");
+            } else if (ok === 0) {
+              showToast("Failed to archive volunteers", "error");
+            } else {
+              showToast(`Archived ${ok}, failed ${fail}`, "warning");
+            }
             renderVolunteersList(container);
-          }
+          },
         });
       };
     }
@@ -480,8 +489,8 @@
             <thead><tr><th>Meeting</th><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
             <tbody>
               ${attendance.length === 0 ? `<tr><td colspan="4" style="text-align:center; padding:24px;">No attendance records found</td></tr>` : attendance.map(a => {
-                const mtg = state.meetings.find(m => m.id === a.meeting_id);
-                return `
+        const mtg = state.meetings.find(m => m.id === a.meeting_id);
+        return `
                   <tr>
                     <td style="font-weight:600;">${mtg ? (App.currentLang === 'ar' ? mtg.title_ar : mtg.title_en) : 'Meeting'}</td>
                     <td>${mtg ? formatDate(mtg.meeting_date) : '—'}</td>
@@ -489,7 +498,7 @@
                     <td style="color:var(--neutral-600);">${a.note || '—'}</td>
                   </tr>
                 `;
-              }).join('')}
+      }).join('')}
             </tbody>
           </table>
         </div>
@@ -512,14 +521,14 @@
               <p style="color:var(--neutral-700); font-size:13px; margin-bottom:12px;">${e.notes || ''}</p>
               <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; background:var(--neutral-50); padding:12px; border-radius:var(--radius-md);">
                 ${state.evaluation_scores.filter(s => s.evaluation_id === e.id).map(sc => {
-                  const crit = state.criteria.find(c => c.id === sc.criteria_id);
-                  return `
+        const crit = state.criteria.find(c => c.id === sc.criteria_id);
+        return `
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
                       <span style="font-weight:600;">${crit ? (App.currentLang === 'ar' ? crit.name_ar : crit.name_en) : 'Criteria'}</span>
                       <span style="color:#F59E0B; font-weight:700;">${sc.score} / 5</span>
                     </div>
                   `;
-                }).join('')}
+      }).join('')}
               </div>
             </div>
           `).join('')}
@@ -578,9 +587,9 @@
           ${transfers.length === 0 ? `<p style="color:var(--neutral-500); padding:12px 0;">No committee transfers recorded.</p>` : `
             <div style="display:flex; flex-direction:column; gap:16px; border-left:2px solid var(--primary-border); padding-left:16px;">
               ${transfers.map(tr => {
-                const fromComm = state.committees.find(c => c.id === tr.from_committee_id);
-                const toComm = state.committees.find(c => c.id === tr.to_committee_id);
-                return `
+        const fromComm = state.committees.find(c => c.id === tr.from_committee_id);
+        const toComm = state.committees.find(c => c.id === tr.to_committee_id);
+        return `
                   <div>
                     <div style="font-size:12px; color:var(--neutral-500);">${tr.transferred_at}</div>
                     <div style="font-weight:700; color:var(--neutral-900); font-size:14px; margin:2px 0;">
@@ -589,7 +598,7 @@
                     <div style="font-size:13px; color:var(--neutral-700);">Reason: ${tr.reason || 'None specified'}</div>
                   </div>
                 `;
-              }).join('')}
+      }).join('')}
             </div>
           `}
         </div>
