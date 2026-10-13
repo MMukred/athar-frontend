@@ -81,7 +81,6 @@
     const brandBtn = document.getElementById("brand-home-btn");
     const langBtn = document.getElementById("lang-toggle-btn");
     const roleBtn = document.getElementById("role-switcher-btn");
-    const qaBtn = document.getElementById("qa-suite-btn");
     const userBtn = document.getElementById("user-profile-btn");
     const searchInput = document.getElementById("global-search-input");
 
@@ -92,7 +91,6 @@
     if (brandBtn) brandBtn.onclick = function () { navigateTo("dashboard"); };
     if (langBtn) langBtn.onclick = function () { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
     if (roleBtn) roleBtn.onclick = function () { window.AtharModals.openRoleSimulatorModal(); };
-    if (qaBtn) qaBtn.onclick = function () { navigateTo("qa-suite"); };
     if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
     // ---- 6. Global search ----
