@@ -4,7 +4,7 @@
 window.AtharAPI = (function () {
   "use strict";
 
-  const BASE_URL = "http://localhost:3000/api";
+  const BASE_URL = "https://athar-api-l8fn.onrender.com/api";
   const ACCESS_KEY = "athar_access_token_v1";
   const REFRESH_KEY = "athar_refresh_token_v1";
   const REMEMBER_KEY = "athar_remember_v1";
