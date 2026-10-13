@@ -50,18 +50,7 @@
     App.currentLang = App.currentUser.preferred_language || state.settings.default_language || "ar";
     setLanguage(App.currentLang);
 
-    // ---- 4. Global guards (unsaved changes, ESC) ----
-    if (!window._atharBeforeUnloadBound) {
-      window.addEventListener("beforeunload", function (e) {
-        if (window.AtharDirty && window.AtharDirty.isDirty()) {
-          e.preventDefault();
-          e.returnValue = "";
-          return "";
-        }
-      });
-      window._atharBeforeUnloadBound = true;
-    }
-
+    // ---- Global ESC key closes top-most modal/slide-over ----
     if (!window._atharEscBound) {
       window.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;
@@ -76,11 +65,10 @@
       window._atharEscBound = true;
     }
 
-    // ---- 5. Topbar wiring ----
+    // ---- Topbar wiring ----
     const sidebarBtn = document.getElementById("sidebar-toggle-btn");
     const brandBtn = document.getElementById("brand-home-btn");
     const langBtn = document.getElementById("lang-toggle-btn");
-    const roleBtn = document.getElementById("role-switcher-btn");
     const userBtn = document.getElementById("user-profile-btn");
     const searchInput = document.getElementById("global-search-input");
 
@@ -90,10 +78,9 @@
     };
     if (brandBtn) brandBtn.onclick = function () { navigateTo("dashboard"); };
     if (langBtn) langBtn.onclick = function () { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
-    if (roleBtn) roleBtn.onclick = function () { window.AtharModals.openRoleSimulatorModal(); };
     if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
-    // ---- 6. Global search ----
+    // ---- Global search ----
     if (searchInput) {
       searchInput.onkeydown = function (e) {
         if (e.key === "Enter") {
@@ -114,13 +101,13 @@
       window._atharSearchBound = true;
     }
 
-    // ---- 7. Router ----
+    // ---- Router ----
     if (!App._routerBound) {
       window.addEventListener("hashchange", handleHashChange);
       App._routerBound = true;
     }
 
-    // ---- 8. First render ----
+    // ---- First render ----
     handleHashChange();
   }
 
@@ -136,17 +123,6 @@
     if (authed) {
       const user = window.AtharAuth.getCurrentUser();
       if (user) {
-        // Try to restore crypto key from sessionStorage (A5 compat — no-op if not applied)
-        if (window.AtharCrypto) {
-          try {
-            await window.AtharCrypto.loadKeyFromSession();
-            if (window.AtharCrypto.hasKey()) {
-              await window.AtharStore.applyDecryption && await window.AtharStore.applyDecryption();
-            }
-          } catch (e) {
-            console.warn("Crypto restore failed", e);
-          }
-        }
         await boot(user);
         window.AtharAuth.startSessionWatcher();
         return;
@@ -157,7 +133,7 @@
   }
 
   // =========================================================================
-  // Public API — used by auth.js, modals.js, and inline onclick handlers
+  // Public API
   // =========================================================================
   function getLang() { return App.currentLang; }
 
@@ -168,7 +144,6 @@
     document.documentElement.setAttribute("dir", isRtl ? "rtl" : "ltr");
     if (App.currentUser) {
       App.currentUser.preferred_language = lang;
-      window.AtharStore.save();
     }
   }
 
@@ -182,7 +157,7 @@
     boot,
     renderCurrentView,
 
-    // Modal openers (proxied to AtharModals for backward compatibility)
+    // Modal openers (proxied to AtharModals)
     openAddVolunteerSlideover: (...a) => window.AtharModals.openAddVolunteerSlideover(...a),
     openTransferModal: (...a) => window.AtharModals.openTransferModal(...a),
     openLogHoursSlideover: (...a) => window.AtharModals.openLogHoursSlideover(...a),
@@ -197,33 +172,7 @@
     duplicateWhatsAppTemplate: (...a) => window.AtharModals.duplicateWhatsAppTemplate(...a),
     deleteWhatsAppTemplate: (...a) => window.AtharModals.deleteWhatsAppTemplate(...a),
 
-    // Auth shortcut
     logout: () => window.AtharAuth && window.AtharAuth.logout(),
-
-    // Role switch (used by modal)
-    switchUser: function (userId) {
-      const state = window.AtharStore.getState();
-      const u = state.users.find(x => x.id === userId);
-      if (!u) return;
-      App.currentUser = u;
-      updateUserMenuBadge();
-      renderSidebar();
-      const modalContainer = document.getElementById("modal-container");
-      if (modalContainer) modalContainer.innerHTML = "";
-      showToast(`Switched active account to: ${u.full_name} (${u.role})`);
-      renderCurrentView();
-    },
-
-    toggleUserActive: function (userId) {
-      const state = window.AtharStore.getState();
-      const u = state.users.find(x => x.id === userId);
-      if (!u || u.role === "super_admin") return;
-      u.is_active = !u.is_active;
-      window.AtharStore.save();
-      window.AtharStore.logAudit(App.currentUser, "update", "user", u.id, `${u.is_active ? 'Activated' : 'Deactivated'} user: ${u.full_name}`, null, null);
-      showToast(u.is_active ? "User activated" : "User deactivated", "success");
-      renderCurrentView();
-    },
 
     // Volunteer actions
     archiveVolunteer: function (volId) {
