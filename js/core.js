@@ -51,8 +51,7 @@ window.AtharCore = (function () {
     "whatsapp-templates": "whatsappTemplates",
     "users": "users",
     "audit-logs": "auditLogs",
-    "settings": "settings",
-    "qa-suite": "qaSuite"
+    "settings": "settings"
   };
 
   // ===========================================================
@@ -77,7 +76,7 @@ window.AtharCore = (function () {
     if (App.currentLang === "ar") {
       const parts = dateStr.split(" ")[0].split("-");
       if (parts.length === 3) {
-        const months = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+        const months = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
         const mIdx = parseInt(parts[1], 10) - 1;
         return `${parts[2]} ${months[mIdx] || parts[1]} ${parts[0]}`;
       }
@@ -199,7 +198,7 @@ window.AtharCore = (function () {
       { module: "settings", action: "edit" }
     ];
     const isRestricted = superAdminOnlyActions.some(
-      function(r) { return r.module === module && r.action === action; }
+      function (r) { return r.module === module && r.action === action; }
     );
     if (isRestricted) return false;
 
@@ -216,7 +215,7 @@ window.AtharCore = (function () {
     // ---- Legacy fallback: local store permissions array ----
     const state = window.AtharStore.getState();
     const permRow = state.permissions.find(
-      function(p) { return p.user_id === App.currentUser.id && p.module === module; }
+      function (p) { return p.user_id === App.currentUser.id && p.module === module; }
     );
     if (!permRow) return false;
     return !!permRow["can_" + action];
@@ -290,8 +289,7 @@ window.AtharCore = (function () {
     "whatsapp-templates": "whatsapp_templates",
     users: "users",
     "audit-logs": "audit_logs",
-    settings: "settings",
-    "qa-suite": "dashboard"
+    settings: "settings"
   };
 
   function navigateTo(view, params, pushState) {
