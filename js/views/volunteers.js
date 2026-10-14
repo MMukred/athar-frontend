@@ -763,17 +763,23 @@
           </table></div>
         ` : activeTab === "evaluations" ? `
           <div style="display:flex; flex-direction:column; gap:16px;">${evalsHtml}</div>
-        ` : activeTab === "hours" ? `
+               ` : activeTab === "hours" ? `
           <div class="table-container"><table class="data-table">
-            <thead><tr><th>Date</th><th>Activity</th><th>Hours</th><th>Status</th><th>Description</th></tr></thead>
+            <thead><tr><th>Date</th><th>Activity</th><th>Hours</th><th>Status</th><th>Description</th><th style="text-align:right;">${t("actions")}</th></tr></thead>
             <tbody>
-              ${hoursLog.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">—</td></tr>` : hoursLog.map(h => `
+              ${hoursLog.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding:24px;">—</td></tr>` : hoursLog.map(h => `
                 <tr>
                   <td>${formatDate(h.date)}</td>
                   <td style="font-weight:600;">${h.activity}</td>
                   <td><span class="num-ltr" style="font-weight:700;">${h.hours} h</span></td>
                   <td><span class="badge ${h.status === 'approved' ? 'badge-success' : h.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${t(h.status)}</span></td>
                   <td style="color:var(--neutral-600); font-size:12px;">${h.description || ''}</td>
+                  <td>
+                    <div class="row-actions-cell">
+                      <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.editHours('${h.id}')" title="${App.currentLang === 'ar' ? 'تعديل' : 'Adjust'}">${ic("pencil", 12)}</button>
+                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteHoursEntry('${h.id}')" title="${t("delete")}">${ic("trash", 12)}</button>
+                    </div>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
