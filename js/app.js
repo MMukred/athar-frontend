@@ -159,6 +159,10 @@
     showConfirmModal,
     boot,
     renderCurrentView,
+    bulkEditHours: function (hoursIds) {
+      window.AtharModals.openBulkEditHoursModal(hoursIds);
+    },
+
 
     // Modal openers (proxied to AtharModals)
     openAddVolunteerSlideover: (...a) => window.AtharModals.openAddVolunteerSlideover(...a),

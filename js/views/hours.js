@@ -64,10 +64,10 @@
 
       <div id="hours-bulk-bar" class="bulk-action-bar" style="display:none;">
         <span class="bulk-count" id="hours-bulk-count">0 selected</span>
-        <div class="bulk-buttons">
+                <div class="bulk-buttons">
+          ${canEdit ? `<button class="btn btn-primary btn-sm" id="btn-bulk-edit-hours">${ic("pencil", 14)} ${App.currentLang === 'ar' ? 'تعديل جماعي' : 'Bulk Edit'}</button>` : ''}
           ${canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-bulk-delete-hours">${ic("trash", 14)} ${t("delete")}</button>` : ''}
         </div>
-      </div>
 
       <div class="table-container">
         <table class="data-table">
@@ -214,10 +214,20 @@
       };
     });
 
+    const bulkEdit = document.getElementById("btn-bulk-edit-hours");
+    if (bulkEdit) {
+      bulkEdit.onclick = () => {
+        const ids = Array.from(selected);
+        if (!ids.length) return;
+        window.AtharApp.bulkEditHours(ids);
+      };
+    }
+
     const bulkDel = document.getElementById("btn-bulk-delete-hours");
     if (bulkDel) {
       bulkDel.onclick = () => {
         const ids = Array.from(selected);
+        if (!ids.length) return;
         showConfirmModal({
           title: t("confirm_destructive"),
           message: App.currentLang === 'ar'

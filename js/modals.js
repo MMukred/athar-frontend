@@ -1347,6 +1347,143 @@ window.AtharModals = (function () {
 
     setTimeout(() => hoursInput.focus(), 100);
   }
+  // =========================================================
+  // 18. Bulk Edit Hours (set same value for many entries)
+  // =========================================================
+  function openBulkEditHoursModal(hoursIds) {
+    hoursIds = hoursIds || [];
+    if (!hoursIds.length) { showToast("No entries selected", "error"); return; }
+
+    const state = window.AtharStore.getState();
+    const entries = state.volunteer_hours.filter(h => hoursIds.includes(h.id));
+    if (!entries.length) { showToast("No matching entries", "error"); return; }
+
+    const totalCurrent = entries.reduce((s, h) => s + Number(h.hours), 0);
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="beh-backdrop">
+        <div class="modal-dialog" style="max-width:520px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("pencil", 18)} ${App.currentLang === 'ar' ? 'تعديل جماعي للساعات' : 'Bulk Edit Hours'} (${entries.length})</h3>
+            <button class="btn-icon" id="beh-close">&times;</button>
+          </div>
+          <form id="beh-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+
+              <div style="padding:12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); font-size:12.5px; color:var(--warning);">
+                ⚠ ${App.currentLang === 'ar'
+        ? `سيتم تطبيق نفس القيمة على ${entries.length} سجل.`
+        : `The same value will be applied to all ${entries.length} entries.`}
+              </div>
+
+              <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
+                <div><strong>${App.currentLang === 'ar' ? 'عدد السجلات' : 'Entries'}:</strong> ${entries.length}</div>
+                <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'مجموع الساعات الحالي' : 'Current total'}:</strong> <span class="num-ltr">${totalCurrent.toFixed(2)} h</span></div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة لكل سجل' : 'New value per entry'}</label>
+                <input type="number" step="0.25" min="0.25" id="beh-hours" class="form-control num-ltr" value="2" required>
+                <span class="field-hint">${App.currentLang === 'ar' ? 'سيتم تطبيق هذا الرقم على كل سجل محدد.' : 'This number will be applied to every selected entry.'}</span>
+              </div>
+
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="0.5">0.5h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="1">1h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="1.5">1.5h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="2">2h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="3">3h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="4">4h</button>
+              </div>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+              <button type="button" class="btn btn-danger-outline" id="beh-delete">${ic("trash", 14)} ${App.currentLang === 'ar' ? 'حذف المحدد' : 'Delete selected'}</button>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary" id="beh-cancel">${t("cancel")}</button>
+                <button type="submit" class="btn btn-primary" id="beh-submit">${App.currentLang === 'ar' ? `تطبيق على ${entries.length}` : `Apply to ${entries.length}`}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const hoursInput = document.getElementById("beh-hours");
+
+    modal.querySelectorAll("[data-quick]").forEach(btn => {
+      btn.onclick = () => { hoursInput.value = btn.getAttribute("data-quick"); };
+    });
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("beh-close").onclick = close;
+    document.getElementById("beh-cancel").onclick = close;
+    document.getElementById("beh-backdrop").onclick = (e) => {
+      if (e.target.id === "beh-backdrop") close();
+    };
+
+    // Bulk delete
+    document.getElementById("beh-delete").onclick = () => {
+      close();
+      showConfirmModal({
+        title: t("confirm_destructive"),
+        message: App.currentLang === 'ar'
+          ? `سيتم حذف ${entries.length} سجل نهائياً. لا يمكن التراجع.`
+          : `Permanently delete ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}? This cannot be undone.`,
+        confirmText: t("delete"),
+        isDanger: true,
+        onConfirm: async () => {
+          const results = await Promise.allSettled(entries.map(e => window.AtharAPI.hours.delete(e.id)));
+          const ok = results.filter(r => r.status === "fulfilled").length;
+          const fail = results.length - ok;
+          await window.AtharStore.refreshHours();
+          if (fail === 0) showToast(`Deleted ${ok}`, "warning");
+          else showToast(`Deleted ${ok}, failed ${fail}`, "warning");
+          window.AtharCore.renderCurrentView();
+        },
+      });
+    };
+
+    // Bulk apply new value
+    document.getElementById("beh-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const newHours = Number(hoursInput.value);
+      if (isNaN(newHours) || newHours <= 0) {
+        showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error");
+        return;
+      }
+
+      const btn = document.getElementById("beh-submit");
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = "…";
+
+      let ok = 0, fail = 0, locked = 0;
+      for (const entry of entries) {
+        try {
+          await window.AtharAPI.hours.update(entry.id, { hours: newHours });
+          ok++;
+        } catch (err) {
+          if (err.code === "HOURS_LOCKED") locked++;
+          else fail++;
+        }
+      }
+
+      await window.AtharStore.refreshHours();
+
+      let msg = App.currentLang === 'ar'
+        ? `تم تحديث ${ok}`
+        : `Updated ${ok}`;
+      if (locked) msg += App.currentLang === 'ar' ? `، ${locked} مقفل` : `, ${locked} locked`;
+      if (fail) msg += App.currentLang === 'ar' ? `، فشل ${fail}` : `, ${fail} failed`;
+      showToast(msg, fail || locked ? "warning" : "success");
+
+      close();
+      window.AtharCore.renderCurrentView();
+    };
+
+    setTimeout(() => hoursInput.focus(), 100);
+  }
 
   return {
     openAddVolunteerSlideover,
@@ -1368,6 +1505,7 @@ window.AtharModals = (function () {
     openRejectHoursModal,
     openEditHoursModal,
     buildSamplePreview,
+    openBulkEditHoursModal
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
   };
