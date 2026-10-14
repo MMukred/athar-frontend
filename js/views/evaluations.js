@@ -7,11 +7,20 @@
   const { App, t, formatDate, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
 
   // =========================================================
-  // Evaluations List
+  // Evaluations List — with completion column + bulk rating
   // =========================================================
   function renderEvaluationsList(container) {
     const state = window.AtharStore.getState();
     const canCreate = hasPermission("evaluations", "create");
+    const activeCriteria = state.criteria.filter(c => c.is_active);
+
+    function completionFor(ev) {
+      const scores = state.evaluation_scores.filter(s => s.evaluation_id === ev.id);
+      const scoredIds = new Set(scores.map(s => s.criteria_id));
+      const total = activeCriteria.length || 1;
+      const done = activeCriteria.filter(c => scoredIds.has(c.id)).length;
+      return { done, total, complete: done === total && total > 0 };
+    }
 
     container.innerHTML = `
       <div class="view-header">
@@ -25,6 +34,11 @@
           <p class="view-subtitle">Star-based evaluations across dynamic weighted criteria</p>
         </div>
         <div class="view-header-actions">
+          ${canCreate && state.volunteers.filter(v => v.status !== 'archived').length > 0 ? `
+            <button class="btn btn-secondary" id="btn-bulk-rating">
+              ${ic("star", 14)} ${App.currentLang === 'ar' ? 'تقييم جماعي' : 'Bulk Rating'}
+            </button>
+          ` : ''}
           ${canCreate ? `<button class="btn btn-primary" id="btn-add-eval">${ic("plus", 14)} ${t("add_evaluation")}</button>` : ''}
         </div>
       </div>
@@ -43,9 +57,9 @@
                 <th>Volunteer</th>
                 <th>Period</th>
                 <th>Overall Score</th>
+                <th>Completion</th>
                 <th>Evaluator</th>
                 <th>Date</th>
-                <th>Notes</th>
                 <th style="text-align:right;">Actions</th>
               </tr>
             </thead>
@@ -53,6 +67,7 @@
               ${state.evaluations.map(ev => {
       const vol = state.volunteers.find(v => v.id === ev.volunteer_id);
       const user = state.users.find(u => u.id === ev.evaluator_id);
+      const c = completionFor(ev);
       return `
                   <tr>
                     <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">
@@ -60,9 +75,13 @@
                     </td>
                     <td><span class="badge badge-primary">${ev.period_label}</span></td>
                     <td><span style="font-weight:800; color:#F59E0B; font-size:14px;">${ev.overall_score} / 5.0</span></td>
+                    <td>
+                      ${c.complete
+          ? `<span class="badge badge-success num-ltr">✓ ${c.done}/${c.total}</span>`
+          : `<span class="badge badge-warning num-ltr">⚠ ${c.done}/${c.total}</span>`}
+                    </td>
                     <td>${user ? user.full_name : 'Super Admin'}</td>
                     <td class="num-ltr">${formatDate(ev.evaluated_at)}</td>
-                    <td style="font-size:12px; color:var(--neutral-600); max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ev.notes || '—'}</td>
                     <td>
                       <div class="row-actions-cell">
                         <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">${t("view")}</button>
@@ -80,10 +99,19 @@
 
     const addBtn = document.getElementById("btn-add-eval");
     if (addBtn) addBtn.onclick = () => navigateTo("new-evaluation");
+
+    const bulkBtn = document.getElementById("btn-bulk-rating");
+    if (bulkBtn) {
+      bulkBtn.onclick = () => {
+        const ids = state.volunteers.filter(v => v.status !== "archived").map(v => v.id);
+        if (!ids.length) { showToast("No active volunteers", "error"); return; }
+        window.AtharModals.openBulkRatingModal(ids);
+      };
+    }
   }
 
   // =========================================================
-  // New Evaluation Form
+  // New Evaluation Form — free-text period (no hardcoded quarters)
   // =========================================================
   function renderNewEvaluationForm(container, preSelectedVolId) {
     const state = window.AtharStore.getState();
@@ -92,52 +120,35 @@
 
     if (criteria.length === 0) {
       container.innerHTML = `
-        <div class="view-header">
-          <div class="view-header-left">
-            <h1 class="view-title">${t("add_evaluation")}</h1>
-          </div>
-        </div>
+        <div class="view-header"><div class="view-header-left"><h1 class="view-title">${t("add_evaluation")}</h1></div></div>
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--warning); margin-bottom:12px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluation criteria defined</div>
           <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">You need to add at least one criterion before creating evaluations.</p>
           ${App.currentUser.role === "super_admin"
           ? `<button class="btn btn-primary" id="btn-goto-criteria">${ic("plus", 14)} ${t("add_criterion")}</button>`
-          : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`
-        }
-        </div>
-      `;
-      const gotoBtn = document.getElementById("btn-goto-criteria");
-      if (gotoBtn) gotoBtn.onclick = () => navigateTo("evaluation-criteria");
+          : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`}
+        </div>`;
+      const b = document.getElementById("btn-goto-criteria");
+      if (b) b.onclick = () => navigateTo("evaluation-criteria");
       return;
     }
 
     if (activeVols.length === 0) {
       container.innerHTML = `
-        <div class="view-header">
-          <div class="view-header-left">
-            <h1 class="view-title">${t("add_evaluation")}</h1>
-          </div>
-        </div>
+        <div class="view-header"><div class="view-header-left"><h1 class="view-title">${t("add_evaluation")}</h1></div></div>
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("users", 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No active volunteers</div>
-          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">Add volunteers first before evaluating them.</p>
           <button class="btn btn-primary" id="btn-goto-vols">Go to Volunteers</button>
-        </div>
-      `;
-      const gotoVols = document.getElementById("btn-goto-vols");
-      if (gotoVols) gotoVols.onclick = () => navigateTo("volunteers");
+        </div>`;
+      const b = document.getElementById("btn-goto-vols");
+      if (b) b.onclick = () => navigateTo("volunteers");
       return;
     }
 
-    // Period list with computed dates
-    const periods = [
-      { label: "2026-Q1", start: "2026-01-01", end: "2026-03-31" },
-      { label: "2026-Q2", start: "2026-04-01", end: "2026-06-30" },
-      { label: "2026-Q3", start: "2026-07-01", end: "2026-09-30" },
-      { label: "2026-Q4", start: "2026-10-01", end: "2026-12-31" },
-    ];
+    const now = new Date();
+    const defaultPeriod = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
 
     container.innerHTML = `
       <div class="view-header">
@@ -164,9 +175,19 @@
             </div>
             <div class="form-field">
               <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
-              <select class="form-control" id="eval-period-select" required>
-                ${periods.map(p => `<option value="${p.label}" data-start="${p.start}" data-end="${p.end}" ${p.label === '2026-Q4' ? 'selected' : ''}>${p.label}</option>`).join('')}
-              </select>
+              <input type="text" id="eval-period-input" class="form-control" required value="${defaultPeriod}" placeholder="e.g. 2026-Q4 or October 2026 or Ramadan 2026">
+              <span class="field-hint">${App.currentLang === 'ar' ? 'أي نص — ربع، شهر، أو فترة مخصصة' : 'Free text — quarter, month, or custom period'}</span>
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:20px;">
+            <div class="form-field">
+              <label class="field-label">${App.currentLang === 'ar' ? 'بداية الفترة (اختياري)' : 'Period Start (optional)'}</label>
+              <input type="date" id="eval-period-start" class="form-control">
+            </div>
+            <div class="form-field">
+              <label class="field-label">${App.currentLang === 'ar' ? 'نهاية الفترة (اختياري)' : 'Period End (optional)'}</label>
+              <input type="date" id="eval-period-end" class="form-control">
             </div>
           </div>
 
@@ -214,17 +235,16 @@
       </div>
     `;
 
-    // Scores state — starts empty (user must rate each criterion)
     const criterionScores = {};
 
     function recalculateOverall() {
-      const scoredCriteria = criteria.filter(c => criterionScores[c.id] !== undefined);
-      if (scoredCriteria.length === 0) {
+      const scored = criteria.filter(c => criterionScores[c.id] !== undefined);
+      if (scored.length === 0) {
         document.getElementById("live-overall-score").textContent = "— / 5.0";
         return null;
       }
       let sum = 0, totalW = 0;
-      scoredCriteria.forEach(c => {
+      scored.forEach(c => {
         sum += criterionScores[c.id] * c.weight;
         totalW += c.weight;
       });
@@ -257,25 +277,20 @@
       e.preventDefault();
 
       const volId = document.getElementById("eval-vol-select").value;
-      const periodSel = document.getElementById("eval-period-select");
-      const period = periodSel.value;
-      const periodStart = periodSel.selectedOptions[0].getAttribute("data-start");
-      const periodEnd = periodSel.selectedOptions[0].getAttribute("data-end");
+      const period = document.getElementById("eval-period-input").value.trim();
+      const periodStart = document.getElementById("eval-period-start").value;
+      const periodEnd = document.getElementById("eval-period-end").value;
       const notes = document.getElementById("eval-general-notes").value;
 
-      if (!volId) {
-        showToast("Please select a volunteer", "error");
-        return;
-      }
+      if (!volId) { showToast("Please select a volunteer", "error"); return; }
+      if (!period) { showToast("Please enter a period label", "error"); return; }
 
-      // Every active criterion must have a score
       const missing = criteria.filter(c => criterionScores[c.id] === undefined);
       if (missing.length > 0) {
         showToast(`Please rate: ${missing.map(c => App.currentLang === 'ar' ? c.name_ar : c.name_en).join(', ')}`, "error");
         return;
       }
 
-      // Build API payload
       const scores = criteria.map(c => {
         const row = container.querySelector(`.eval-criterion-row[data-crit-id="${c.id}"]`);
         const comment = row ? row.querySelector(".crit-comment").value.trim() : "";
@@ -295,13 +310,12 @@
         await window.AtharAPI.evaluations.create({
           volunteerId: volId,
           periodLabel: period,
-          periodStart,
-          periodEnd,
+          periodStart: periodStart || undefined,
+          periodEnd: periodEnd || undefined,
           notes: notes || undefined,
           scores,
         });
         await window.AtharStore.refreshEvaluations();
-
         showToast(t("saved_successfully"), "success");
         navigateTo("volunteer-profile", { id: volId, sub: "evaluations" });
       } catch (err) {
@@ -322,7 +336,7 @@
   }
 
   // =========================================================
-  // Criteria Settings
+  // Criteria Settings (unchanged)
   // =========================================================
   function renderEvaluationCriteriaSettings(container) {
     if (!hasPermission("evaluation_criteria", "view")) {
@@ -396,39 +410,26 @@
       `}
     `;
 
-    // ---------------------------------------------------------
-    // Wire the "Add Criterion" buttons (both variants)
-    // Uses AtharCriteriaModal — the actual exposed name.
-    // ---------------------------------------------------------
     const openAdd = () => {
       if (window.AtharCriteriaModal && typeof window.AtharCriteriaModal.openAdd === "function") {
         window.AtharCriteriaModal.openAdd();
       } else {
-        console.error("[evaluations] AtharCriteriaModal.openAdd is not available. Is criteria-modal.js loaded?");
+        console.error("[evaluations] AtharCriteriaModal.openAdd is not available");
         showToast("Criteria editor is not available.", "error");
       }
     };
 
     const addBtn = document.getElementById("btn-add-crit");
     if (addBtn) addBtn.onclick = openAdd;
-
     const addBtnEmpty = document.getElementById("btn-add-crit-empty");
     if (addBtnEmpty) addBtnEmpty.onclick = openAdd;
 
-    // ---------------------------------------------------------
-    // Wire the row action buttons via data-attributes
-    // (avoids inline onclick + UUID quoting problems)
-    // ---------------------------------------------------------
     container.querySelectorAll("[data-crit-action]").forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-crit-id");
         const action = btn.getAttribute("data-crit-action");
         const M = window.AtharCriteriaModal;
-        if (!M) {
-          console.error("[evaluations] AtharCriteriaModal is not available");
-          showToast("Criteria editor is not available.", "error");
-          return;
-        }
+        if (!M) { showToast("Criteria editor is not available.", "error"); return; }
         if (action === "edit" && typeof M.openEdit === "function") M.openEdit(id);
         else if (action === "toggle" && typeof M.toggleActive === "function") M.toggleActive(id);
         else if (action === "delete" && typeof M.delete === "function") M.delete(id);
