@@ -21,9 +21,9 @@ window.AtharCore = (function () {
     lockoutUntil: 0,
     pagination: {
       volunteersPage: 1,
-      volunteersPerPage: 10,
+      volunteersPerPage: 20,
       hoursPage: 1,
-      hoursPerPage: 10,
+      hoursPerPage: 20,
       auditPage: 1,
       auditPerPage: 12
     }
@@ -74,7 +74,7 @@ window.AtharCore = (function () {
   function formatDate(dateStr) {
     if (!dateStr) return "—";
     if (App.currentLang === "ar") {
-      const parts = dateStr.split(" ")[0].split("-");
+      const parts = String(dateStr).split(" ")[0].split("-");
       if (parts.length === 3) {
         const months = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
         const mIdx = parseInt(parts[1], 10) - 1;
@@ -85,7 +85,46 @@ window.AtharCore = (function () {
   }
 
   // ===========================================================
-  // HTML escaping (used by views + modals)
+  // Age from date-of-birth
+  // ===========================================================
+  function age(dobStr) {
+    if (!dobStr) return null;
+    const d = new Date(dobStr);
+    if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    let a = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+    if (a < 0 || a > 130) return null;
+    return a;
+  }
+
+  // ===========================================================
+  // Gender color tokens
+  // ===========================================================
+  function genderStyle(gender) {
+    if (gender === "female") {
+      return { border: "#EC4899", bg: "#FCE7F3", text: "#BE185D", ring: "rgba(236,72,153,0.25)" };
+    }
+    if (gender === "male") {
+      return { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.25)" };
+    }
+    return { border: "#D0D7DE", bg: "#F6F8FA", text: "#57606A", ring: "rgba(140,149,159,0.20)" };
+  }
+
+  // ===========================================================
+  // Notes splitter — one note per non-empty line
+  // ===========================================================
+  function splitNotes(text) {
+    if (!text) return [];
+    return String(text)
+      .split(/\r?\n+/)
+      .map(function (s) { return s.trim(); })
+      .filter(Boolean);
+  }
+
+  // ===========================================================
+  // HTML escaping
   // ===========================================================
   function escapeHtml(str) {
     if (str == null) return "";
@@ -182,7 +221,6 @@ window.AtharCore = (function () {
     if (!App.currentUser) return false;
     if (App.currentUser.role === "super_admin") return true;
 
-    // Super-admin-only actions — always denied for trusted admins
     const superAdminOnlyActions = [
       { module: "evaluation_criteria", action: "create" },
       { module: "evaluation_criteria", action: "edit" },
@@ -202,7 +240,6 @@ window.AtharCore = (function () {
     );
     if (isRestricted) return false;
 
-    // ---- Preferred path: API-provided permissions map on currentUser ----
     const apiPerms = App.currentUser.permissions;
     if (apiPerms && typeof apiPerms === "object" && !Array.isArray(apiPerms)) {
       const wildcard = apiPerms["*"];
@@ -212,7 +249,6 @@ window.AtharCore = (function () {
       return false;
     }
 
-    // ---- Legacy fallback: local store permissions array ----
     const state = window.AtharStore.getState();
     const permRow = state.permissions.find(
       function (p) { return p.user_id === App.currentUser.id && p.module === module; }
@@ -233,7 +269,6 @@ window.AtharCore = (function () {
     const state = window.AtharStore.getState();
     state.settings.default_language = lang;
     if (App.currentUser) App.currentUser.preferred_language = lang;
-    window.AtharStore.save();
 
     const appNameEl = document.getElementById("txt-app-name");
     const appSubEl = document.getElementById("txt-app-subname");
@@ -256,7 +291,7 @@ window.AtharCore = (function () {
   function updateUserMenuBadge() {
     if (!App.currentUser) return;
     const isSuper = App.currentUser.role === "super_admin";
-    const roleText = isSuper ? t("super_admin") : `${t("trusted_admin")} (${App.currentUser.preset || "Custom"})`;
+    const roleText = isSuper ? t("super_admin") : t("trusted_admin");
 
     const roleEl = document.getElementById("current-user-role-label");
     const nameEl = document.getElementById("user-display-name");
@@ -296,7 +331,6 @@ window.AtharCore = (function () {
     params = params || {};
     if (pushState === undefined) pushState = true;
 
-    // Unsaved-changes guard (A7)
     if (window.AtharDirty && window.AtharDirty.isDirty() && !App._navBypass) {
       window.AtharDirty.guard(() => {
         App._navBypass = true;
@@ -336,32 +370,50 @@ window.AtharCore = (function () {
   }
 
   // ===========================================================
-  // Sidebar
+  // Sidebar — now with live counts
   // ===========================================================
   function renderSidebar() {
     const navContainer = document.getElementById("sidebar-nav-container");
     if (!navContainer) return;
 
     const state = window.AtharStore.getState();
+
+    // ---- Live counts ----
+    const activeVolunteers = state.volunteers.filter(v => v.status !== "archived").length;
+    const activeCommittees = state.committees.filter(c => c.status === "active").length;
+    const upcomingMeetings = state.meetings.filter(m => m.status === "scheduled").length;
     const pendingHoursCount = state.volunteer_hours.filter(h => h.status === "pending").length;
+    const totalEvals = state.evaluations.length;
+    const draftCerts = state.certificates.filter(c => c.status === "draft").length;
+    const totalAudit = state.audit_logs.length;
+
+    const badge = (count, tone) => {
+      if (!count || count <= 0) return "";
+      const style = tone === "warn"
+        ? "background:var(--warning); color:white;"
+        : tone === "info"
+          ? "background:var(--primary-light); color:var(--primary); border:1px solid var(--primary-border);"
+          : "background:var(--neutral-200); color:var(--neutral-700);";
+      return `<span class="nav-badge num-ltr" style="${style}">${count > 99 ? '99+' : count}</span>`;
+    };
 
     const navStructure = [
       {
         group: t("group_operations"),
         items: [
           { id: "dashboard", label: t("nav_dashboard"), icon: "dashboard", module: "dashboard" },
-          { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers" },
-          { id: "committees", label: t("nav_committees"), icon: "building", module: "committees" },
-          { id: "meetings", label: t("nav_meetings"), icon: "calendar", module: "meetings" },
+          { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers", badgeHtml: badge(activeVolunteers, "info") },
+          { id: "committees", label: t("nav_committees"), icon: "building", module: "committees", badgeHtml: badge(activeCommittees, "info") },
+          { id: "meetings", label: t("nav_meetings"), icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings, "info") },
           { id: "attendance", label: t("nav_attendance"), icon: "clipboard_check", module: "attendance", targetView: "meetings" }
         ]
       },
       {
         group: t("group_performance"),
         items: [
-          { id: "evaluations", label: t("nav_evaluations"), icon: "star", module: "evaluations" },
-          { id: "volunteer-hours", label: t("nav_volunteer_hours"), icon: "clock", module: "volunteer_hours", badge: pendingHoursCount },
-          { id: "certificates", label: t("nav_certificates"), icon: "award", module: "certificates" }
+          { id: "evaluations", label: t("nav_evaluations"), icon: "star", module: "evaluations", badgeHtml: badge(totalEvals, "info") },
+          { id: "volunteer-hours", label: t("nav_volunteer_hours"), icon: "clock", module: "volunteer_hours", badgeHtml: badge(pendingHoursCount, pendingHoursCount > 0 ? "warn" : "info") },
+          { id: "certificates", label: t("nav_certificates"), icon: "award", module: "certificates", badgeHtml: badge(draftCerts, draftCerts > 0 ? "warn" : "info") }
         ]
       },
       {
@@ -376,7 +428,7 @@ window.AtharCore = (function () {
           { id: "users", label: t("nav_users"), icon: "shield", module: "users" },
           { id: "whatsapp-templates", label: t("nav_whatsapp_templates"), icon: "message_circle", module: "whatsapp_templates" },
           { id: "evaluation-criteria", label: t("nav_evaluation_criteria"), icon: "sliders", module: "evaluation_criteria" },
-          { id: "audit-logs", label: t("nav_audit_logs"), icon: "file_text", module: "audit_logs" },
+          { id: "audit-logs", label: t("nav_audit_logs"), icon: "file_text", module: "audit_logs", badgeHtml: badge(totalAudit, "info") },
           { id: "settings", label: t("nav_settings"), icon: "settings", module: "settings" }
         ]
       }
@@ -401,7 +453,7 @@ window.AtharCore = (function () {
               <span class="nav-icon">${ic(item.icon, 18, { strokeWidth: 2 })}</span>
               <span class="nav-label">${item.label}</span>
             </div>
-            ${item.badge && item.badge > 0 ? `<span class="nav-badge num-ltr">${item.badge}</span>` : ''}
+            ${item.badgeHtml || ''}
           </a>
         `;
       });
@@ -417,7 +469,7 @@ window.AtharCore = (function () {
   }
 
   // ===========================================================
-  // View dispatcher (registry-based)
+  // View dispatcher
   // ===========================================================
   function renderCurrentView() {
     const container = document.getElementById("main-content");
@@ -439,6 +491,9 @@ window.AtharCore = (function () {
     App,
     t,
     formatDate,
+    age,
+    genderStyle,
+    splitNotes,
     escapeHtml,
     ic,
     showToast,
