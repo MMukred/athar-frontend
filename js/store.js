@@ -305,6 +305,20 @@ window.AtharStore = (function () {
     const r = await window.AtharAPI.certificates.list({ limit: 100 });
     state.certificates = (r.items || []).map(adaptCertificate);
   }
+  async function refreshSettings() {
+    if (!window.AtharAPI?.hasSession()) return state.settings;
+    try {
+      const items = await window.AtharAPI.settings.list();
+      if (Array.isArray(items)) {
+        const obj = {};
+        for (const s of items) obj[s.key] = s.value;
+        state.settings = { ...state.settings, ...obj };
+      }
+    } catch (e) {
+      console.warn("[Store] Failed to refresh settings:", e);
+    }
+    return state.settings;
+  }
 
   // ---------------------------------------------------------
   // Volunteer stats (computed from cache)
@@ -354,6 +368,7 @@ window.AtharStore = (function () {
     refreshCriteria,
     refreshEvaluations,
     refreshCertificates,
+    refreshSettings,
     getVolunteerStats,
     generateUUID,
     save,

@@ -4,7 +4,14 @@
 window.AtharAPI = (function () {
   "use strict";
 
-  const BASE_URL = "https://athar-api-l8fn.onrender.com/api";
+  // Auto-detect: localhost dev → local API; production → Render
+  const BASE_URL = (function () {
+    if (window._ATHAR_API_URL__) return String(window._ATHAR_API_URL__).replace(/\/$/, "");
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return "http://localhost:3000/api";
+    return "https://athar-api-l8fn.onrender.com/api";
+  })();
+
   const ACCESS_KEY = "athar_access_token_v1";
   const REFRESH_KEY = "athar_refresh_token_v1";
   const REMEMBER_KEY = "athar_remember_v1";
@@ -55,6 +62,8 @@ window.AtharAPI = (function () {
       this.details = details;
     }
     isAuth() { return this.status === 401; }
+    isValidation() { return this.status === 422; }
+    isForbidden() { return this.status === 403; }
   }
 
   async function rawFetch(path, options = {}, opts = {}) {
@@ -94,7 +103,12 @@ window.AtharAPI = (function () {
 
     if (!response.ok) {
       const err = (body && body.error) || {};
-      throw new ApiError(response.status, err.code || `HTTP_${response.status}`, err.message || "Request failed", err.details);
+      throw new ApiError(
+        response.status,
+        err.code || `HTTP_${response.status}`,
+        err.message || "Request failed",
+        err.details,
+      );
     }
     return body;
   }
@@ -129,6 +143,7 @@ window.AtharAPI = (function () {
 
   const get = (p, o) => rawFetch(p, { method: "GET" }, o);
   const post = (p, b, o) => rawFetch(p, { method: "POST", body: b ? JSON.stringify(b) : undefined }, o);
+  const put = (p, b, o) => rawFetch(p, { method: "PUT", body: b ? JSON.stringify(b) : undefined }, o);
   const patch = (p, b, o) => rawFetch(p, { method: "PATCH", body: b ? JSON.stringify(b) : undefined }, o);
   const del = (p, o) => rawFetch(p, { method: "DELETE" }, o);
 
@@ -139,6 +154,7 @@ window.AtharAPI = (function () {
     hasSession: () => !!refreshToken,
     clearTokens,
     getAccessToken: () => accessToken,
+    getBaseUrl: () => BASE_URL,
 
     auth: {
       async login(email, password, remember) {
@@ -230,15 +246,25 @@ window.AtharAPI = (function () {
     },
 
     verify: {
-      check: (certificateNo) => rawFetch(`/certificates/verify/${encodeURIComponent(certificateNo)}`, { method: "GET" }, { skipAuth: true }),
+      check: (certificateNo) =>
+        rawFetch(`/certificates/verify/${encodeURIComponent(certificateNo)}`, { method: "GET" }, { skipAuth: true }),
     },
 
+    // =========================================================
+    // Settings — Super Admin only for writes
+    // =========================================================
     settings: {
       list: async () => (await get("/settings")).items,
+      get: async (key) => (await get(`/settings/${encodeURIComponent(key)}`)).setting,
+      set: async (key, value) =>
+        (await put(`/settings/${encodeURIComponent(key)}`, { value })).setting,
+      bulkUpdate: async (settingsObj) =>
+        (await patch("/settings", { settings: settingsObj })).items,
     },
 
     health: {
       check: () => rawFetch("/health", { method: "GET" }, { skipAuth: true }),
+      ready: () => rawFetch("/health/ready", { method: "GET" }, { skipAuth: true }),
     },
 
     _utils: { ApiError, ensureFreshToken },
