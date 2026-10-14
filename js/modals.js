@@ -540,13 +540,49 @@ window.AtharModals = (function () {
   }
 
   // =========================================================
-  // 7. Diff Viewer
+  // 7. Diff Viewer  (fetches from API on cache miss)
   // =========================================================
-  function openDiffModal(logId) {
+  async function openDiffModal(logId) {
+    // Try cache first
     const state = window.AtharStore.getState();
-    const log = state.audit_logs.find(l => l.id === logId);
+    let log = state.audit_logs.find(l => l.id === logId);
+
+    // If not cached (or cache is stale), fetch fresh
+    if (!log) {
+      try {
+        const apiLog = await window.AtharAPI.audit.get(logId);
+        // Adapt API shape → frontend shape
+        let createdAt = apiLog.createdAt;
+        if (typeof createdAt === "string") {
+          createdAt = createdAt.replace("T", " ").slice(0, 19);
+        } else if (createdAt) {
+          try {
+            createdAt = new Date(createdAt).toISOString().replace("T", " ").slice(0, 19);
+          } catch { createdAt = ""; }
+        }
+
+        log = {
+          id: apiLog.id,
+          user_id: apiLog.userId,
+          user_name: apiLog.userName || "System",
+          action: apiLog.action,
+          entity: apiLog.entity,
+          entity_id: apiLog.entityId,
+          details: apiLog.details,
+          old_value: apiLog.oldValue,
+          new_value: apiLog.newValue,
+          created_at: createdAt,
+        };
+      } catch (err) {
+        showToast("Could not load audit entry", "error");
+        return;
+      }
+    }
+
     if (!log) return;
-    const html = window.DiffViewer.renderDiff(log.old_value, log.new_value);
+
+    const diffHtml = window.DiffViewer.renderDiff(log.old_value, log.new_value);
+
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
       <div class="overlay-backdrop" id="df-backdrop">
@@ -555,15 +591,34 @@ window.AtharModals = (function () {
             <h3 class="modal-title">${ic("eye", 18)} ${t("audit_diff_modal")}</h3>
             <button class="btn-icon" id="df-close">&times;</button>
           </div>
-          <div class="modal-body">${html}</div>
-          <div class="modal-footer"><button class="btn btn-secondary" id="df-cancel">${t("close")}</button></div>
+          <div class="modal-body">
+            <div style="margin-bottom:16px; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px;">
+              <div>
+                <strong>Action:</strong>
+                <span class="badge badge-primary">${log.action}</span>
+                &bull;
+                <strong>Entity:</strong> <code>${log.entity || '—'}</code>
+              </div>
+              ${log.details ? `<div style="margin-top:4px;"><strong>Details:</strong> ${log.details}</div>` : ''}
+              <div style="margin-top:4px; color:var(--neutral-500); font-size:11px;" class="num-ltr">
+                ${log.created_at} by ${log.user_name}
+              </div>
+            </div>
+            ${diffHtml}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="df-cancel">${t("close")}</button>
+          </div>
         </div>
       </div>
     `;
+
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("df-close").onclick = close;
     document.getElementById("df-cancel").onclick = close;
-    document.getElementById("df-backdrop").onclick = (e) => { if (e.target.id === "df-backdrop") close(); };
+    document.getElementById("df-backdrop").onclick = (e) => {
+      if (e.target.id === "df-backdrop") close();
+    };
   }
 
   // =========================================================

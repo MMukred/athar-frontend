@@ -207,6 +207,36 @@ window.AtharStore = (function () {
     };
   }
 
+  function adaptAuditLog(l) {
+    let createdAt = l.createdAt;
+    if (typeof createdAt === "string") {
+      createdAt = createdAt.replace("T", " ").slice(0, 19);
+    } else if (createdAt) {
+      try {
+        createdAt = new Date(createdAt).toISOString().replace("T", " ").slice(0, 19);
+      } catch {
+        createdAt = "";
+      }
+    } else {
+      createdAt = "";
+    }
+
+    return {
+      id: l.id,
+      user_id: l.userId,
+      user_name: l.userName || (l.user && l.user.fullName) || "System",
+      action: l.action,
+      entity: l.entity,
+      entity_id: l.entityId,
+      details: l.details,
+      old_value: l.oldValue,
+      new_value: l.newValue,
+      ip_address: l.ipAddress,
+      user_agent: l.userAgent,
+      created_at: createdAt,
+    };
+  }
+
   // ---------------------------------------------------------
   // Load all data from API
   // ---------------------------------------------------------
@@ -228,9 +258,10 @@ window.AtharStore = (function () {
       api.evaluations.list({ limit: 100 }),
       api.certificates.list({ limit: 100 }),
       api.settings.list(),
+      api.audit.list({ limit: 100 }),
     ]);
 
-    const [volsR, commR, mtgR, hrsR, critR, evalR, certR, setR] = results;
+    const [volsR, commR, mtgR, hrsR, critR, evalR, certR, setR, auditR] = results;
 
     if (volsR.status === "fulfilled" && volsR.value?.items) {
       state.volunteers = volsR.value.items.map(adaptVolunteer);
@@ -258,12 +289,21 @@ window.AtharStore = (function () {
       for (const s of setR.value) obj[s.key] = s.value;
       state.settings = { ...state.settings, ...obj };
     }
+    if (auditR.status === "fulfilled" && auditR.value?.items) {
+      state.audit_logs = auditR.value.items.map(adaptAuditLog);
+    } else if (auditR.status === "rejected") {
+      // Trusted admin without audit_logs.view — silently ignore (403 expected)
+      const code = auditR.reason?.status;
+      if (code !== 403) {
+        console.warn("[Store] Failed to load audit logs:", auditR.reason?.message);
+      }
+    }
 
     // Currently logged-in user as the only "user" for trusted admins
     const me = window.AtharAuth?.getCurrentUser?.();
     if (me) state.users = [adaptUser(me)];
 
-    console.log(`[Store] Loaded ${state.volunteers.length}v ${state.committees.length}c ${state.meetings.length}m ${state.volunteer_hours.length}h ${state.certificates.length}cert`);
+    console.log(`[Store] Loaded ${state.volunteers.length}v ${state.committees.length}c ${state.meetings.length}m ${state.volunteer_hours.length}h ${state.certificates.length}cert ${state.audit_logs.length}audit`);
     return state;
   }
 
@@ -319,6 +359,18 @@ window.AtharStore = (function () {
     }
     return state.settings;
   }
+  async function refreshAuditLogs(params = {}) {
+    if (!window.AtharAPI?.hasSession()) return state.audit_logs;
+    try {
+      const r = await window.AtharAPI.audit.list({ limit: 100, ...params });
+      state.audit_logs = (r.items || []).map(adaptAuditLog);
+    } catch (e) {
+      if (e.status !== 403) {
+        console.warn("[Store] refreshAuditLogs failed:", e.message);
+      }
+    }
+    return state.audit_logs;
+  }
 
   // ---------------------------------------------------------
   // Volunteer stats (computed from cache)
@@ -369,6 +421,7 @@ window.AtharStore = (function () {
     refreshEvaluations,
     refreshCertificates,
     refreshSettings,
+    refreshAuditLogs,
     getVolunteerStats,
     generateUUID,
     save,
