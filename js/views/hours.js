@@ -64,10 +64,11 @@
 
       <div id="hours-bulk-bar" class="bulk-action-bar" style="display:none;">
         <span class="bulk-count" id="hours-bulk-count">0 selected</span>
-                <div class="bulk-buttons">
+        <div class="bulk-buttons">
           ${canEdit ? `<button class="btn btn-primary btn-sm" id="btn-bulk-edit-hours">${ic("pencil", 14)} ${App.currentLang === 'ar' ? 'تعديل جماعي' : 'Bulk Edit'}</button>` : ''}
           ${canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-bulk-delete-hours">${ic("trash", 14)} ${t("delete")}</button>` : ''}
         </div>
+      </div>
 
       <div class="table-container">
         <table class="data-table">
@@ -93,9 +94,12 @@
             </td></tr>` : filtered.map(h => {
       const vol = state.volunteers.find(v => v.id === h.volunteer_id);
       const comm = state.committees.find(c => c.id === h.committee_id);
-      const volName = vol
-        ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name)
-        : (h.volunteer && (h.volunteer.fullName || h.volunteer.full_name)) || '—';
+      const source = vol || h.volunteer || {};
+      const nameEn = source.full_name || source.fullName || "";
+      const nameAr = source.full_name_ar || source.fullNameAr || "";
+      const volName = App.currentLang === 'ar'
+        ? (nameAr || nameEn || '—')
+        : (nameEn || nameAr || '—');
 
       return `
                 <tr data-hours-row="${h.id}">
