@@ -39,6 +39,7 @@ window.AtharCore = (function () {
     "committees": "committees",
     "committee-detail": "committeeDetail",
     "meetings": "meetings",
+    "events": "events",
     "meeting-detail": "meetingDetail",
     "evaluations": "evaluations",
     "new-evaluation": "newEvaluation",
@@ -312,6 +313,7 @@ window.AtharCore = (function () {
     committees: "committees",
     "committee-detail": "committees",
     meetings: "meetings",
+    events: "meetings",
     "meeting-detail": "attendance",
     evaluations: "evaluations",
     "new-evaluation": "evaluations",
@@ -370,7 +372,7 @@ window.AtharCore = (function () {
   }
 
   // ===========================================================
-  // Sidebar — now with live counts
+  // Sidebar — with live counts + kind-aware Events entry
   // ===========================================================
   function renderSidebar() {
     const navContainer = document.getElementById("sidebar-nav-container");
@@ -381,7 +383,8 @@ window.AtharCore = (function () {
     // ---- Live counts ----
     const activeVolunteers = state.volunteers.filter(v => v.status !== "archived").length;
     const activeCommittees = state.committees.filter(c => c.status === "active").length;
-    const upcomingMeetings = state.meetings.filter(m => m.status === "scheduled").length;
+    const upcomingMeetings = state.meetings.filter(m => m.status === "scheduled" && (m.kind || "meeting") === "meeting").length;
+    const upcomingEvents = state.meetings.filter(m => m.status === "scheduled" && m.kind === "event").length;
     const pendingHoursCount = state.volunteer_hours.filter(h => h.status === "pending").length;
     const totalEvals = state.evaluations.length;
     const draftCerts = state.certificates.filter(c => c.status === "draft").length;
@@ -405,6 +408,7 @@ window.AtharCore = (function () {
           { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers", badgeHtml: badge(activeVolunteers, "info") },
           { id: "committees", label: t("nav_committees"), icon: "building", module: "committees", badgeHtml: badge(activeCommittees, "info") },
           { id: "meetings", label: t("nav_meetings"), icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings, "info") },
+          { id: "events", label: t("nav_events") || (App.currentLang === "ar" ? "الفعاليات" : "Events"), icon: "sparkles", module: "meetings", badgeHtml: badge(upcomingEvents, "info") },
           { id: "attendance", label: t("nav_attendance"), icon: "clipboard_check", module: "attendance", targetView: "meetings" }
         ]
       },
@@ -434,6 +438,13 @@ window.AtharCore = (function () {
       }
     ];
 
+    // Which kind is the currently open meeting-detail? (for correct highlight)
+    let currentDetailKind = "meeting";
+    if (App.currentView === "meeting-detail" && App.currentParams && App.currentParams.id) {
+      const openMeeting = state.meetings.find(m => m.id === App.currentParams.id);
+      if (openMeeting) currentDetailKind = openMeeting.kind || "meeting";
+    }
+
     let html = "";
     navStructure.forEach(group => {
       const accessibleItems = group.items.filter(item => hasPermission(item.module, "view"));
@@ -444,7 +455,8 @@ window.AtharCore = (function () {
         const isActive = (App.currentView === item.id) ||
           (item.id === "volunteers" && App.currentView === "volunteer-profile") ||
           (item.id === "committees" && App.currentView === "committee-detail") ||
-          (item.id === "meetings" && App.currentView === "meeting-detail") ||
+          (item.id === "meetings" && App.currentView === "meeting-detail" && currentDetailKind !== "event") ||
+          (item.id === "events" && App.currentView === "meeting-detail" && currentDetailKind === "event") ||
           (item.id === "certificates" && (App.currentView === "generate-certificate" || App.currentView === "public-verify"));
 
         html += `
