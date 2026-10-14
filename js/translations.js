@@ -29,6 +29,7 @@ window.Translations = {
     nav_volunteers: "Volunteers",
     nav_committees: "Committees",
     nav_meetings: "Meetings",
+    nav_events: "Events",
     nav_attendance: "Attendance",
     nav_evaluations: "Evaluations",
     nav_evaluation_criteria: "Evaluation Criteria",
@@ -128,6 +129,8 @@ window.Translations = {
     gender: "Gender",
     male: "Male",
     female: "Female",
+    nationality: "Nationality",
+    study_level: "Study Level",
     skills: "Skills (Tag Input)",
     skills_hint: "Type a skill and press Enter to add chip",
     join_date: "Join Date",
@@ -199,6 +202,16 @@ window.Translations = {
     send_whatsapp: "Send WhatsApp Invite",
     whatsapp_tooltip: "Open pre-filled WhatsApp invite",
     no_meetings_found: "No meetings found.",
+
+    // Events (new)
+    events_title: "Events",
+    add_event: "+ New Event",
+    events_subtitle: "Time-bounded events with auto-logged volunteer hours",
+    auto_log_hours: "Auto-log Hours",
+    auto_log_hours_title: "Auto-log Hours",
+    auto_log_hours_message: "Hours will be logged for everyone marked Present or Late, based on event duration. Existing entries will be skipped.",
+    no_events_found: "No events yet",
+    event_detail: "Event Details & Attendance",
 
     // Evaluations
     evaluations_title: "Volunteer Evaluations",
@@ -355,6 +368,7 @@ window.Translations = {
     nav_volunteers: "المتطوعون",
     nav_committees: "اللجان",
     nav_meetings: "الاجتماعات",
+    nav_events: "الفعاليات",
     nav_attendance: "تحضير الاجتماعات",
     nav_evaluations: "التقييمات",
     nav_evaluation_criteria: "معايير التقييم",
@@ -454,6 +468,8 @@ window.Translations = {
     gender: "الجنس",
     male: "ذكر",
     female: "أنثى",
+    nationality: "الجنسية",
+    study_level: "المستوى الدراسي",
     skills: "المهارات والاهتمامات",
     skills_hint: "اكتب المهارة واضغط Enter لإضافتها",
     join_date: "تاريخ الانضمام",
@@ -525,6 +541,16 @@ window.Translations = {
     send_whatsapp: "إرسال دعوة واتساب",
     whatsapp_tooltip: "فتح رسالة دعوة مجهزة عبر واتساب",
     no_meetings_found: "لا توجد اجتماعات مسجلة.",
+
+    // Events (new)
+    events_title: "الفعاليات",
+    add_event: "+ فعالية جديدة",
+    events_subtitle: "فعاليات بمدة زمنية وساعات تطوعية تلقائية",
+    auto_log_hours: "تسجيل الساعات تلقائياً",
+    auto_log_hours_title: "تسجيل الساعات تلقائياً",
+    auto_log_hours_message: "سيتم تسجيل ساعات لكل من حضر أو تأخر، حسب مدة الفعالية. سيتم تخطي من لديه قيد مسبق.",
+    no_events_found: "لا توجد فعاليات بعد",
+    event_detail: "تفاصيل الفعالية وكشف التحضير",
 
     // Evaluations
     evaluations_title: "تقييمات أداء المتطوعين",
