@@ -129,8 +129,12 @@
             <div class="card-title">${ic("calendar", 18)} ${t("upcoming_meetings")}</div>
             <button class="btn btn-secondary btn-sm" id="btn-goto-meetings">${t("view")}</button>
           </div>
-          ${upcomingMeetings.length === 0 ? `<p style="color:var(--neutral-500); padding:16px 0;">${t("no_upcoming_meetings")}</p>` : `
-            <div style="display:flex; flex-direction:column; gap:12px;">
+  ${upcomingMeetings.length === 0 ? `
+            <div class="empty-state" style="padding:32px 16px;">
+              <div class="empty-state-icon">${ic("calendar", 36, { strokeWidth: 1.5 })}</div>
+              <div class="empty-state-title">${t("no_upcoming_meetings")}</div>
+            </div>
+          ` : `            <div style="display:flex; flex-direction:column; gap:12px;">
               ${upcomingMeetings.map(m => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">
                   <div>
@@ -173,8 +177,11 @@
             <div class="card-title">${ic("building", 18)} ${t("volunteers_per_committee")}</div>
           </div>
           <div style="display:flex; flex-direction:column; gap:16px;">
-            ${state.committees.length === 0
-        ? `<p style="color:var(--neutral-500); font-size:13px;">No committees yet.</p>`
+    ${state.committees.length === 0
+        ? `<div class="empty-state" style="padding:32px 16px;">
+             <div class="empty-state-icon">${ic("building", 36, { strokeWidth: 1.5 })}</div>
+             <div class="empty-state-title">No committees yet</div>
+           </div>`
         : state.committees.map(c => {
           const count = state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length;
           const percent = totalVolunteers > 0 ? Math.min(100, Math.round((count / totalVolunteers) * 100)) : 0;
@@ -199,8 +206,11 @@
             <div class="card-title">${ic("award", 18)} ${t("top_active_volunteers")}</div>
           </div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            ${topVols.length === 0
-        ? `<p style="color:var(--neutral-500); font-size:13px;">No approved hours yet.</p>`
+                       ${topVols.length === 0
+        ? `<div class="empty-state" style="padding:32px 16px;">
+             <div class="empty-state-icon">${ic("award", 36, { strokeWidth: 1.5 })}</div>
+             <div class="empty-state-title">No approved hours yet</div>
+           </div>`
         : topVols.map((item, idx) => `
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${item.vol.id}'})">
                   <div style="display:flex; align-items:center; gap:12px;">

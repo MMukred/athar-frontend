@@ -495,7 +495,29 @@ window.AtharCore = (function () {
       container.innerHTML = `<div class="empty-state"><p>View not found: ${App.currentView}</p></div>`;
     }
   }
-
+  // ===========================================================
+  // Loading skeleton renderer
+  // ===========================================================
+  function renderSkeleton(container, rows) {
+    rows = rows || 5;
+    let rowsHtml = "";
+    for (let i = 0; i < rows; i++) {
+      const w = 55 + Math.floor(Math.random() * 35);
+      rowsHtml += `<div class="skeleton-row" style="width:${w}%;"></div>`;
+    }
+    container.innerHTML = `
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="skeleton skeleton-title" style="width:180px;"></div>
+          <div class="skeleton skeleton-text" style="width:120px;"></div>
+        </div>
+        <div class="skeleton skeleton-text" style="width:100px; height:32px;"></div>
+      </div>
+      <div class="card" style="padding:24px;">
+        ${rowsHtml}
+      </div>
+    `;
+  }
   // ===========================================================
   // Public API
   // ===========================================================
@@ -516,6 +538,7 @@ window.AtharCore = (function () {
     navigateTo,
     handleHashChange,
     renderSidebar,
-    renderCurrentView
+    renderCurrentView,
+    renderSkeleton,
   };
 })();

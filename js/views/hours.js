@@ -69,7 +69,13 @@
             </tr>
           </thead>
           <tbody>
-            ${filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center; padding:24px;">No volunteer hours match current filters</td></tr>` : filtered.map(h => {
+ ${filtered.length === 0 ? `<tr><td colspan="${canApprove ? 7 : 6}">
+              <div class="empty-state">
+                <div class="empty-state-icon">${ic("clock", 42, { strokeWidth: 1.5 })}</div>
+                <div class="empty-state-title">${App.currentLang === 'ar' ? 'لا توجد سجلات ساعات' : 'No hours records'}</div>
+                <div class="empty-state-desc">${App.currentLang === 'ar' ? 'جرّب تغيير الفلاتر أو سجّل ساعات جديدة.' : 'Try changing filters or log new hours.'}</div>
+              </div>
+            </td></tr>` : filtered.map(h => {
       const vol = state.volunteers.find(v => v.id === h.volunteer_id);
       const comm = state.committees.find(c => c.id === h.committee_id);
       return `

@@ -37,6 +37,9 @@
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
       return;
     }
+    // ---- Boot skeleton (visible while data loads) ----
+    const mainEl = document.getElementById("main-content");
+    if (mainEl) window.AtharCore.renderSkeleton(mainEl, 6);
 
     // Load all data from API before rendering
     try {
@@ -162,6 +165,7 @@
     openTransferModal: (...a) => window.AtharModals.openTransferModal(...a),
     openLogHoursSlideover: (...a) => window.AtharModals.openLogHoursSlideover(...a),
     openCreateMeetingSlideover: (...a) => window.AtharModals.openCreateMeetingSlideover(...a),
+    openCreateEventSlideover: (...a) => window.AtharModals.openCreateEventSlideover(...a),   // ← NEW
     openAddCommitteeModal: (...a) => window.AtharModals.openAddCommitteeModal(...a),
     openPermissionsEditor: (...a) => window.AtharModals.openPermissionsEditor(...a),
     openDiffModal: (...a) => window.AtharModals.openDiffModal(...a),
