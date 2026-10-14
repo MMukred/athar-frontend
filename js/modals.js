@@ -1504,8 +1504,8 @@ window.AtharModals = (function () {
     openBulkRatingModal,
     openRejectHoursModal,
     openEditHoursModal,
+    openBulkEditHoursModal,
     buildSamplePreview,
-    openBulkEditHoursModal
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
   };
