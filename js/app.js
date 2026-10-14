@@ -174,7 +174,9 @@
 
     logout: () => window.AtharAuth && window.AtharAuth.logout(),
 
+    // =========================================================
     // Volunteer actions
+    // =========================================================
     archiveVolunteer: function (volId) {
       const state = window.AtharStore.getState();
       const v = state.volunteers.find(function (x) { return x.id === volId; });
@@ -207,7 +209,9 @@
       }
     },
 
+    // =========================================================
     // Hours actions
+    // =========================================================
     approveHours: async function (hoursId) {
       try {
         await window.AtharAPI.hours.approve(hoursId);
@@ -241,7 +245,34 @@
       }
     },
 
+    // =========================================================
+    // Evaluation actions
+    // =========================================================
+    deleteEvaluation: function (evalId) {
+      const state = window.AtharStore.getState();
+      const ev = state.evaluations.find(function (e) { return e.id === evalId; });
+      if (!ev) return;
+      const vol = state.volunteers.find(function (v) { return v.id === ev.volunteer_id; });
+      window.AtharCore.showConfirmModal({
+        title: t("confirm_destructive"),
+        message: "Delete evaluation for " + (vol ? vol.full_name : "this volunteer") + " (" + ev.period_label + ")? This cannot be undone.",
+        confirmText: t("delete"),
+        onConfirm: async function () {
+          try {
+            await window.AtharAPI.evaluations.delete(evalId);
+            await window.AtharStore.refreshEvaluations();
+            showToast("Evaluation deleted", "warning");
+            renderCurrentView();
+          } catch (err) {
+            showToast(err.message || "Delete failed", "error");
+          }
+        },
+      });
+    },
+
+    // =========================================================
     // Certificate actions
+    // =========================================================
     sendCertWhatsApp: function (certId) {
       const state = window.AtharStore.getState();
       const cert = state.certificates.find(c => c.id === certId);

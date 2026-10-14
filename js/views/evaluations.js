@@ -6,6 +6,9 @@
 
   const { App, t, formatDate, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
 
+  // =========================================================
+  // Evaluations List
+  // =========================================================
   function renderEvaluationsList(container) {
     const state = window.AtharStore.getState();
     const canCreate = hasPermission("evaluations", "create");
@@ -26,54 +29,111 @@
         </div>
       </div>
 
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Volunteer</th>
-              <th>Period</th>
-              <th>Overall Score</th>
-              <th>Evaluator</th>
-              <th>Date</th>
-              <th>Notes</th>
-              <th style="text-align:right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.evaluations.map(ev => {
-              const vol = state.volunteers.find(v => v.id === ev.volunteer_id);
-              const user = state.users.find(u => u.id === ev.evaluator_id);
-              return `
-                <tr>
-                  <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">
-                    ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
-                  </td>
-                  <td><span class="badge badge-primary">${ev.period_label}</span></td>
-                  <td><span style="font-weight:800; color:#F59E0B; font-size:14px;">${ev.overall_score} / 5.0</span></td>
-                  <td>${user ? user.full_name : 'Super Admin'}</td>
-                  <td class="num-ltr">${formatDate(ev.evaluated_at)}</td>
-                  <td style="font-size:12px; color:var(--neutral-600); max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ev.notes || '—'}</td>
-                  <td>
-                    <div class="row-actions-cell">
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">${t("view")}</button>
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
+      ${state.evaluations.length === 0 ? `
+        <div class="card" style="text-align:center; padding:48px;">
+          <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("star", 42, { strokeWidth: 1.5 })}</div>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluations yet</div>
+          <p style="color:var(--neutral-500); font-size:13px;">Create your first evaluation to start tracking volunteer performance.</p>
+        </div>
+      ` : `
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Volunteer</th>
+                <th>Period</th>
+                <th>Overall Score</th>
+                <th>Evaluator</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.evaluations.map(ev => {
+      const vol = state.volunteers.find(v => v.id === ev.volunteer_id);
+      const user = state.users.find(u => u.id === ev.evaluator_id);
+      return `
+                  <tr>
+                    <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">
+                      ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
+                    </td>
+                    <td><span class="badge badge-primary">${ev.period_label}</span></td>
+                    <td><span style="font-weight:800; color:#F59E0B; font-size:14px;">${ev.overall_score} / 5.0</span></td>
+                    <td>${user ? user.full_name : 'Super Admin'}</td>
+                    <td class="num-ltr">${formatDate(ev.evaluated_at)}</td>
+                    <td style="font-size:12px; color:var(--neutral-600); max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ev.notes || '—'}</td>
+                    <td>
+                      <div class="row-actions-cell">
+                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">${t("view")}</button>
+                        ${canCreate ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteEvaluation('${ev.id}')">${t("delete")}</button>` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+    }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
     `;
 
     const addBtn = document.getElementById("btn-add-eval");
     if (addBtn) addBtn.onclick = () => navigateTo("new-evaluation");
   }
 
+  // =========================================================
+  // New Evaluation Form
+  // =========================================================
   function renderNewEvaluationForm(container, preSelectedVolId) {
     const state = window.AtharStore.getState();
     const criteria = state.criteria.filter(c => c.is_active);
     const activeVols = state.volunteers.filter(v => v.status !== "archived");
+
+    if (criteria.length === 0) {
+      container.innerHTML = `
+        <div class="view-header">
+          <div class="view-header-left">
+            <h1 class="view-title">${t("add_evaluation")}</h1>
+          </div>
+        </div>
+        <div class="card" style="text-align:center; padding:48px;">
+          <div style="color:var(--warning); margin-bottom:12px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluation criteria defined</div>
+          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">You need to add at least one criterion before creating evaluations.</p>
+          ${App.currentUser.role === "super_admin"
+          ? `<button class="btn btn-primary" onclick="window.AtharApp.navigateTo('evaluation-criteria')">${ic("plus", 14)} ${t("add_criterion")}</button>`
+          : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`
+        }
+        </div>
+      `;
+      return;
+    }
+
+    if (activeVols.length === 0) {
+      container.innerHTML = `
+        <div class="view-header">
+          <div class="view-header-left">
+            <h1 class="view-title">${t("add_evaluation")}</h1>
+          </div>
+        </div>
+        <div class="card" style="text-align:center; padding:48px;">
+          <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("users", 42, { strokeWidth: 1.5 })}</div>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No active volunteers</div>
+          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">Add volunteers first before evaluating them.</p>
+          <button class="btn btn-primary" onclick="window.AtharApp.navigateTo('volunteers')">Go to Volunteers</button>
+        </div>
+      `;
+      return;
+    }
+
+    // Period list with computed dates
+    const periods = [
+      { label: "2026-Q1", start: "2026-01-01", end: "2026-03-31" },
+      { label: "2026-Q2", start: "2026-04-01", end: "2026-06-30" },
+      { label: "2026-Q3", start: "2026-07-01", end: "2026-09-30" },
+      { label: "2026-Q4", start: "2026-10-01", end: "2026-12-31" },
+    ];
 
     container.innerHTML = `
       <div class="view-header">
@@ -88,28 +148,25 @@
         </div>
       </div>
 
-      <div class="card" style="max-width: 800px; margin: 0 auto;">
+      <div class="card" style="max-width: 820px; margin: 0 auto;">
         <form id="new-eval-form">
           <div class="form-grid" style="margin-bottom:20px;">
             <div class="form-field">
               <label class="field-label">${t("volunteer_name")} <span class="required-asterisk">*</span></label>
               <select class="form-control" id="eval-vol-select" required>
-                <option value="">${t("select_all")}...</option>
+                <option value="">—</option>
                 ${activeVols.map(v => `<option value="${v.id}" ${preSelectedVolId === v.id ? 'selected' : ''}>${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}</option>`).join('')}
               </select>
             </div>
             <div class="form-field">
               <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
               <select class="form-control" id="eval-period-select" required>
-                <option value="2026-Q1">2026 - Q1</option>
-                <option value="2026-Q2">2026 - Q2</option>
-                <option value="2026-Q3">2026 - Q3</option>
-                <option value="2026-Q4" selected>2026 - Q4</option>
+                ${periods.map(p => `<option value="${p.label}" data-start="${p.start}" data-end="${p.end}" ${p.label === '2026-Q4' ? 'selected' : ''}>${p.label}</option>`).join('')}
               </select>
             </div>
           </div>
 
-          <h3 style="font-size:15px; margin-bottom:14px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">${t("criteria")} Ratings (1 to 5 Stars)</h3>
+          <h3 style="font-size:15px; margin-bottom:14px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">${t("criteria")} (1 to 5 Stars)</h3>
 
           <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
             ${criteria.map(c => `
@@ -120,10 +177,10 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:16px;">
                   <div class="star-rating" data-crit-id="${c.id}">
-                    <span class="star filled" data-score="1">★</span>
-                    <span class="star filled" data-score="2">★</span>
-                    <span class="star filled" data-score="3">★</span>
-                    <span class="star filled" data-score="4">★</span>
+                    <span class="star" data-score="1">★</span>
+                    <span class="star" data-score="2">★</span>
+                    <span class="star" data-score="3">★</span>
+                    <span class="star" data-score="4">★</span>
                     <span class="star" data-score="5">★</span>
                   </div>
                   <input type="text" class="form-control crit-comment" placeholder="${t("comment")}..." style="width:180px; font-size:12px;">
@@ -135,9 +192,9 @@
           <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-lg); margin-bottom:20px;">
             <div>
               <div style="font-weight:800; font-size:16px; color:var(--primary);">${t("overall_score")} (Auto-calculated)</div>
-              <div style="font-size:12px; color:var(--neutral-600);">Weighted average based on assigned criterion priorities</div>
+              <div style="font-size:12px; color:var(--neutral-600);">Weighted average — pick all stars to see the score</div>
             </div>
-            <div id="live-overall-score" style="font-size:28px; font-weight:800; color:var(--primary);" class="num-ltr">4.0 / 5.0</div>
+            <div id="live-overall-score" style="font-size:28px; font-weight:800; color:var(--primary);" class="num-ltr">— / 5.0</div>
           </div>
 
           <div class="form-field" style="margin-bottom:24px;">
@@ -147,30 +204,29 @@
 
           <div style="display:flex; justify-content:flex-end; gap:12px;">
             <button type="button" class="btn btn-secondary" onclick="window.AtharApp.navigateTo('evaluations')">${t("cancel")}</button>
-            <button type="submit" class="btn btn-primary">${t("save")}</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-eval">${t("save")}</button>
           </div>
         </form>
       </div>
     `;
 
-    if (window.AtharDirty) {
-      const evalFormEl = document.getElementById("new-eval-form");
-      if (evalFormEl) window.AtharDirty.track(evalFormEl);
-    }
-
+    // Scores state — starts empty (user must rate each criterion)
     const criterionScores = {};
-    criteria.forEach(c => criterionScores[c.id] = 4);
 
     function recalculateOverall() {
+      const scoredCriteria = criteria.filter(c => criterionScores[c.id] !== undefined);
+      if (scoredCriteria.length === 0) {
+        document.getElementById("live-overall-score").textContent = "— / 5.0";
+        return null;
+      }
       let sum = 0, totalW = 0;
-      criteria.forEach(c => {
-        const sc = criterionScores[c.id] || 4;
-        sum += sc * c.weight;
+      scoredCriteria.forEach(c => {
+        sum += criterionScores[c.id] * c.weight;
         totalW += c.weight;
       });
-      const avg = (sum / totalW).toFixed(2);
-      document.getElementById("live-overall-score").textContent = `${avg} / 5.0`;
-      return Number(avg);
+      const avg = totalW > 0 ? (sum / totalW).toFixed(2) : null;
+      document.getElementById("live-overall-score").textContent = avg ? `${avg} / 5.0` : "— / 5.0";
+      return avg ? Number(avg) : null;
     }
 
     container.querySelectorAll(".star-rating").forEach(ratingEl => {
@@ -190,61 +246,77 @@
       });
     });
 
-    document.getElementById("new-eval-form").onsubmit = (e) => {
+    document.getElementById("new-eval-form").onsubmit = async (e) => {
       e.preventDefault();
-      if (window.AtharDirty) window.AtharDirty.beginSubmit();
 
       const volId = document.getElementById("eval-vol-select").value;
-      const period = document.getElementById("eval-period-select").value;
+      const periodSel = document.getElementById("eval-period-select");
+      const period = periodSel.value;
+      const periodStart = periodSel.selectedOptions[0].getAttribute("data-start");
+      const periodEnd = periodSel.selectedOptions[0].getAttribute("data-end");
       const notes = document.getElementById("eval-general-notes").value;
 
-      if (!volId) { showToast(t("error_required_fields"), "error"); return; }
-
-      const existing = state.evaluations.find(ev => ev.volunteer_id === volId && ev.period_label === period);
-      if (existing) {
-        showToast("An evaluation already exists for this volunteer in period " + period, "error");
+      if (!volId) {
+        showToast("Please select a volunteer", "error");
         return;
       }
 
-      const evalId = "eval-" + window.AtharStore.generateUUID().substring(0, 8);
-      const overall = recalculateOverall();
+      // Every active criterion must have a score
+      const missing = criteria.filter(c => criterionScores[c.id] === undefined);
+      if (missing.length > 0) {
+        showToast(`Please rate: ${missing.map(c => App.currentLang === 'ar' ? c.name_ar : c.name_en).join(', ')}`, "error");
+        return;
+      }
 
-      criteria.forEach(c => {
+      // Build API payload
+      const scores = criteria.map(c => {
         const row = container.querySelector(`.eval-criterion-row[data-crit-id="${c.id}"]`);
-        const comment = row ? row.querySelector(".crit-comment").value : "";
-        state.evaluation_scores.push({
-          id: window.AtharStore.generateUUID(),
-          evaluation_id: evalId,
-          criteria_id: c.id,
-          score: criterionScores[c.id] || 4,
-          comment: comment
-        });
+        const comment = row ? row.querySelector(".crit-comment").value.trim() : "";
+        return {
+          criteriaId: c.id,
+          score: criterionScores[c.id],
+          comment: comment || undefined,
+        };
       });
 
-      const newEval = {
-        id: evalId,
-        volunteer_id: volId,
-        evaluator_id: App.currentUser.id,
-        period_label: period,
-        period_start: "2026-10-01",
-        period_end: "2026-12-31",
-        overall_score: overall,
-        notes: notes,
-        evaluated_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-      };
+      const submitBtn = document.getElementById("btn-submit-eval");
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Saving…";
 
-      state.evaluations.unshift(newEval);
-      window.AtharStore.save();
-      const vol = state.volunteers.find(v => v.id === volId);
-      window.AtharStore.logAudit(App.currentUser, "create", "evaluation", evalId, `Created evaluation for ${vol ? vol.full_name : volId} (${period}): ${overall}/5.0`, null, newEval);
+      try {
+        await window.AtharAPI.evaluations.create({
+          volunteerId: volId,
+          periodLabel: period,
+          periodStart,
+          periodEnd,
+          notes: notes || undefined,
+          scores,
+        });
+        await window.AtharStore.refreshEvaluations();
 
-      if (window.AtharDirty) window.AtharDirty.clear();
-      showToast(t("saved_successfully"), "success");
-      navigateTo("volunteer-profile", { id: volId, sub: "evaluations" });
+        showToast(t("saved_successfully"), "success");
+        navigateTo("volunteer-profile", { id: volId, sub: "evaluations" });
+      } catch (err) {
+        if (err.code === "EVALUATION_EXISTS") {
+          showToast(`An evaluation already exists for this volunteer in ${period}`, "error");
+        } else if (err.code === "MISSING_CRITERIA_SCORES") {
+          showToast("Please rate every criterion before saving", "error");
+        } else if (err.isValidation && err.details) {
+          const firstField = Object.keys(err.details)[0];
+          showToast(`${firstField}: ${err.details[firstField]?.[0]}`, "error");
+        } else {
+          showToast(err.message || "Save failed", "error");
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     };
   }
 
+  // =========================================================
+  // Criteria Settings
+  // =========================================================
   function renderEvaluationCriteriaSettings(container) {
     if (!hasPermission("evaluation_criteria", "view")) {
       navigateTo("dashboard");
@@ -263,54 +335,65 @@
             <span>Settings</span>
           </div>
           <h1 class="view-title">${t("criteria_settings_title")}</h1>
-          <p class="view-subtitle">Super Admin only: customize evaluation criteria metrics & weight ratios</p>
+          <p class="view-subtitle">Define scoring criteria and their weights</p>
         </div>
         <div class="view-header-actions">
           ${isSuper ? `<button class="btn btn-primary" id="btn-add-crit">${ic("plus", 14)} ${t("add_criterion")}</button>` : ''}
         </div>
       </div>
 
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Criterion Name (EN)</th>
-              <th>Criterion Name (AR)</th>
-              <th>Weight</th>
-              <th>Active</th>
-              ${isSuper ? '<th style="text-align:right;">Actions</th>' : ''}
-            </tr>
-          </thead>
-          <tbody>
-            ${state.criteria.map((c, idx) => `
+      ${state.criteria.length === 0 ? `
+        <div class="card" style="text-align:center; padding:48px;">
+          <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("sliders", 42, { strokeWidth: 1.5 })}</div>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No criteria yet</div>
+          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">Add criteria to enable volunteer evaluations.</p>
+          ${isSuper ? `<button class="btn btn-primary" id="btn-add-crit-empty">${ic("plus", 14)} ${t("add_criterion")}</button>` : ''}
+        </div>
+      ` : `
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td><span class="badge badge-neutral num-ltr">#${c.display_order || idx + 1}</span></td>
-                <td style="font-weight:700;">${c.name_en}</td>
-                <td style="font-weight:700;">${c.name_ar}</td>
-                <td><span class="num-ltr badge badge-primary">${c.weight}x</span></td>
-                <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-danger'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
-                ${isSuper ? `
-                  <td>
-                    <div class="row-actions-cell">
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.openEditCriterionModal && window.AtharApp.openEditCriterionModal('${c.id}')">${t("edit")}</button>
-                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.toggleCriterionActive && window.AtharApp.toggleCriterionActive('${c.id}')">
-                        ${c.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </div>
-                  </td>
-                ` : ''}
+                <th>Order</th>
+                <th>Criterion Name (EN)</th>
+                <th>Criterion Name (AR)</th>
+                <th>Weight</th>
+                <th>Active</th>
+                ${isSuper ? '<th style="text-align:right;">Actions</th>' : ''}
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              ${state.criteria.map((c, idx) => `
+                <tr>
+                  <td><span class="badge badge-neutral num-ltr">#${c.display_order || idx + 1}</span></td>
+                  <td style="font-weight:700;">${c.name_en}</td>
+                  <td style="font-weight:700;">${c.name_ar}</td>
+                  <td><span class="num-ltr badge badge-primary">${c.weight}x</span></td>
+                  <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-danger'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+                  ${isSuper ? `
+                    <td>
+                      <div class="row-actions-cell">
+                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.openEditCriterionModal('${c.id}')">${t("edit")}</button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.toggleCriterionActive('${c.id}')">
+                          ${c.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteCriterion('${c.id}')">${t("delete")}</button>
+                      </div>
+                    </td>
+                  ` : ''}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
     `;
 
     const addBtn = document.getElementById("btn-add-crit");
-    if (addBtn && window.AtharApp.openAddCriterionModal) {
-      addBtn.onclick = () => window.AtharApp.openAddCriterionModal();
-    }
+    if (addBtn) addBtn.onclick = () => window.AtharApp.openAddCriterionModal();
+
+    const addBtnEmpty = document.getElementById("btn-add-crit-empty");
+    if (addBtnEmpty) addBtnEmpty.onclick = () => window.AtharApp.openAddCriterionModal();
   }
 
   window.AtharViews.evaluations = (c, p) => renderEvaluationsList(c);
