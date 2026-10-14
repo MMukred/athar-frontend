@@ -191,6 +191,7 @@ window.AtharAPI = (function () {
       create: async (p) => (await post("/committees", p)).committee,
       update: async (id, p) => (await patch(`/committees/${id}`, p)).committee,
       archive: async (id) => (await del(`/committees/${id}`)).committee,
+      restore: async (id) => (await post(`/committees/${id}/restore`)).committee,
     },
 
     meetings: {
