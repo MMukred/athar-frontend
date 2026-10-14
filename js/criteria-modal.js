@@ -1,16 +1,16 @@
 /**
  * Athar — Evaluation Criteria Modal
- * Super Admin only: create/edit/toggle/delete criteria.
- * Attaches to window.AtharApp.
+ * Self-contained: exposes window.AtharCriteriaModal
+ * No dependency on window.AtharApp load order.
  */
 
 (function () {
     "use strict";
 
-    const { App, t, ic, showToast, showConfirmModal } = window.AtharCore;
-
     function openCriterionModal(criterionId) {
         criterionId = criterionId || null;
+
+        const { App, t, ic, showToast } = window.AtharCore;
 
         if (App.currentUser.role !== "super_admin") {
             showToast(t("permission_denied"), "error");
@@ -33,25 +33,21 @@
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
               <div class="form-field">
                 <label class="field-label">${t("criterion_name_en")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="crit-name-en" class="form-control" required
-                       value="${existing ? (existing.name_en || '') : ''}">
+                <input type="text" id="crit-name-en" class="form-control" required value="${existing ? (existing.name_en || '') : ''}">
               </div>
               <div class="form-field">
                 <label class="field-label">${t("criterion_name_ar")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="crit-name-ar" class="form-control" required
-                       value="${existing ? (existing.name_ar || '') : ''}">
+                <input type="text" id="crit-name-ar" class="form-control" required value="${existing ? (existing.name_ar || '') : ''}">
               </div>
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("weight")} <span class="required-asterisk">*</span></label>
-                  <input type="number" step="0.1" min="0.1" max="10" id="crit-weight"
-                         class="form-control" required value="${existing ? existing.weight : 1.0}">
-                  <span class="field-hint">1.0 = normal, 1.5 = more important, 0.5 = less</span>
+                  <input type="number" step="0.1" min="0.1" max="10" id="crit-weight" class="form-control" required value="${existing ? existing.weight : 1.0}">
+                  <span class="field-hint">1.0 = normal, 1.5 = more important</span>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("display_order")}</label>
-                  <input type="number" min="0" id="crit-order" class="form-control"
-                         value="${existing ? existing.display_order : (state.criteria.length + 1)}">
+                  <input type="number" min="0" id="crit-order" class="form-control" value="${existing ? existing.display_order : (state.criteria.length + 1)}">
                 </div>
               </div>
               <div class="form-field">
@@ -116,6 +112,8 @@
     }
 
     async function toggleCriterionActive(criterionId) {
+        const { App, t, showToast } = window.AtharCore;
+
         if (App.currentUser.role !== "super_admin") {
             showToast(t("permission_denied"), "error");
             return;
@@ -136,6 +134,8 @@
     }
 
     function deleteCriterion(criterionId) {
+        const { App, t, showToast, showConfirmModal } = window.AtharCore;
+
         if (App.currentUser.role !== "super_admin") {
             showToast(t("permission_denied"), "error");
             return;
@@ -166,10 +166,11 @@
         });
     }
 
-    // Attach to global app API
-    window.AtharApp = window.AtharApp || {};
-    window.AtharApp.openAddCriterionModal = () => openCriterionModal(null);
-    window.AtharApp.openEditCriterionModal = (id) => openCriterionModal(id);
-    window.AtharApp.toggleCriterionActive = toggleCriterionActive;
-    window.AtharApp.deleteCriterion = deleteCriterion;
+    // Expose the module
+    window.AtharCriteriaModal = {
+        openAdd: () => openCriterionModal(null),
+        openEdit: (id) => openCriterionModal(id),
+        toggleActive: toggleCriterionActive,
+        delete: deleteCriterion,
+    };
 })();

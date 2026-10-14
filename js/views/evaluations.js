@@ -102,11 +102,13 @@
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluation criteria defined</div>
           <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">You need to add at least one criterion before creating evaluations.</p>
           ${App.currentUser.role === "super_admin"
-          ? `<button class="btn btn-primary" onclick="window.AtharApp.navigateTo('evaluation-criteria')">${ic("plus", 14)} ${t("add_criterion")}</button>`
+          ? `<button class="btn btn-primary" id="btn-goto-criteria">${ic("plus", 14)} ${t("add_criterion")}</button>`
           : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`
         }
         </div>
       `;
+      const gotoBtn = document.getElementById("btn-goto-criteria");
+      if (gotoBtn) gotoBtn.onclick = () => navigateTo("evaluation-criteria");
       return;
     }
 
@@ -121,9 +123,11 @@
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("users", 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No active volunteers</div>
           <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">Add volunteers first before evaluating them.</p>
-          <button class="btn btn-primary" onclick="window.AtharApp.navigateTo('volunteers')">Go to Volunteers</button>
+          <button class="btn btn-primary" id="btn-goto-vols">Go to Volunteers</button>
         </div>
       `;
+      const gotoVols = document.getElementById("btn-goto-vols");
+      if (gotoVols) gotoVols.onclick = () => navigateTo("volunteers");
       return;
     }
 
@@ -203,7 +207,7 @@
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:12px;">
-            <button type="button" class="btn btn-secondary" onclick="window.AtharApp.navigateTo('evaluations')">${t("cancel")}</button>
+            <button type="button" class="btn btn-secondary" id="btn-cancel-eval">${t("cancel")}</button>
             <button type="submit" class="btn btn-primary" id="btn-submit-eval">${t("save")}</button>
           </div>
         </form>
@@ -245,6 +249,9 @@
         };
       });
     });
+
+    const cancelBtn = document.getElementById("btn-cancel-eval");
+    if (cancelBtn) cancelBtn.onclick = () => navigateTo("evaluations");
 
     document.getElementById("new-eval-form").onsubmit = async (e) => {
       e.preventDefault();
@@ -373,11 +380,11 @@
                   ${isSuper ? `
                     <td>
                       <div class="row-actions-cell">
-                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.openEditCriterionModal('${c.id}')">${t("edit")}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.toggleCriterionActive('${c.id}')">
+                        <button class="btn btn-secondary btn-sm" data-crit-action="edit" data-crit-id="${c.id}">${t("edit")}</button>
+                        <button class="btn btn-secondary btn-sm" data-crit-action="toggle" data-crit-id="${c.id}">
                           ${c.is_active ? 'Deactivate' : 'Activate'}
                         </button>
-                        <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteCriterion('${c.id}')">${t("delete")}</button>
+                        <button class="btn btn-danger-outline btn-sm" data-crit-action="delete" data-crit-id="${c.id}">${t("delete")}</button>
                       </div>
                     </td>
                   ` : ''}
@@ -389,11 +396,44 @@
       `}
     `;
 
+    // ---------------------------------------------------------
+    // Wire the "Add Criterion" buttons (both variants)
+    // Uses AtharCriteriaModal — the actual exposed name.
+    // ---------------------------------------------------------
+    const openAdd = () => {
+      if (window.AtharCriteriaModal && typeof window.AtharCriteriaModal.openAdd === "function") {
+        window.AtharCriteriaModal.openAdd();
+      } else {
+        console.error("[evaluations] AtharCriteriaModal.openAdd is not available. Is criteria-modal.js loaded?");
+        showToast("Criteria editor is not available.", "error");
+      }
+    };
+
     const addBtn = document.getElementById("btn-add-crit");
-    if (addBtn) addBtn.onclick = () => window.AtharApp.openAddCriterionModal();
+    if (addBtn) addBtn.onclick = openAdd;
 
     const addBtnEmpty = document.getElementById("btn-add-crit-empty");
-    if (addBtnEmpty) addBtnEmpty.onclick = () => window.AtharApp.openAddCriterionModal();
+    if (addBtnEmpty) addBtnEmpty.onclick = openAdd;
+
+    // ---------------------------------------------------------
+    // Wire the row action buttons via data-attributes
+    // (avoids inline onclick + UUID quoting problems)
+    // ---------------------------------------------------------
+    container.querySelectorAll("[data-crit-action]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-crit-id");
+        const action = btn.getAttribute("data-crit-action");
+        const M = window.AtharCriteriaModal;
+        if (!M) {
+          console.error("[evaluations] AtharCriteriaModal is not available");
+          showToast("Criteria editor is not available.", "error");
+          return;
+        }
+        if (action === "edit" && typeof M.openEdit === "function") M.openEdit(id);
+        else if (action === "toggle" && typeof M.toggleActive === "function") M.toggleActive(id);
+        else if (action === "delete" && typeof M.delete === "function") M.delete(id);
+      };
+    });
   }
 
   window.AtharViews.evaluations = (c, p) => renderEvaluationsList(c);
