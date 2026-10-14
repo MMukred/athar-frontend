@@ -67,6 +67,8 @@ window.AtharStore = (function () {
       email: v.email,
       dob: iso(v.dob),
       gender: v.gender,
+      nationality: v.nationality,          // ← new
+      study_level: v.studyLevel,           // ← new
       skills: v.skills || [],
       status: v.status,
       committee_id: v.committeeId,

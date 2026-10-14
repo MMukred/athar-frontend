@@ -41,7 +41,16 @@ window.AtharModals = (function () {
     const state = window.AtharStore.getState();
     const existing = volunteerId ? state.volunteers.find(v => v.id === volunteerId) : null;
     const isEdit = !!existing;
-    let skillsList = existing && existing.skills ? [...existing.skills] : [];
+
+    const STUDY_LEVELS = [
+      { value: "primary", en: "Primary", ar: "ابتدائي" },
+      { value: "secondary", en: "Secondary", ar: "متوسط" },
+      { value: "diploma", en: "Diploma", ar: "دبلوم" },
+      { value: "bachelor", en: "Bachelor's", ar: "بكالوريوس" },
+      { value: "master", en: "Master's", ar: "ماجستير" },
+      { value: "phd", en: "PhD", ar: "دكتوراه" },
+      { value: "other", en: "Other", ar: "أخرى" },
+    ];
 
     const slideover = document.getElementById("slideover-container");
     slideover.innerHTML = `
@@ -52,70 +61,94 @@ window.AtharModals = (function () {
             <button class="btn-icon" id="vol-close">&times;</button>
           </div>
           <div class="drawer-body">
-            <form id="vol-form" style="display:flex; flex-direction:column; gap:16px;">
+            <form id="vol-form" style="display:flex; flex-direction:column; gap:16px;" novalidate>
+
               <div class="form-field">
                 <label class="field-label">${t("volunteer_name")} (EN) <span class="required-asterisk">*</span></label>
-                <input type="text" id="vol-name-en" class="form-control" required value="${existing ? existing.full_name : ''}">
+                <input type="text" id="vol-name-en" class="form-control" maxlength="150" value="${existing ? existing.full_name : ''}">
+                <span class="field-hint" id="vol-name-en-err" style="color:var(--danger); display:none;"></span>
               </div>
+
               <div class="form-field">
                 <label class="field-label">${t("volunteer_name")} (AR)</label>
-                <input type="text" id="vol-name-ar" class="form-control" value="${existing ? (existing.full_name_ar || '') : ''}">
+                <input type="text" id="vol-name-ar" class="form-control" maxlength="150" value="${existing ? (existing.full_name_ar || '') : ''}">
               </div>
+
               <div class="form-grid">
                 <div class="form-field">
-                  <label class="field-label">${t("national_id")} <span class="required-asterisk">*</span></label>
-                  <input type="text" id="vol-nid" class="form-control" required value="${existing ? (existing.national_id || '') : ''}">
+                  <label class="field-label">${t("whatsapp")}</label>
+                  <input type="tel" id="vol-wa" class="form-control" placeholder="+96650..." maxlength="30" value="${existing ? (existing.whatsapp || '') : ''}">
+                  <span class="field-hint" id="vol-wa-err" style="color:var(--danger); display:none;"></span>
+                </div>
+                <div class="form-field">
+                  <label class="field-label">${t("email")}</label>
+                  <input type="email" id="vol-email" class="form-control" maxlength="150" value="${existing ? (existing.email || '') : ''}">
+                  <span class="field-hint" id="vol-email-err" style="color:var(--danger); display:none;"></span>
+                </div>
+              </div>
+
+              <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
+                ${App.currentLang === 'ar'
+        ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.'
+        : 'At least one of WhatsApp number or email is required.'}
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">${t("gender")}</label>
+                  <select id="vol-gender" class="form-control">
+                    <option value="">—</option>
+                    <option value="male" ${existing && existing.gender === 'male' ? 'selected' : ''}>${t("male")}</option>
+                    <option value="female" ${existing && existing.gender === 'female' ? 'selected' : ''}>${t("female")}</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="field-label">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</label>
+                  <input type="text" id="vol-nationality" class="form-control" maxlength="100" value="${existing ? (existing.nationality || '') : ''}" placeholder="${App.currentLang === 'ar' ? 'سعودي' : 'Saudi'}">
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</label>
+                  <select id="vol-study-level" class="form-control">
+                    <option value="">—</option>
+                    ${STUDY_LEVELS.map(s => `<option value="${s.value}" ${existing && existing.study_level === s.value ? 'selected' : ''}>${App.currentLang === 'ar' ? s.ar : s.en}</option>`).join('')}
+                  </select>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("dob")}</label>
                   <input type="date" id="vol-dob" class="form-control" value="${existing ? (existing.dob || '') : ''}">
                 </div>
               </div>
-              <div class="form-grid">
-                <div class="form-field">
-                  <label class="field-label">${t("phone")}</label>
-                  <input type="text" id="vol-phone" class="form-control" value="${existing ? (existing.phone || '') : ''}">
-                </div>
-                <div class="form-field">
-                  <label class="field-label">${t("whatsapp")}</label>
-                  <input type="text" id="vol-wa" class="form-control" value="${existing ? (existing.whatsapp || '') : ''}">
-                </div>
-              </div>
-              <div class="form-field">
-                <label class="field-label">${t("email")}</label>
-                <input type="email" id="vol-email" class="form-control" value="${existing ? (existing.email || '') : ''}">
-              </div>
+
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("committee")}</label>
                   <select id="vol-comm" class="form-control">
                     <option value="">—</option>
-                    ${state.committees.map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                    ${state.committees.filter(c => c.status !== 'archived').map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("status")}</label>
                   <select id="vol-status" class="form-control">
-                    <option value="active" ${existing && existing.status === 'active' ? 'selected' : ''}>${t("active")}</option>
+                    <option value="active" ${!existing || existing.status === 'active' ? 'selected' : ''}>${t("active")}</option>
                     <option value="suspended" ${existing && existing.status === 'suspended' ? 'selected' : ''}>${t("suspended")}</option>
                     <option value="withdrawn" ${existing && existing.status === 'withdrawn' ? 'selected' : ''}>${t("withdrawn")}</option>
                     <option value="completed" ${existing && existing.status === 'completed' ? 'selected' : ''}>${t("completed")}</option>
                   </select>
                 </div>
               </div>
-              <div class="form-field">
-                <label class="field-label">${t("skills")}</label>
-                <div class="tag-input-container" id="vol-skills">
-                  <input type="text" id="vol-skill-input" class="tag-input-field" placeholder="Add skill and press Enter">
-                </div>
-              </div>
+
               <div class="form-field">
                 <label class="field-label">${t("notes")}</label>
-                <textarea id="vol-notes" class="form-control" rows="2">${existing ? (existing.notes || '') : ''}</textarea>
+                <textarea id="vol-notes" class="form-control" rows="3">${existing ? (existing.notes || '') : ''}</textarea>
               </div>
+
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="vol-cancel">${t("cancel")}</button>
-                <button type="submit" class="btn btn-primary">${t("save")}</button>
+                <button type="submit" class="btn btn-primary" id="vol-submit">${t("save")}</button>
               </div>
             </form>
           </div>
@@ -126,65 +159,85 @@ window.AtharModals = (function () {
     const close = () => { slideover.innerHTML = ""; };
     document.getElementById("vol-close").onclick = close;
     document.getElementById("vol-cancel").onclick = close;
-    document.getElementById("vol-backdrop").onclick = (e) => { if (e.target.id === "vol-backdrop") close(); };
-
-    // Tag chips
-    const skillsEl = document.getElementById("vol-skills");
-    const skillInput = document.getElementById("vol-skill-input");
-    function renderChips() {
-      skillsEl.querySelectorAll(".tag-chip").forEach(c => c.remove());
-      skillsList.forEach(s => {
-        const chip = document.createElement("span");
-        chip.className = "tag-chip";
-        chip.innerHTML = `#${s} <span class="tag-chip-remove">&times;</span>`;
-        skillsEl.insertBefore(chip, skillInput);
-        chip.querySelector(".tag-chip-remove").onclick = () => {
-          skillsList = skillsList.filter(x => x !== s);
-          renderChips();
-        };
-      });
-    }
-    renderChips();
-    skillInput.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === ",") {
-        e.preventDefault();
-        const v = skillInput.value.trim().replace(/^#/, "");
-        if (v && !skillsList.includes(v)) { skillsList.push(v); skillInput.value = ""; renderChips(); }
-      }
+    document.getElementById("vol-backdrop").onclick = (e) => {
+      if (e.target.id === "vol-backdrop") close();
     };
 
-    // Submit → API
+    // Clear errors on input
+    const clearErr = (id) => {
+      const el = document.getElementById(id + "-err");
+      if (el) { el.textContent = ""; el.style.display = "none"; }
+    };
+    ["vol-name-en", "vol-wa", "vol-email"].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) input.addEventListener("input", () => clearErr(id));
+    });
+
+    const setErr = (id, msg) => {
+      const el = document.getElementById(id + "-err");
+      if (el) { el.textContent = msg; el.style.display = "block"; }
+    };
+
     document.getElementById("vol-form").onsubmit = async (e) => {
       e.preventDefault();
+
+      // Reset errors
+      ["vol-name-en", "vol-wa", "vol-email"].forEach(clearErr);
+
       const nameEn = document.getElementById("vol-name-en").value.trim();
       const nameAr = document.getElementById("vol-name-ar").value.trim();
-      const nid = document.getElementById("vol-nid").value.trim();
-      const phone = document.getElementById("vol-phone").value.trim();
       const wa = document.getElementById("vol-wa").value.trim();
       const email = document.getElementById("vol-email").value.trim();
+      const gender = document.getElementById("vol-gender").value || null;
+      const nationality = document.getElementById("vol-nationality").value.trim();
+      const studyLevel = document.getElementById("vol-study-level").value || null;
       const dob = document.getElementById("vol-dob").value;
       const commId = document.getElementById("vol-comm").value || null;
       const status = document.getElementById("vol-status").value;
       const notes = document.getElementById("vol-notes").value;
 
-      if (!nameEn || !nid) { showToast(t("error_required_fields"), "error"); return; }
+      // Validation
+      let hasError = false;
+
+      if (nameEn.length < 2) {
+        setErr("vol-name-en", "Name must be at least 2 characters.");
+        hasError = true;
+      }
+
+      if (!wa && !email) {
+        setErr("vol-wa", "Provide a WhatsApp number or an email.");
+        setErr("vol-email", "Provide a WhatsApp number or an email.");
+        hasError = true;
+      }
+
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setErr("vol-email", "Invalid email format.");
+        hasError = true;
+      }
+
+      if (hasError) {
+        showToast("Please fix the highlighted fields.", "error");
+        return;
+      }
 
       const payload = {
         fullName: nameEn,
         fullNameAr: nameAr || undefined,
-        nationalId: nid,
-        phone: phone || undefined,
         whatsapp: wa || undefined,
         email: email || undefined,
+        gender: gender || undefined,
+        nationality: nationality || undefined,
+        studyLevel: studyLevel || undefined,
         dob: dob || undefined,
         committeeId: commId,
         status,
-        skills: skillsList,
         notes: notes || undefined,
       };
 
-      const submitBtn = e.submitter || e.target.querySelector('button[type="submit"]');
-      if (submitBtn) submitBtn.disabled = true;
+      const submitBtn = document.getElementById("vol-submit");
+      submitBtn.disabled = true;
+      const origText = submitBtn.textContent;
+      submitBtn.textContent = "Saving…";
 
       try {
         if (isEdit) {
@@ -200,12 +253,19 @@ window.AtharModals = (function () {
       } catch (err) {
         if (err.code === "DUPLICATE_NATIONAL_ID" || err.code === "DUPLICATE_RECORD") {
           showToast(t("error_duplicate_id"), "error");
+        } else if (err.code === "MISSING_CONTACT" || (err.status === 422 && err.details)) {
+          if (err.details?.whatsapp) setErr("vol-wa", Array.isArray(err.details.whatsapp) ? err.details.whatsapp[0] : err.details.whatsapp);
+          if (err.details?.email) setErr("vol-email", Array.isArray(err.details.email) ? err.details.email[0] : err.details.email);
+          showToast("Please fix the highlighted fields.", "error");
         } else {
           showToast(err.message || "Save failed", "error");
         }
-        if (submitBtn) submitBtn.disabled = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
       }
     };
+
+    setTimeout(() => document.getElementById("vol-name-en").focus(), 100);
   }
 
   // =========================================================
