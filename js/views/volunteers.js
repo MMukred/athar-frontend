@@ -366,7 +366,7 @@
                       </span>
                     </td>
                     <td><span class="num-ltr" style="font-weight:700;">${stats ? stats.totalHours : 0} h</span></td>
-                      <td>
+                    <td>
                       ${v.whatsapp ? `
                         <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
                           <a href="https://wa.me/${v.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:2px 8px; font-size:11px;" onclick="event.stopPropagation();">
@@ -602,6 +602,8 @@
     const canEvaluate = hasPermission("evaluations", "create");
     const canLogHours = hasPermission("volunteer_hours", "create");
     const canCert = hasPermission("certificates", "create");
+    const canEditHours = hasPermission("volunteer_hours", "edit") || App.currentUser.role === "super_admin";
+    const canDeleteHours = hasPermission("volunteer_hours", "delete") || App.currentUser.role === "super_admin";
 
     const transfers = state.committee_transfers.filter(t => t.volunteer_id === vol.id);
     const attendanceRecords = state.attendance.filter(a => a.volunteer_id === vol.id);
@@ -679,7 +681,7 @@
                 <span>${formatDate(vol.join_date)}</span>
               </div>
               ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${vol.phone}</span></div>` : ''}
-                ${vol.whatsapp ? `
+              ${vol.whatsapp ? `
                 <a href="https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:3px 10px;">
                   ${ic("whatsapp", 12)} WhatsApp
                 </a>
@@ -763,9 +765,16 @@
           </table></div>
         ` : activeTab === "evaluations" ? `
           <div style="display:flex; flex-direction:column; gap:16px;">${evalsHtml}</div>
-               ` : activeTab === "hours" ? `
+        ` : activeTab === "hours" ? `
           <div class="table-container"><table class="data-table">
-            <thead><tr><th>Date</th><th>Activity</th><th>Hours</th><th>Status</th><th>Description</th><th style="text-align:right;">${t("actions")}</th></tr></thead>
+            <thead><tr>
+              <th>${t("date")}</th>
+              <th>${t("activity")}</th>
+              <th>${t("hours")}</th>
+              <th>${t("status")}</th>
+              <th>${t("details")}</th>
+              <th style="text-align:right;">${t("actions")}</th>
+            </tr></thead>
             <tbody>
               ${hoursLog.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding:24px;">—</td></tr>` : hoursLog.map(h => `
                 <tr>
@@ -776,8 +785,8 @@
                   <td style="color:var(--neutral-600); font-size:12px;">${h.description || ''}</td>
                   <td>
                     <div class="row-actions-cell">
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.editHours('${h.id}')" title="${App.currentLang === 'ar' ? 'تعديل' : 'Adjust'}">${ic("pencil", 12)}</button>
-                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteHoursEntry('${h.id}')" title="${t("delete")}">${ic("trash", 12)}</button>
+                      ${canEditHours ? `<button class="btn btn-secondary btn-sm" data-volhr-edit="${h.id}" title="${App.currentLang === 'ar' ? 'تعديل' : 'Adjust'}">${ic("pencil", 12)}</button>` : ''}
+                      ${canDeleteHours ? `<button class="btn btn-danger-outline btn-sm" data-volhr-del="${h.id}" title="${t("delete")}">${ic("trash", 12)}</button>` : ''}
                     </div>
                   </td>
                 </tr>
@@ -833,6 +842,42 @@
     bind2("btn-prof-eval", () => navigateTo("new-evaluation", { id: vol.id }));
     bind2("btn-prof-log-hours", () => window.AtharModals.openLogHoursSlideover(vol.id));
     bind2("btn-prof-gen-cert", () => navigateTo("generate-certificate", { id: vol.id }));
+
+    // Wire hours tab: edit / delete buttons (direct call, no AtharApp dependency)
+    container.querySelectorAll("[data-volhr-edit]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-volhr-edit");
+        if (window.AtharModals && typeof window.AtharModals.openEditHoursModal === "function") {
+          window.AtharModals.openEditHoursModal(id);
+        } else {
+          showToast("Edit hours is not available — modals.js not updated", "error");
+        }
+      };
+    });
+
+    container.querySelectorAll("[data-volhr-del]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-volhr-del");
+        showConfirmModal({
+          title: t("confirm_destructive"),
+          message: App.currentLang === 'ar'
+            ? 'سيتم حذف سجل الساعات نهائياً. لا يمكن التراجع.'
+            : 'This hours entry will be permanently deleted. This cannot be undone.',
+          confirmText: t("delete"),
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await window.AtharAPI.hours.delete(id);
+              await window.AtharStore.refreshHours();
+              showToast(App.currentLang === 'ar' ? 'تم الحذف' : 'Entry deleted', "warning");
+              renderVolunteerProfile(container, volunteerId);
+            } catch (err) {
+              showToast(err.message || "Delete failed", "error");
+            }
+          },
+        });
+      };
+    });
   }
 
   // Register views
