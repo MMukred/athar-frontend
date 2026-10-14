@@ -237,7 +237,8 @@
     const absentCount = roster.filter(r => r.status === "absent").length;
     const excusedCount = roster.filter(r => r.status === "excused").length;
     const isCompleted = meeting.status === "completed";
-    const showAutoHours = isEvent && isCompleted;
+    // Auto-hours button only needs a valid duration (end_time).
+    const showAutoHours = isCompleted && !!meeting.end_time;
 
     container.innerHTML = `
       <div class="view-header">
@@ -414,7 +415,7 @@
           await window.AtharAPI.meetings.saveRoster(meetingId, records, true);
           await window.AtharStore.refreshMeetings();
 
-          if (isEvent && presentLateCount > 0) {
+          if (presentLateCount > 0) {
             saveBtn.innerHTML = "Logging hours…";
             try {
               const res = await window.AtharAPI.meetings.autoHours(meetingId, false);
@@ -448,8 +449,8 @@
               if (autoErr.code === "NO_END_TIME") {
                 showToast(
                   App.currentLang === 'ar'
-                    ? "تم حفظ الحضور · أضف وقت انتهاء للفعالية لتسجيل الساعات تلقائياً"
-                    : "Attendance saved · Add an end time to the event to auto-log hours",
+                    ? "تم حفظ الحضور · أضف وقت انتهاء لتسجيل الساعات تلقائياً"
+                    : "Attendance saved · Add an end time to auto-log hours",
                   "warning"
                 );
               } else if (autoErr.status === 403) {
@@ -468,13 +469,6 @@
                 );
               }
             }
-          } else if (isEvent && presentLateCount === 0) {
-            showToast(
-              App.currentLang === 'ar'
-                ? `تم حفظ ${records.length} سجل · لا يوجد حاضرون لتسجيل ساعاتهم`
-                : `Saved ${records.length} attendance · No Present/Late to log`,
-              "info"
-            );
           } else {
             showToast(
               App.currentLang === 'ar'
@@ -523,7 +517,7 @@
         } catch (err) {
           if (err.code === "NO_END_TIME") {
             showToast(
-              App.currentLang === 'ar' ? "أضف وقت انتهاء للفعالية أولاً" : "Set an end time on the event first",
+              App.currentLang === 'ar' ? "أضف وقت انتهاء أولاً" : "Set an end time first",
               "error"
             );
           } else {
