@@ -1,10 +1,52 @@
 /**
- * View: Meetings + Events (list + detail + attendance + auto-hours)
+ * View: Meetings + Events (list + detail + attendance + auto-hours + delete)
  */
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo } = window.AtharCore;
+
+  // =========================================================================
+  // Confirm + delete a session (shared by list and detail)
+  // =========================================================================
+  function confirmDeleteSession(session, onDeleted) {
+    const isEvent = (session.kind || "meeting") === "event";
+    const label = isEvent
+      ? (App.currentLang === 'ar' ? 'الفعالية' : 'event')
+      : (App.currentLang === 'ar' ? 'الاجتماع' : 'meeting');
+    const title = App.currentLang === 'ar'
+      ? `حذف ${label}`
+      : `Delete ${label}`;
+    const msg = App.currentLang === 'ar'
+      ? `سيتم حذف "${session.title_ar || session.title_en}" نهائياً مع كل سجلات الحضور. لا يمكن التراجع.`
+      : `Permanently delete "${session.title_en}" and all its attendance records. This cannot be undone.`;
+
+    showConfirmModal({
+      title,
+      message: msg,
+      confirmText: t("delete"),
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await window.AtharAPI.meetings.delete(session.id);
+          await window.AtharStore.refreshMeetings();
+          showToast(
+            App.currentLang === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully',
+            'warning'
+          );
+          if (onDeleted) onDeleted();
+        } catch (err) {
+          if (err.status === 403) {
+            showToast(t("permission_denied"), "error");
+          } else if (err.status === 404) {
+            showToast(App.currentLang === 'ar' ? 'غير موجود' : 'Not found', "error");
+          } else {
+            showToast(err.message || "Delete failed", "error");
+          }
+        }
+      },
+    });
+  }
 
   // =========================================================================
   // Session list — shared between Meetings and Events
@@ -13,6 +55,7 @@
     const isEvent = kind === "event";
     const state = window.AtharStore.getState();
     const canCreate = hasPermission("meetings", "create");
+    const canDelete = hasPermission("meetings", "delete");
     const sessions = state.meetings.filter(m => (m.kind || "meeting") === kind);
 
     const label = isEvent
@@ -97,6 +140,11 @@
                         <button class="btn btn-primary btn-sm" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">
                           ${m.status === 'completed' ? t("view") : (App.currentLang === 'ar' ? 'التحضير' : 'Take Attendance')}
                         </button>
+                        ${canDelete ? `
+                          <button class="btn btn-danger-outline btn-sm" data-delete-session="${m.id}" title="${t("delete")}">
+                            ${ic("trash", 13)}
+                          </button>
+                        ` : ''}
                       </div>
                     </td>
                   </tr>
@@ -118,10 +166,20 @@
         }
       };
     }
+
+    // Delete buttons
+    container.querySelectorAll("[data-delete-session]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-delete-session");
+        const session = sessions.find(x => x.id === id);
+        if (!session) return;
+        confirmDeleteSession(session, () => renderSessionList(container, kind));
+      };
+    });
   }
 
   // =========================================================================
-  // Session detail — with attendance + auto-hours
+  // Session detail — attendance + auto-hours + delete
   // =========================================================================
   async function renderMeetingDetail(container, meetingId) {
     const state = window.AtharStore.getState();
@@ -137,6 +195,7 @@
     const backLabel = isEvent
       ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events')
       : t("nav_meetings");
+    const canDelete = hasPermission("meetings", "delete");
 
     // Loading state
     container.innerHTML = `
@@ -205,6 +264,11 @@
           ${showAutoHours ? `
             <button class="btn btn-secondary" id="btn-auto-hours" title="${App.currentLang === 'ar' ? 'إعادة تسجيل الساعات لغير المسجلين' : 'Re-run auto-log for anyone not yet logged'}">
               ${ic("refresh", 14)} ${App.currentLang === 'ar' ? 'تسجيل الساعات المتبقية' : 'Re-log Hours'}
+            </button>
+          ` : ''}
+          ${canDelete ? `
+            <button class="btn btn-danger-outline" id="btn-delete-session" title="${t("delete")}">
+              ${ic("trash", 14)} ${t("delete")}
             </button>
           ` : ''}
         </div>
@@ -326,9 +390,7 @@
       recalcCounts();
     };
 
-    // =========================================================
-    // Save attendance — auto-logs hours for events
-    // =========================================================
+    // Save attendance + auto-log hours
     const saveBtn = document.getElementById("btn-save-attendance");
     if (saveBtn) {
       saveBtn.onclick = async () => {
@@ -349,11 +411,9 @@
         saveBtn.innerHTML = "Saving…";
 
         try {
-          // 1) Persist the roster (marks session completed)
           await window.AtharAPI.meetings.saveRoster(meetingId, records, true);
           await window.AtharStore.refreshMeetings();
 
-          // 2) Auto-log hours (events only)
           if (isEvent && presentLateCount > 0) {
             saveBtn.innerHTML = "Logging hours…";
             try {
@@ -433,9 +493,7 @@
       };
     }
 
-    // =========================================================
-    // Manual "Re-log Hours" (fallback — re-runs for anyone missed)
-    // =========================================================
+    // Re-log hours (manual fallback)
     const autoBtn = document.getElementById("btn-auto-hours");
     if (autoBtn) {
       autoBtn.onclick = async () => {
@@ -475,6 +533,16 @@
           autoBtn.disabled = false;
           autoBtn.innerHTML = orig;
         }
+      };
+    }
+
+    // Delete this session
+    const deleteBtn = document.getElementById("btn-delete-session");
+    if (deleteBtn) {
+      deleteBtn.onclick = () => {
+        confirmDeleteSession(meeting, () => {
+          navigateTo(backView);
+        });
       };
     }
   }
