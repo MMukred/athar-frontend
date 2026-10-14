@@ -366,11 +366,14 @@
                       </span>
                     </td>
                     <td><span class="num-ltr" style="font-weight:700;">${stats ? stats.totalHours : 0} h</span></td>
-                    <td>
+                      <td>
                       ${v.whatsapp ? `
-                        <a href="https://wa.me/${v.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:2px 8px; font-size:11px;" onclick="event.stopPropagation();">
-                          ${ic("whatsapp", 12)} WhatsApp
-                        </a>
+                        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                          <a href="https://wa.me/${v.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:2px 8px; font-size:11px;" onclick="event.stopPropagation();">
+                            ${ic("whatsapp", 12)} WhatsApp
+                          </a>
+                          <span class="num-ltr" style="font-size:11px; color:var(--neutral-600); font-family:var(--font-mono);">${v.whatsapp}</span>
+                        </div>
                       ` : '—'}
                     </td>
                     <td><span class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(v.join_date)}</span></td>
@@ -676,10 +679,11 @@
                 <span>${formatDate(vol.join_date)}</span>
               </div>
               ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${vol.phone}</span></div>` : ''}
-              ${vol.whatsapp ? `
+                ${vol.whatsapp ? `
                 <a href="https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:3px 10px;">
                   ${ic("whatsapp", 12)} WhatsApp
                 </a>
+                <span class="num-ltr profile-meta-item" style="font-family:var(--font-mono); font-size:12px; color:var(--neutral-700);">${vol.whatsapp}</span>
               ` : ''}
               ${vol.email ? `<div class="profile-meta-item">${ic("send", 14)} ${vol.email}</div>` : ''}
             </div>
