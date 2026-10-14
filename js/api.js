@@ -262,6 +262,15 @@ window.AtharAPI = (function () {
         (await patch("/settings", { settings: settingsObj })).items,
     },
 
+    // =========================================================
+    // Audit Logs — read-only
+    // =========================================================
+    audit: {
+      list: (params) => get(`/audit-logs${qs(params)}`),
+      get: async (id) => (await get(`/audit-logs/${id}`)).log,
+      stats: () => get("/audit-logs/stats"),
+    },
+
     health: {
       check: () => rawFetch("/health", { method: "GET" }, { skipAuth: true }),
       ready: () => rawFetch("/health/ready", { method: "GET" }, { skipAuth: true }),
