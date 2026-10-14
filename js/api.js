@@ -212,11 +212,11 @@ window.AtharAPI = (function () {
       get: async (id) => (await get(`/volunteer-hours/${id}`)).entry,
       create: async (p) => (await post("/volunteer-hours", p)).entry,
       update: async (id, p) => (await patch(`/volunteer-hours/${id}`, p)).entry,
+      delete: (id) => del(`/volunteer-hours/${id}`),
       approve: async (id) => (await post(`/volunteer-hours/${id}/approve`)).entry,
       reject: async (id, reason) => (await post(`/volunteer-hours/${id}/reject`, { reason })).entry,
       bulkApprove: () => post("/volunteer-hours/bulk-approve"),
     },
-
     criteria: {
       list: async () => (await get("/evaluations/criteria")).items,
       create: async (p) => (await post("/evaluations/criteria", p)).criterion,
