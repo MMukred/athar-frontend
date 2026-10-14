@@ -70,9 +70,9 @@
           </thead>
           <tbody>
             ${filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center; padding:24px;">No volunteer hours match current filters</td></tr>` : filtered.map(h => {
-              const vol = state.volunteers.find(v => v.id === h.volunteer_id);
-              const comm = state.committees.find(c => c.id === h.committee_id);
-              return `
+      const vol = state.volunteers.find(v => v.id === h.volunteer_id);
+      const comm = state.committees.find(c => c.id === h.committee_id);
+      return `
                 <tr>
                   <td>${formatDate(h.date)}</td>
                   <td>
@@ -102,7 +102,7 @@
                   ` : ''}
                 </tr>
               `;
-            }).join('')}
+    }).join('')}
           </tbody>
         </table>
       </div>
@@ -121,6 +121,9 @@
     const addBtn = document.getElementById("btn-log-hours");
     if (addBtn) addBtn.onclick = () => window.AtharModals.openLogHoursSlideover();
 
+    // =========================================================
+    // Bulk approve — calls backend, then refreshes cache
+    // =========================================================
     const approveAllBtn = document.getElementById("btn-hours-approve-all");
     if (approveAllBtn) {
       approveAllBtn.onclick = () => {
@@ -129,22 +132,38 @@
           message: `Are you sure you want to approve all ${pendingCount} pending volunteer hours?`,
           isDanger: false,
           confirmText: t("approve"),
-          onConfirm: () => {
-            const now = new Date().toISOString();
-            state.volunteer_hours.filter(h => h.status === "pending").forEach(h => {
-              h.status = "approved";
-              h.approved_by = App.currentUser.id;
-              h.approved_at = now;
-            });
-            window.AtharStore.save();
-            window.AtharStore.logAudit(App.currentUser, "approve", "volunteer_hours", null, `Bulk approved all pending volunteer hours (${pendingCount} entries)`, null, null);
-            showToast("All hours approved successfully");
-            renderVolunteerHours(container);
-          }
+          onConfirm: async () => {
+            approveAllBtn.disabled = true;
+            const originalHtml = approveAllBtn.innerHTML;
+            approveAllBtn.innerHTML = "Approving…";
+
+            try {
+              const res = await window.AtharAPI.hours.bulkApprove();
+              await window.AtharStore.refreshHours();
+
+              const count = res?.count ?? 0;
+              showToast(
+                count === 1 ? "Approved 1 entry" : `Approved ${count} entries`,
+                "success",
+              );
+              renderVolunteerHours(container);
+            } catch (err) {
+              if (err.status === 403) {
+                showToast("You don't have permission to approve hours.", "error");
+              } else {
+                showToast(err.message || "Bulk approve failed", "error");
+              }
+              approveAllBtn.disabled = false;
+              approveAllBtn.innerHTML = originalHtml;
+            }
+          },
         });
       };
     }
 
+    // =========================================================
+    // Export CSV — uses the local cache (which is refreshed after mutations)
+    // =========================================================
     const exportBtn = document.getElementById("btn-export-hours");
     if (exportBtn) {
       exportBtn.onclick = () => {
