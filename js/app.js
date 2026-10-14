@@ -171,6 +171,8 @@
     openEditWhatsAppTemplate: (...a) => window.AtharModals.openEditWhatsAppTemplate(...a),
     duplicateWhatsAppTemplate: (...a) => window.AtharModals.duplicateWhatsAppTemplate(...a),
     deleteWhatsAppTemplate: (...a) => window.AtharModals.deleteWhatsAppTemplate(...a),
+    openBulkLogHoursSlideover: (...a) => window.AtharModals.openBulkLogHoursSlideover(...a),
+    openBulkRatingModal: (...a) => window.AtharModals.openBulkRatingModal(...a),
 
     logout: () => window.AtharAuth && window.AtharAuth.logout(),
 

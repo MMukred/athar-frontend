@@ -163,7 +163,6 @@ window.AtharModals = (function () {
       if (e.target.id === "vol-backdrop") close();
     };
 
-    // Clear errors on input
     const clearErr = (id) => {
       const el = document.getElementById(id + "-err");
       if (el) { el.textContent = ""; el.style.display = "none"; }
@@ -181,7 +180,6 @@ window.AtharModals = (function () {
     document.getElementById("vol-form").onsubmit = async (e) => {
       e.preventDefault();
 
-      // Reset errors
       ["vol-name-en", "vol-wa", "vol-email"].forEach(clearErr);
 
       const nameEn = document.getElementById("vol-name-en").value.trim();
@@ -196,7 +194,6 @@ window.AtharModals = (function () {
       const status = document.getElementById("vol-status").value;
       const notes = document.getElementById("vol-notes").value;
 
-      // Validation
       let hasError = false;
 
       if (nameEn.length < 2) {
@@ -600,18 +597,15 @@ window.AtharModals = (function () {
   }
 
   // =========================================================
-  // 7. Diff Viewer  (fetches from API on cache miss)
+  // 7. Diff Viewer (fetches from API on cache miss)
   // =========================================================
   async function openDiffModal(logId) {
-    // Try cache first
     const state = window.AtharStore.getState();
     let log = state.audit_logs.find(l => l.id === logId);
 
-    // If not cached (or cache is stale), fetch fresh
     if (!log) {
       try {
         const apiLog = await window.AtharAPI.audit.get(logId);
-        // Adapt API shape → frontend shape
         let createdAt = apiLog.createdAt;
         if (typeof createdAt === "string") {
           createdAt = createdAt.replace("T", " ").slice(0, 19);
@@ -810,6 +804,297 @@ window.AtharModals = (function () {
   function duplicateWhatsAppTemplate() { showToast("Not available yet", "info"); }
   function deleteWhatsAppTemplate() { showToast("Not available yet", "info"); }
 
+  // =========================================================
+  // 14. Bulk Log Hours
+  // =========================================================
+  function openBulkLogHoursSlideover(volunteerIds) {
+    volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
+    if (!volunteerIds.length) { showToast("No volunteers selected", "error"); return; }
+
+    const state = window.AtharStore.getState();
+    const vols = state.volunteers.filter(v => volunteerIds.includes(v.id));
+    if (!vols.length) { showToast("No matching volunteers", "error"); return; }
+
+    const slideover = document.getElementById("slideover-container");
+    slideover.innerHTML = `
+      <div class="overlay-backdrop" id="bhr-backdrop">
+        <div class="slide-over">
+          <div class="drawer-header">
+            <h3 class="drawer-title">${ic("clock", 18)} ${App.currentLang === 'ar' ? 'تسجيل ساعات جماعي' : 'Bulk Log Hours'} (${vols.length})</h3>
+            <button class="btn-icon" id="bhr-close">&times;</button>
+          </div>
+          <div class="drawer-body">
+            <form id="bhr-form" style="display:flex; flex-direction:column; gap:16px;">
+              <div style="padding:12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md);">
+                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:6px;">
+                  ${vols.length} ${App.currentLang === 'ar' ? 'متطوع سيحصل على نفس القيد' : 'volunteer(s) will get the same entry'}
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:110px; overflow-y:auto;">
+                  ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${t("activity")} <span class="required-asterisk">*</span></label>
+                <input type="text" id="bhr-activity" class="form-control" required>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">${t("hours_amount")} <span class="required-asterisk">*</span></label>
+                  <input type="number" step="0.5" min="0.5" id="bhr-hours" class="form-control" required value="2">
+                </div>
+                <div class="form-field">
+                  <label class="field-label">${t("date")} <span class="required-asterisk">*</span></label>
+                  <input type="date" id="bhr-date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${t("notes")}</label>
+                <textarea id="bhr-notes" class="form-control" rows="2"></textarea>
+              </div>
+
+              <div id="bhr-progress" style="display:none; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px; font-weight:600;">
+                ${App.currentLang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…'} <span id="bhr-progress-text">0 / ${vols.length}</span>
+              </div>
+
+              <div class="drawer-footer">
+                <button type="button" class="btn btn-secondary" id="bhr-cancel">${t("cancel")}</button>
+                <button type="submit" class="btn btn-primary" id="bhr-submit">${t("save")} × ${vols.length}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { slideover.innerHTML = ""; };
+    document.getElementById("bhr-close").onclick = close;
+    document.getElementById("bhr-cancel").onclick = close;
+    document.getElementById("bhr-backdrop").onclick = (e) => { if (e.target.id === "bhr-backdrop") close(); };
+
+    document.getElementById("bhr-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const activity = document.getElementById("bhr-activity").value.trim();
+      const hours = Number(document.getElementById("bhr-hours").value);
+      const date = document.getElementById("bhr-date").value;
+      const notes = document.getElementById("bhr-notes").value.trim();
+
+      if (!activity) { showToast("Activity required", "error"); return; }
+      if (!hours || hours <= 0) { showToast("Hours must be > 0", "error"); return; }
+
+      const submitBtn = document.getElementById("bhr-submit");
+      submitBtn.disabled = true;
+      document.getElementById("bhr-progress").style.display = "block";
+
+      let ok = 0, fail = 0;
+
+      for (let i = 0; i < vols.length; i++) {
+        const v = vols[i];
+        document.getElementById("bhr-progress-text").textContent = `${i + 1} / ${vols.length}`;
+        try {
+          await window.AtharAPI.hours.create({
+            volunteerId: v.id,
+            activity,
+            hours,
+            date,
+            description: notes || undefined,
+          });
+          ok++;
+        } catch (err) {
+          fail++;
+        }
+      }
+
+      await window.AtharStore.refreshHours();
+
+      if (fail === 0) showToast(`Logged ${hours}h for ${ok} volunteer(s)`, "success");
+      else if (ok === 0) showToast(`All ${fail} entries failed`, "error");
+      else showToast(`Logged ${ok}, failed ${fail}`, "warning");
+
+      if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
+      close();
+      window.AtharCore.renderCurrentView();
+    };
+  }
+
+  // =========================================================
+  // 15. Bulk Rating
+  // =========================================================
+  function openBulkRatingModal(volunteerIds) {
+    volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
+    if (!volunteerIds.length) { showToast("No volunteers selected", "error"); return; }
+
+    const state = window.AtharStore.getState();
+    const vols = state.volunteers.filter(v => volunteerIds.includes(v.id));
+    const criteria = state.criteria.filter(c => c.is_active);
+
+    if (!vols.length) { showToast("No matching volunteers", "error"); return; }
+    if (!criteria.length) { showToast("No active criteria — add them in Evaluation Criteria", "error"); return; }
+
+    const now = new Date();
+    const defaultPeriod = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="brt-backdrop">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("star", 18)} ${App.currentLang === 'ar' ? 'تقييم جماعي' : 'Bulk Rating'} (${vols.length})</h3>
+            <button class="btn-icon" id="brt-close">&times;</button>
+          </div>
+          <form id="brt-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; max-height:70vh; overflow-y:auto;">
+              <div style="padding:12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); font-size:12px; color:var(--warning);">
+                ⚠ ${App.currentLang === 'ar'
+        ? `جميع الـ ${vols.length} متطوع سيحصلون على نفس التقييم. من لديه تقييم سابق لنفس الفترة سيتم تخطيه.`
+        : `All ${vols.length} volunteer(s) get the same rating. Existing evaluations for this period will be skipped.`}
+              </div>
+
+              <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:90px; overflow-y:auto;">
+                ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
+                  <input type="text" id="brt-period" class="form-control" required value="${defaultPeriod}" placeholder="e.g. 2026-Q4 or October 2026">
+                  <span class="field-hint">${App.currentLang === 'ar' ? 'نص حر' : 'Free text'}</span>
+                </div>
+                <div class="form-field">
+                  <label class="field-label">${t("notes")}</label>
+                  <input type="text" id="brt-notes" class="form-control" maxlength="200">
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">${App.currentLang === 'ar' ? 'بداية الفترة' : 'Period Start'}</label>
+                  <input type="date" id="brt-start" class="form-control">
+                </div>
+                <div class="form-field">
+                  <label class="field-label">${App.currentLang === 'ar' ? 'نهاية الفترة' : 'Period End'}</label>
+                  <input type="date" id="brt-end" class="form-control">
+                </div>
+              </div>
+
+              <h3 style="font-size:15px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">
+                ${t("criteria")} — ${App.currentLang === 'ar' ? 'نفس التقييم للجميع' : 'same for all'}
+              </h3>
+
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                ${criteria.map(c => `
+                  <div class="brt-criterion-row" data-crit-id="${c.id}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md);">
+                    <div>
+                      <div style="font-weight:700;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</div>
+                      <div style="font-size:11px; color:var(--neutral-500);">Weight: ${c.weight}x</div>
+                    </div>
+                    <div class="star-rating" data-crit-id="${c.id}">
+                      <span class="star" data-score="1">★</span>
+                      <span class="star" data-score="2">★</span>
+                      <span class="star" data-score="3">★</span>
+                      <span class="star" data-score="4">★</span>
+                      <span class="star" data-score="5">★</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div id="brt-progress" style="display:none; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px; font-weight:600;">
+                ${App.currentLang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…'} <span id="brt-progress-text">0 / ${vols.length}</span>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="brt-cancel">${t("cancel")}</button>
+              <button type="submit" class="btn btn-primary" id="brt-submit">${App.currentLang === 'ar' ? `تقييم ${vols.length} وحفظ` : `Rate ${vols.length} & Save`}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("brt-close").onclick = close;
+    document.getElementById("brt-cancel").onclick = close;
+    document.getElementById("brt-backdrop").onclick = (e) => { if (e.target.id === "brt-backdrop") close(); };
+
+    const criterionScores = {};
+    modal.querySelectorAll(".star-rating").forEach(ratingEl => {
+      const critId = ratingEl.getAttribute("data-crit-id");
+      const stars = ratingEl.querySelectorAll(".star");
+      stars.forEach(star => {
+        star.onclick = () => {
+          const score = Number(star.getAttribute("data-score"));
+          criterionScores[critId] = score;
+          stars.forEach(s => {
+            const sc = Number(s.getAttribute("data-score"));
+            if (sc <= score) s.classList.add("filled");
+            else s.classList.remove("filled");
+          });
+        };
+      });
+    });
+
+    document.getElementById("brt-form").onsubmit = async (e) => {
+      e.preventDefault();
+
+      const period = document.getElementById("brt-period").value.trim();
+      const notes = document.getElementById("brt-notes").value.trim();
+      const start = document.getElementById("brt-start").value;
+      const end = document.getElementById("brt-end").value;
+
+      if (!period) { showToast("Period required", "error"); return; }
+
+      const missing = criteria.filter(c => criterionScores[c.id] === undefined);
+      if (missing.length > 0) {
+        showToast(`Rate: ${missing.map(c => App.currentLang === 'ar' ? c.name_ar : c.name_en).join(', ')}`, "error");
+        return;
+      }
+
+      const scores = criteria.map(c => ({
+        criteriaId: c.id,
+        score: criterionScores[c.id],
+      }));
+
+      const submitBtn = document.getElementById("brt-submit");
+      submitBtn.disabled = true;
+      document.getElementById("brt-progress").style.display = "block";
+
+      let ok = 0, skipped = 0, fail = 0;
+
+      for (let i = 0; i < vols.length; i++) {
+        const v = vols[i];
+        document.getElementById("brt-progress-text").textContent = `${i + 1} / ${vols.length}`;
+        try {
+          await window.AtharAPI.evaluations.create({
+            volunteerId: v.id,
+            periodLabel: period,
+            periodStart: start || undefined,
+            periodEnd: end || undefined,
+            notes: notes || undefined,
+            scores,
+          });
+          ok++;
+        } catch (err) {
+          if (err.code === "EVALUATION_EXISTS") skipped++;
+          else fail++;
+        }
+      }
+
+      await window.AtharStore.refreshEvaluations();
+
+      let msg = `Rated ${ok}`;
+      if (skipped) msg += `, skipped ${skipped} (already rated)`;
+      if (fail) msg += `, ${fail} failed`;
+      showToast(msg, fail ? "warning" : "success");
+
+      if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
+      close();
+      window.AtharCore.renderCurrentView();
+    };
+  }
+
   return {
     openAddVolunteerSlideover,
     openTransferModal,
@@ -824,6 +1109,8 @@ window.AtharModals = (function () {
     openEditWhatsAppTemplate,
     duplicateWhatsAppTemplate,
     deleteWhatsAppTemplate,
+    openBulkLogHoursSlideover,
+    openBulkRatingModal,
     buildSamplePreview,
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
