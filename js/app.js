@@ -233,22 +233,33 @@
       }
     },
 
-    rejectHours: async function (hoursId) {
-      const reason = prompt(t("rejection_prompt"), "Hours unverified");
-      if (!reason || reason.trim().length < 3) return;
+    rejectHours: function (hoursId) {
+      window.AtharModals.openRejectHoursModal(hoursId);
+    },
 
-      try {
-        await window.AtharAPI.hours.reject(hoursId, reason.trim());
-        await window.AtharStore.refreshHours();
-        showToast(t("rejected_successfully"), "warning");
-        renderCurrentView();
-      } catch (err) {
-        if (err.code === "ALREADY_REJECTED") {
-          showToast("Hours already rejected", "warning");
-        } else {
-          showToast(err.message || "Rejection failed", "error");
-        }
-      }
+    editHours: function (hoursId) {
+      window.AtharModals.openEditHoursModal(hoursId);
+    },
+
+    deleteHoursEntry: function (hoursId) {
+      window.AtharCore.showConfirmModal({
+        title: t("confirm_destructive"),
+        message: App.currentLang === 'ar'
+          ? 'سيتم حذف سجل الساعات نهائياً. لا يمكن التراجع.'
+          : 'This hours entry will be permanently deleted. This cannot be undone.',
+        confirmText: t("delete"),
+        isDanger: true,
+        onConfirm: async function () {
+          try {
+            await window.AtharAPI.hours.delete(hoursId);
+            await window.AtharStore.refreshHours();
+            showToast(App.currentLang === 'ar' ? 'تم الحذف' : 'Entry deleted', "warning");
+            renderCurrentView();
+          } catch (err) {
+            showToast(err.message || "Delete failed", "error");
+          }
+        },
+      });
     },
 
     // =========================================================

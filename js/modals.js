@@ -821,7 +821,23 @@ window.AtharModals = (function () {
   // =========================================================
   function openEditWhatsAppTemplate() { showToast("WhatsApp templates are local-only for now", "info"); }
   function duplicateWhatsAppTemplate() { showToast("Not available yet", "info"); }
-  function deleteWhatsAppTemplate() { showToast("Not available yet", "info"); }
+  function deleteWhatsAppTemplate(templateId) {
+    const state = window.AtharStore.getState();
+    const tmpl = state.whatsapp_templates.find(x => x.id === templateId);
+    if (!tmpl) return;
+
+    showConfirmModal({
+      title: t("confirm_destructive"),
+      message: `${App.currentLang === 'ar' ? 'حذف القالب' : 'Delete template'} "${tmpl.name}" (${tmpl.language.toUpperCase()})?`,
+      confirmText: t("delete"),
+      isDanger: true,
+      onConfirm: () => {
+        state.whatsapp_templates = state.whatsapp_templates.filter(x => x.id !== templateId);
+        showToast(App.currentLang === 'ar' ? 'تم حذف القالب محلياً' : 'Template removed locally', "warning");
+        window.AtharCore.renderCurrentView();
+      },
+    });
+  }
 
   // =========================================================
   // 14. Bulk Log Hours
@@ -1114,6 +1130,224 @@ window.AtharModals = (function () {
     };
   }
 
+  // =========================================================
+  // 16. Reject Hours Modal
+  // =========================================================
+  function openRejectHoursModal(hoursId) {
+    const state = window.AtharStore.getState();
+    const entry = state.volunteer_hours.find(h => h.id === hoursId);
+    if (!entry) return;
+    const vol = state.volunteers.find(v => v.id === entry.volunteer_id);
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="rej-backdrop">
+        <div class="modal-dialog" style="max-width:480px;">
+          <div class="modal-header">
+            <h3 class="modal-title" style="color:var(--danger);">${ic("x_circle", 18)} ${t("reject")}</h3>
+            <button class="btn-icon" id="rej-close">&times;</button>
+          </div>
+          <form id="rej-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+              <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
+                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
+                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${entry.activity}</div>
+                <div style="margin-top:4px;"><strong>${t("hours")}:</strong> <span class="num-ltr">${entry.hours}</span> h</div>
+                <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">${t("reject_reason")} <span class="required-asterisk">*</span></label>
+                <textarea id="rej-reason" class="form-control" rows="3" maxlength="500" required placeholder="${t("rejection_prompt")}"></textarea>
+                <span class="field-hint" id="rej-reason-err" style="color:var(--danger); display:none;">${App.currentLang === 'ar' ? 'السبب مطلوب (٥ أحرف على الأقل).' : 'Reason is required (at least 5 characters).'}</span>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="rej-cancel">${t("cancel")}</button>
+              <button type="submit" class="btn btn-danger" id="rej-submit">${t("reject")}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("rej-close").onclick = close;
+    document.getElementById("rej-cancel").onclick = close;
+    document.getElementById("rej-backdrop").onclick = (e) => {
+      if (e.target.id === "rej-backdrop") close();
+    };
+
+    document.getElementById("rej-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const reason = document.getElementById("rej-reason").value.trim();
+      const errEl = document.getElementById("rej-reason-err");
+
+      if (reason.length < 5) {
+        errEl.style.display = "block";
+        return;
+      }
+      errEl.style.display = "none";
+
+      const btn = document.getElementById("rej-submit");
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = "…";
+
+      try {
+        await window.AtharAPI.hours.reject(hoursId, reason);
+        await window.AtharStore.refreshHours();
+        showToast(t("rejected_successfully"), "warning");
+        close();
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        if (err.code === "ALREADY_REJECTED") {
+          showToast("Hours already rejected", "warning");
+        } else {
+          showToast(err.message || "Rejection failed", "error");
+        }
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    };
+
+    setTimeout(() => document.getElementById("rej-reason").focus(), 100);
+  }
+
+  // =========================================================
+  // 17. Edit Hours Modal (adjust / subtract / zero-out)
+  // =========================================================
+  function openEditHoursModal(hoursId) {
+    const state = window.AtharStore.getState();
+    const entry = state.volunteer_hours.find(h => h.id === hoursId);
+    if (!entry) return;
+    const vol = state.volunteers.find(v => v.id === entry.volunteer_id);
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="eh-backdrop">
+        <div class="modal-dialog" style="max-width:500px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("clock", 18)} ${App.currentLang === 'ar' ? 'تعديل الساعات' : 'Adjust Hours'}</h3>
+            <button class="btn-icon" id="eh-close">&times;</button>
+          </div>
+          <form id="eh-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+              <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
+                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
+                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${entry.activity}</div>
+                <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
+                <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الحالي' : 'Current'}:</strong> <span class="num-ltr" style="color:var(--primary); font-weight:700;">${entry.hours} h</span></div>
+                <div style="margin-top:4px;"><strong>${t("status")}:</strong> <span class="badge ${entry.status === 'approved' ? 'badge-success' : entry.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${t(entry.status)}</span></div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة (ساعات)' : 'New hours value'}</label>
+                <input type="number" step="0.25" min="0" id="eh-hours" class="form-control num-ltr" value="${entry.hours}" required>
+                <span class="field-hint">${App.currentLang === 'ar' ? 'اضبط القيمة، أو اكتب 0 لإلغاء الساعات.' : 'Set to a new value, or 0 to zero them out.'}</span>
+              </div>
+
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="0">Set to 0</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="-0.5">− 0.5h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="-1">− 1h</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="-2">− 2h</button>
+              </div>
+            </div>
+            <div class="modal-footer" style="justify-content:space-between;">
+              <button type="button" class="btn btn-danger-outline" id="eh-delete">${ic("trash", 14)} ${t("delete")}</button>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary" id="eh-cancel">${t("cancel")}</button>
+                <button type="submit" class="btn btn-primary" id="eh-submit">${t("save")}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const hoursInput = document.getElementById("eh-hours");
+
+    modal.querySelectorAll("[data-quick]").forEach(btn => {
+      btn.onclick = () => {
+        const q = btn.getAttribute("data-quick");
+        if (q === "0") {
+          hoursInput.value = 0;
+        } else {
+          const delta = Number(q);
+          const cur = Number(hoursInput.value) || 0;
+          hoursInput.value = Math.max(0, +(cur + delta).toFixed(2));
+        }
+      };
+    });
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("eh-close").onclick = close;
+    document.getElementById("eh-cancel").onclick = close;
+    document.getElementById("eh-backdrop").onclick = (e) => {
+      if (e.target.id === "eh-backdrop") close();
+    };
+
+    document.getElementById("eh-delete").onclick = () => {
+      showConfirmModal({
+        title: t("confirm_destructive"),
+        message: App.currentLang === 'ar'
+          ? 'سيتم حذف هذا السجل نهائياً.'
+          : 'This hours entry will be permanently deleted.',
+        confirmText: t("delete"),
+        isDanger: true,
+        onConfirm: async () => {
+          try {
+            await window.AtharAPI.hours.delete(hoursId);
+            await window.AtharStore.refreshHours();
+            showToast(App.currentLang === 'ar' ? 'تم حذف السجل' : 'Entry deleted', "warning");
+            close();
+            window.AtharCore.renderCurrentView();
+          } catch (err) {
+            showToast(err.message || "Delete failed", "error");
+          }
+        },
+      });
+    };
+
+    document.getElementById("eh-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const newHours = Number(hoursInput.value);
+
+      if (isNaN(newHours) || newHours < 0) {
+        showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error");
+        return;
+      }
+
+      if (newHours === 0) {
+        document.getElementById("eh-delete").click();
+        return;
+      }
+
+      const btn = document.getElementById("eh-submit");
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = "…";
+
+      try {
+        await window.AtharAPI.hours.update(hoursId, { hours: newHours });
+        await window.AtharStore.refreshHours();
+        showToast(t("updated_successfully"), "success");
+        close();
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        if (err.code === "HOURS_LOCKED") {
+          showToast(App.currentLang === 'ar' ? 'لا يمكن تعديل الساعات المعتمدة إلا من قبل المعتمد.' : 'Approved/rejected hours can only be edited by an approver.', "error");
+        } else {
+          showToast(err.message || "Update failed", "error");
+        }
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    };
+
+    setTimeout(() => hoursInput.focus(), 100);
+  }
+
   return {
     openAddVolunteerSlideover,
     openTransferModal,
@@ -1131,6 +1365,8 @@ window.AtharModals = (function () {
     deleteWhatsAppTemplate,
     openBulkLogHoursSlideover,
     openBulkRatingModal,
+    openRejectHoursModal,
+    openEditHoursModal,
     buildSamplePreview,
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
