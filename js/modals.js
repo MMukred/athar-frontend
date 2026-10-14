@@ -412,10 +412,12 @@ window.AtharModals = (function () {
   }
 
   // =========================================================
-  // 4. Create Meeting
+  // 4. Create Meeting / Event
   // =========================================================
-  function openCreateMeetingSlideover(committeeId) {
+  function openCreateMeetingSlideover(committeeId, kind) {
     committeeId = committeeId || null;
+    kind = kind === "event" ? "event" : "meeting";
+    const isEvent = kind === "event";
     const state = window.AtharStore.getState();
     const slideover = document.getElementById("slideover-container");
 
@@ -423,7 +425,12 @@ window.AtharModals = (function () {
       <div class="overlay-backdrop" id="mt-backdrop">
         <div class="slide-over">
           <div class="drawer-header">
-            <h3 class="drawer-title">${ic("calendar", 18)} ${t("add_meeting")}</h3>
+            <h3 class="drawer-title">
+              ${ic(isEvent ? "sparkles" : "calendar", 18)}
+              ${isEvent
+        ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event')
+        : t("add_meeting")}
+            </h3>
             <button class="btn-icon" id="mt-close">&times;</button>
           </div>
           <div class="drawer-body">
@@ -453,10 +460,17 @@ window.AtharModals = (function () {
                   <input type="time" id="mt-start" class="form-control" value="18:00" required>
                 </div>
                 <div class="form-field">
-                  <label class="field-label">${t("end_time")}</label>
-                  <input type="time" id="mt-end" class="form-control" value="19:30">
+                  <label class="field-label">${t("end_time")} ${isEvent ? '<span class="required-asterisk">*</span>' : ''}</label>
+                  <input type="time" id="mt-end" class="form-control" value="19:30" ${isEvent ? 'required' : ''}>
                 </div>
               </div>
+              ${isEvent ? `
+                <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
+                  ${App.currentLang === 'ar'
+          ? 'لاحقاً يمكنك تسجيل ساعات تلقائياً لكل من حضر، حسب مدة الفعالية.'
+          : 'After saving attendance, you can auto-log hours for everyone present, based on event duration.'}
+                </div>
+              ` : ''}
               <div class="form-field">
                 <label class="field-label">${t("location")}</label>
                 <input type="text" id="mt-loc" class="form-control" value="Room 3">
@@ -488,6 +502,7 @@ window.AtharModals = (function () {
 
       try {
         const created = await window.AtharAPI.meetings.create({
+          kind,
           titleEn,
           titleAr,
           meetingDate: date,
@@ -501,9 +516,13 @@ window.AtharModals = (function () {
         close();
         navigateTo("meeting-detail", { id: created.id });
       } catch (err) {
-        showToast(err.message || "Failed to create meeting", "error");
+        showToast(err.message || "Failed to create", "error");
       }
     };
+  }
+
+  function openCreateEventSlideover(committeeId) {
+    return openCreateMeetingSlideover(committeeId, "event");
   }
 
   // =========================================================
@@ -1100,6 +1119,7 @@ window.AtharModals = (function () {
     openTransferModal,
     openLogHoursSlideover,
     openCreateMeetingSlideover,
+    openCreateEventSlideover,
     openAddCommitteeModal,
     openPermissionsEditor,
     openDiffModal,
