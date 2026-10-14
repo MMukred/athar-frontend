@@ -203,6 +203,8 @@ window.AtharAPI = (function () {
       getRoster: (id) => get(`/meetings/${id}/roster`),
       saveRoster: (id, records, markCompleted = true) =>
         post(`/meetings/${id}/roster`, { records, markMeetingCompleted: markCompleted }),
+      autoHours: (id, autoApprove = false) =>
+        post(`/meetings/${id}/auto-hours`, { autoApprove }),
     },
 
     hours: {
