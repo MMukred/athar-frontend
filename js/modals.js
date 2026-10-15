@@ -2,7 +2,6 @@
  * Athar Modals — API-backed
  * All mutations go through window.AtharAPI, then refresh the cache.
  */
-
 window.AtharModals = (function () {
   "use strict";
 
@@ -88,9 +87,7 @@ window.AtharModals = (function () {
               </div>
 
               <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
-                ${App.currentLang === 'ar'
-        ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.'
-        : 'At least one of WhatsApp number or email is required.'}
+                ${App.currentLang === 'ar' ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.' : 'At least one of WhatsApp number or email is required.'}
               </div>
 
               <div class="form-grid">
@@ -159,27 +156,17 @@ window.AtharModals = (function () {
     const close = () => { slideover.innerHTML = ""; };
     document.getElementById("vol-close").onclick = close;
     document.getElementById("vol-cancel").onclick = close;
-    document.getElementById("vol-backdrop").onclick = (e) => {
-      if (e.target.id === "vol-backdrop") close();
-    };
+    document.getElementById("vol-backdrop").onclick = (e) => { if (e.target.id === "vol-backdrop") close(); };
 
-    const clearErr = (id) => {
-      const el = document.getElementById(id + "-err");
-      if (el) { el.textContent = ""; el.style.display = "none"; }
-    };
+    const clearErr = (id) => { const el = document.getElementById(id + "-err"); if (el) { el.textContent = ""; el.style.display = "none"; } };
     ["vol-name-en", "vol-wa", "vol-email"].forEach((id) => {
       const input = document.getElementById(id);
       if (input) input.addEventListener("input", () => clearErr(id));
     });
-
-    const setErr = (id, msg) => {
-      const el = document.getElementById(id + "-err");
-      if (el) { el.textContent = msg; el.style.display = "block"; }
-    };
+    const setErr = (id, msg) => { const el = document.getElementById(id + "-err"); if (el) { el.textContent = msg; el.style.display = "block"; } };
 
     document.getElementById("vol-form").onsubmit = async (e) => {
       e.preventDefault();
-
       ["vol-name-en", "vol-wa", "vol-email"].forEach(clearErr);
 
       const nameEn = document.getElementById("vol-name-en").value.trim();
@@ -195,41 +182,12 @@ window.AtharModals = (function () {
       const notes = document.getElementById("vol-notes").value;
 
       let hasError = false;
+      if (nameEn.length < 2) { setErr("vol-name-en", "Name must be at least 2 characters."); hasError = true; }
+      if (!wa && !email) { setErr("vol-wa", "Provide a WhatsApp number or an email."); setErr("vol-email", "Provide a WhatsApp number or an email."); hasError = true; }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("vol-email", "Invalid email format."); hasError = true; }
+      if (hasError) { showToast("Please fix the highlighted fields.", "error"); return; }
 
-      if (nameEn.length < 2) {
-        setErr("vol-name-en", "Name must be at least 2 characters.");
-        hasError = true;
-      }
-
-      if (!wa && !email) {
-        setErr("vol-wa", "Provide a WhatsApp number or an email.");
-        setErr("vol-email", "Provide a WhatsApp number or an email.");
-        hasError = true;
-      }
-
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setErr("vol-email", "Invalid email format.");
-        hasError = true;
-      }
-
-      if (hasError) {
-        showToast("Please fix the highlighted fields.", "error");
-        return;
-      }
-
-      const payload = {
-        fullName: nameEn,
-        fullNameAr: nameAr || undefined,
-        whatsapp: wa || undefined,
-        email: email || undefined,
-        gender: gender || undefined,
-        nationality: nationality || undefined,
-        studyLevel: studyLevel || undefined,
-        dob: dob || undefined,
-        committeeId: commId,
-        status,
-        notes: notes || undefined,
-      };
+      const payload = { fullName: nameEn, fullNameAr: nameAr || undefined, whatsapp: wa || undefined, email: email || undefined, gender: gender || undefined, nationality: nationality || undefined, studyLevel: studyLevel || undefined, dob: dob || undefined, committeeId: commId, status, notes: notes || undefined };
 
       const submitBtn = document.getElementById("vol-submit");
       submitBtn.disabled = true;
@@ -237,26 +195,18 @@ window.AtharModals = (function () {
       submitBtn.textContent = "Saving…";
 
       try {
-        if (isEdit) {
-          await window.AtharAPI.volunteers.update(existing.id, payload);
-          showToast(t("updated_successfully"), "success");
-        } else {
-          await window.AtharAPI.volunteers.create(payload);
-          showToast(t("saved_successfully"), "success");
-        }
+        if (isEdit) { await window.AtharAPI.volunteers.update(existing.id, payload); showToast(t("updated_successfully"), "success"); }
+        else { await window.AtharAPI.volunteers.create(payload); showToast(t("saved_successfully"), "success"); }
         await window.AtharStore.refreshVolunteers();
         close();
         window.AtharCore.renderCurrentView();
       } catch (err) {
-        if (err.code === "DUPLICATE_NATIONAL_ID" || err.code === "DUPLICATE_RECORD") {
-          showToast(t("error_duplicate_id"), "error");
-        } else if (err.code === "MISSING_CONTACT" || (err.status === 422 && err.details)) {
+        if (err.code === "DUPLICATE_NATIONAL_ID" || err.code === "DUPLICATE_RECORD") { showToast(t("error_duplicate_id"), "error"); }
+        else if (err.code === "MISSING_CONTACT" || (err.status === 422 && err.details)) {
           if (err.details?.whatsapp) setErr("vol-wa", Array.isArray(err.details.whatsapp) ? err.details.whatsapp[0] : err.details.whatsapp);
           if (err.details?.email) setErr("vol-email", Array.isArray(err.details.email) ? err.details.email[0] : err.details.email);
           showToast("Please fix the highlighted fields.", "error");
-        } else {
-          showToast(err.message || "Save failed", "error");
-        }
+        } else { showToast(err.message || "Save failed", "error"); }
         submitBtn.disabled = false;
         submitBtn.textContent = origText;
       }
@@ -320,9 +270,7 @@ window.AtharModals = (function () {
         showToast(t("transfer_success"), "success");
         close();
         window.AtharCore.renderCurrentView();
-      } catch (err) {
-        showToast(err.message || "Transfer failed", "error");
-      }
+      } catch (err) { showToast(err.message || "Transfer failed", "error"); }
     };
   }
 
@@ -390,24 +338,14 @@ window.AtharModals = (function () {
       const amount = Number(document.getElementById("hr-amount").value);
       const date = document.getElementById("hr-date").value;
       const notes = document.getElementById("hr-notes").value;
-
       if (amount <= 0) { showToast("Hours must be > 0", "error"); return; }
-
       try {
-        await window.AtharAPI.hours.create({
-          volunteerId: vId,
-          activity,
-          hours: amount,
-          date,
-          description: notes || undefined,
-        });
+        await window.AtharAPI.hours.create({ volunteerId: vId, activity, hours: amount, date, description: notes || undefined });
         await window.AtharStore.refreshHours();
         showToast(t("saved_successfully"), "success");
         close();
         window.AtharCore.renderCurrentView();
-      } catch (err) {
-        showToast(err.message || "Failed to log hours", "error");
-      }
+      } catch (err) { showToast(err.message || "Failed to log hours", "error"); }
     };
   }
 
@@ -427,9 +365,7 @@ window.AtharModals = (function () {
           <div class="drawer-header">
             <h3 class="drawer-title">
               ${ic(isEvent ? "sparkles" : "calendar", 18)}
-              ${isEvent
-        ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event')
-        : t("add_meeting")}
+              ${isEvent ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event') : t("add_meeting")}
             </h3>
             <button class="btn-icon" id="mt-close">&times;</button>
           </div>
@@ -466,9 +402,7 @@ window.AtharModals = (function () {
               </div>
               ${isEvent ? `
                 <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
-                  ${App.currentLang === 'ar'
-          ? 'لاحقاً يمكنك تسجيل ساعات تلقائياً لكل من حضر، حسب مدة الفعالية.'
-          : 'After saving attendance, you can auto-log hours for everyone present, based on event duration.'}
+                  ${App.currentLang === 'ar' ? 'لاحقاً يمكنك تسجيل ساعات تلقائياً لكل من حضر، حسب مدة الفعالية.' : 'After saving attendance, you can auto-log hours for everyone present, based on event duration.'}
                 </div>
               ` : ''}
               <div class="form-field">
@@ -499,25 +433,13 @@ window.AtharModals = (function () {
       const start = document.getElementById("mt-start").value;
       const end = document.getElementById("mt-end").value;
       const loc = document.getElementById("mt-loc").value;
-
       try {
-        const created = await window.AtharAPI.meetings.create({
-          kind,
-          titleEn,
-          titleAr,
-          meetingDate: date,
-          startTime: start,
-          endTime: end || undefined,
-          location: loc || undefined,
-          committeeId: commId,
-        });
+        const created = await window.AtharAPI.meetings.create({ kind, titleEn, titleAr, meetingDate: date, startTime: start, endTime: end || undefined, location: loc || undefined, committeeId: commId });
         await window.AtharStore.refreshMeetings();
         showToast(t("saved_successfully"), "success");
         close();
         navigateTo("meeting-detail", { id: created.id });
-      } catch (err) {
-        showToast(err.message || "Failed to create", "error");
-      }
+      } catch (err) { showToast(err.message || "Failed to create", "error"); }
     };
   }
 
@@ -581,27 +503,14 @@ window.AtharModals = (function () {
       const nameAr = document.getElementById("cm-name-ar").value.trim();
       const descEn = document.getElementById("cm-desc-en").value;
       const descAr = document.getElementById("cm-desc-ar").value;
-
       if (!nameEn || !nameAr) { showToast("Both names required", "error"); return; }
-
       try {
-        if (isEdit) {
-          await window.AtharAPI.committees.update(existing.id, {
-            nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined,
-          });
-          showToast(t("updated_successfully"), "success");
-        } else {
-          await window.AtharAPI.committees.create({
-            nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined,
-          });
-          showToast(t("saved_successfully"), "success");
-        }
+        if (isEdit) { await window.AtharAPI.committees.update(existing.id, { nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined }); showToast(t("updated_successfully"), "success"); }
+        else { await window.AtharAPI.committees.create({ nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined }); showToast(t("saved_successfully"), "success"); }
         await window.AtharStore.refreshCommittees();
         close();
         window.AtharCore.renderCurrentView();
-      } catch (err) {
-        showToast(err.message || "Save failed", "error");
-      }
+      } catch (err) { showToast(err.message || "Save failed", "error"); }
     };
   }
 
@@ -616,7 +525,7 @@ window.AtharModals = (function () {
   }
 
   // =========================================================
-  // 7. Diff Viewer (fetches from API on cache miss)
+  // 7. Diff Viewer
   // =========================================================
   async function openDiffModal(logId) {
     const state = window.AtharStore.getState();
@@ -626,36 +535,14 @@ window.AtharModals = (function () {
       try {
         const apiLog = await window.AtharAPI.audit.get(logId);
         let createdAt = apiLog.createdAt;
-        if (typeof createdAt === "string") {
-          createdAt = createdAt.replace("T", " ").slice(0, 19);
-        } else if (createdAt) {
-          try {
-            createdAt = new Date(createdAt).toISOString().replace("T", " ").slice(0, 19);
-          } catch { createdAt = ""; }
-        }
-
-        log = {
-          id: apiLog.id,
-          user_id: apiLog.userId,
-          user_name: apiLog.userName || "System",
-          action: apiLog.action,
-          entity: apiLog.entity,
-          entity_id: apiLog.entityId,
-          details: apiLog.details,
-          old_value: apiLog.oldValue,
-          new_value: apiLog.newValue,
-          created_at: createdAt,
-        };
-      } catch (err) {
-        showToast("Could not load audit entry", "error");
-        return;
-      }
+        if (typeof createdAt === "string") createdAt = createdAt.replace("T", " ").slice(0, 19);
+        else if (createdAt) { try { createdAt = new Date(createdAt).toISOString().replace("T", " ").slice(0, 19); } catch { createdAt = ""; } }
+        log = { id: apiLog.id, user_id: apiLog.userId, user_name: apiLog.userName || "System", action: apiLog.action, entity: apiLog.entity, entity_id: apiLog.entityId, details: apiLog.details, old_value: apiLog.oldValue, new_value: apiLog.newValue, created_at: createdAt };
+      } catch (err) { showToast("Could not load audit entry", "error"); return; }
     }
 
     if (!log) return;
-
     const diffHtml = window.DiffViewer.renderDiff(log.old_value, log.new_value);
-
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
       <div class="overlay-backdrop" id="df-backdrop">
@@ -666,16 +553,9 @@ window.AtharModals = (function () {
           </div>
           <div class="modal-body">
             <div style="margin-bottom:16px; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px;">
-              <div>
-                <strong>Action:</strong>
-                <span class="badge badge-primary">${log.action}</span>
-                &bull;
-                <strong>Entity:</strong> <code>${log.entity || '—'}</code>
-              </div>
+              <div><strong>Action:</strong> <span class="badge badge-primary">${log.action}</span> &bull; <strong>Entity:</strong> <code>${log.entity || '—'}</code></div>
               ${log.details ? `<div style="margin-top:4px;"><strong>Details:</strong> ${log.details}</div>` : ''}
-              <div style="margin-top:4px; color:var(--neutral-500); font-size:11px;" class="num-ltr">
-                ${log.created_at} by ${log.user_name}
-              </div>
+              <div style="margin-top:4px; color:var(--neutral-500); font-size:11px;" class="num-ltr">${log.created_at} by ${log.user_name}</div>
             </div>
             ${diffHtml}
           </div>
@@ -685,13 +565,10 @@ window.AtharModals = (function () {
         </div>
       </div>
     `;
-
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("df-close").onclick = close;
     document.getElementById("df-cancel").onclick = close;
-    document.getElementById("df-backdrop").onclick = (e) => {
-      if (e.target.id === "df-backdrop") close();
-    };
+    document.getElementById("df-backdrop").onclick = (e) => { if (e.target.id === "df-backdrop") close(); };
   }
 
   // =========================================================
@@ -772,9 +649,7 @@ window.AtharModals = (function () {
         showToast(t("cert_revoked_successfully"), "warning");
         close();
         window.AtharCore.renderCurrentView();
-      } catch (err) {
-        showToast(err.message || "Revoke failed", "error");
-      }
+      } catch (err) { showToast(err.message || "Revoke failed", "error"); }
     };
   }
 
@@ -810,10 +685,7 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("um-close").onclick = close;
     document.getElementById("um-backdrop").onclick = (e) => { if (e.target.id === "um-backdrop") close(); };
-    document.getElementById("um-logout").onclick = () => {
-      close();
-      if (window.AtharAuth) window.AtharAuth.logout();
-    };
+    document.getElementById("um-logout").onclick = () => { close(); if (window.AtharAuth) window.AtharAuth.logout(); };
   }
 
   // =========================================================
@@ -825,7 +697,6 @@ window.AtharModals = (function () {
     const state = window.AtharStore.getState();
     const tmpl = state.whatsapp_templates.find(x => x.id === templateId);
     if (!tmpl) return;
-
     showConfirmModal({
       title: t("confirm_destructive"),
       message: `${App.currentLang === 'ar' ? 'حذف القالب' : 'Delete template'} "${tmpl.name}" (${tmpl.language.toUpperCase()})?`,
@@ -845,7 +716,6 @@ window.AtharModals = (function () {
   function openBulkLogHoursSlideover(volunteerIds) {
     volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
     if (!volunteerIds.length) { showToast("No volunteers selected", "error"); return; }
-
     const state = window.AtharStore.getState();
     const vols = state.volunteers.filter(v => volunteerIds.includes(v.id));
     if (!vols.length) { showToast("No matching volunteers", "error"); return; }
@@ -861,19 +731,15 @@ window.AtharModals = (function () {
           <div class="drawer-body">
             <form id="bhr-form" style="display:flex; flex-direction:column; gap:16px;">
               <div style="padding:12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md);">
-                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:6px;">
-                  ${vols.length} ${App.currentLang === 'ar' ? 'متطوع سيحصل على نفس القيد' : 'volunteer(s) will get the same entry'}
-                </div>
+                <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:6px;">${vols.length} ${App.currentLang === 'ar' ? 'متطوع سيحصل على نفس القيد' : 'volunteer(s) will get the same entry'}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:110px; overflow-y:auto;">
                   ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
                 </div>
               </div>
-
               <div class="form-field">
                 <label class="field-label">${t("activity")} <span class="required-asterisk">*</span></label>
                 <input type="text" id="bhr-activity" class="form-control" required>
               </div>
-
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("hours_amount")} <span class="required-asterisk">*</span></label>
@@ -884,16 +750,13 @@ window.AtharModals = (function () {
                   <input type="date" id="bhr-date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required>
                 </div>
               </div>
-
               <div class="form-field">
                 <label class="field-label">${t("notes")}</label>
                 <textarea id="bhr-notes" class="form-control" rows="2"></textarea>
               </div>
-
               <div id="bhr-progress" style="display:none; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px; font-weight:600;">
                 ${App.currentLang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…'} <span id="bhr-progress-text">0 / ${vols.length}</span>
               </div>
-
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="bhr-cancel">${t("cancel")}</button>
                 <button type="submit" class="btn btn-primary" id="bhr-submit">${t("save")} × ${vols.length}</button>
@@ -915,39 +778,24 @@ window.AtharModals = (function () {
       const hours = Number(document.getElementById("bhr-hours").value);
       const date = document.getElementById("bhr-date").value;
       const notes = document.getElementById("bhr-notes").value.trim();
-
       if (!activity) { showToast("Activity required", "error"); return; }
       if (!hours || hours <= 0) { showToast("Hours must be > 0", "error"); return; }
-
       const submitBtn = document.getElementById("bhr-submit");
       submitBtn.disabled = true;
       document.getElementById("bhr-progress").style.display = "block";
-
       let ok = 0, fail = 0;
-
       for (let i = 0; i < vols.length; i++) {
         const v = vols[i];
         document.getElementById("bhr-progress-text").textContent = `${i + 1} / ${vols.length}`;
         try {
-          await window.AtharAPI.hours.create({
-            volunteerId: v.id,
-            activity,
-            hours,
-            date,
-            description: notes || undefined,
-          });
+          await window.AtharAPI.hours.create({ volunteerId: v.id, activity, hours, date, description: notes || undefined });
           ok++;
-        } catch (err) {
-          fail++;
-        }
+        } catch (err) { fail++; }
       }
-
       await window.AtharStore.refreshHours();
-
       if (fail === 0) showToast(`Logged ${hours}h for ${ok} volunteer(s)`, "success");
       else if (ok === 0) showToast(`All ${fail} entries failed`, "error");
       else showToast(`Logged ${ok}, failed ${fail}`, "warning");
-
       if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
       close();
       window.AtharCore.renderCurrentView();
@@ -960,16 +808,11 @@ window.AtharModals = (function () {
   function openBulkRatingModal(volunteerIds) {
     volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
     if (!volunteerIds.length) { showToast("No volunteers selected", "error"); return; }
-
     const state = window.AtharStore.getState();
     const vols = state.volunteers.filter(v => volunteerIds.includes(v.id));
     const criteria = state.criteria.filter(c => c.is_active);
-
     if (!vols.length) { showToast("No matching volunteers", "error"); return; }
     if (!criteria.length) { showToast("No active criteria — add them in Evaluation Criteria", "error"); return; }
-
-    const now = new Date();
-    const defaultPeriod = "";
 
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
@@ -982,26 +825,22 @@ window.AtharModals = (function () {
           <form id="brt-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; max-height:70vh; overflow-y:auto;">
               <div style="padding:12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); font-size:12px; color:var(--warning);">
-                ⚠ ${App.currentLang === 'ar'
-        ? `جميع الـ ${vols.length} متطوع سيحصلون على نفس التقييم. من لديه تقييم سابق لنفس الفترة سيتم تخطيه.`
-        : `All ${vols.length} volunteer(s) get the same rating. Existing evaluations for this period will be skipped.`}
+                ⚠ ${App.currentLang === 'ar' ? `جميع الـ ${vols.length} متطوع سيحصلون على نفس التقييم.` : `All ${vols.length} volunteer(s) get the same rating.`}
               </div>
-
               <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:90px; overflow-y:auto;">
                 ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
               </div>
-
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
-                  <input type="text" id="brt-period" class="form-control" required value="" placeholder="${App.currentLang === 'ar' ? 'مثال: فعالية اليوم المفتوح ٢٠٢٦' : 'e.g. Open Day Event 2026'}">                  <span class="field-hint">${App.currentLang === 'ar' ? 'نص حر' : 'Free text'}</span>
+                  <input type="text" id="brt-period" class="form-control" required value="" placeholder="${App.currentLang === 'ar' ? 'مثال: فعالية اليوم المفتوح ٢٠٢٦' : 'e.g. Open Day Event 2026'}">
+                  <span class="field-hint">${App.currentLang === 'ar' ? 'نص حر' : 'Free text'}</span>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("notes")}</label>
                   <input type="text" id="brt-notes" class="form-control" maxlength="200">
                 </div>
               </div>
-
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${App.currentLang === 'ar' ? 'بداية الفترة' : 'Period Start'}</label>
@@ -1012,11 +851,7 @@ window.AtharModals = (function () {
                   <input type="date" id="brt-end" class="form-control">
                 </div>
               </div>
-
-              <h3 style="font-size:15px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">
-                ${t("criteria")} — ${App.currentLang === 'ar' ? 'نفس التقييم للجميع' : 'same for all'}
-              </h3>
-
+              <h3 style="font-size:15px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">${t("criteria")}</h3>
               <div style="display:flex; flex-direction:column; gap:14px;">
                 ${criteria.map(c => `
                   <div class="brt-criterion-row" data-crit-id="${c.id}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md);">
@@ -1034,7 +869,6 @@ window.AtharModals = (function () {
                   </div>
                 `).join('')}
               </div>
-
               <div id="brt-progress" style="display:none; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px; font-weight:600;">
                 ${App.currentLang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…'} <span id="brt-progress-text">0 / ${vols.length}</span>
               </div>
@@ -1072,57 +906,34 @@ window.AtharModals = (function () {
 
     document.getElementById("brt-form").onsubmit = async (e) => {
       e.preventDefault();
-
       const period = document.getElementById("brt-period").value.trim();
       const notes = document.getElementById("brt-notes").value.trim();
       const start = document.getElementById("brt-start").value;
       const end = document.getElementById("brt-end").value;
-
       if (!period) { showToast("Period required", "error"); return; }
-
       const missing = criteria.filter(c => criterionScores[c.id] === undefined);
-      if (missing.length > 0) {
-        showToast(`Rate: ${missing.map(c => App.currentLang === 'ar' ? c.name_ar : c.name_en).join(', ')}`, "error");
-        return;
-      }
-
-      const scores = criteria.map(c => ({
-        criteriaId: c.id,
-        score: criterionScores[c.id],
-      }));
-
+      if (missing.length > 0) { showToast(`Rate: ${missing.map(c => App.currentLang === 'ar' ? c.name_ar : c.name_en).join(', ')}`, "error"); return; }
+      const scores = criteria.map(c => ({ criteriaId: c.id, score: criterionScores[c.id] }));
       const submitBtn = document.getElementById("brt-submit");
       submitBtn.disabled = true;
       document.getElementById("brt-progress").style.display = "block";
-
       let ok = 0, skipped = 0, fail = 0;
-
       for (let i = 0; i < vols.length; i++) {
         const v = vols[i];
         document.getElementById("brt-progress-text").textContent = `${i + 1} / ${vols.length}`;
         try {
-          await window.AtharAPI.evaluations.create({
-            volunteerId: v.id,
-            periodLabel: period,
-            periodStart: start || undefined,
-            periodEnd: end || undefined,
-            notes: notes || undefined,
-            scores,
-          });
+          await window.AtharAPI.evaluations.create({ volunteerId: v.id, periodLabel: period, periodStart: start || undefined, periodEnd: end || undefined, notes: notes || undefined, scores });
           ok++;
         } catch (err) {
           if (err.code === "EVALUATION_EXISTS") skipped++;
           else fail++;
         }
       }
-
       await window.AtharStore.refreshEvaluations();
-
       let msg = `Rated ${ok}`;
       if (skipped) msg += `, skipped ${skipped} (already rated)`;
       if (fail) msg += `, ${fail} failed`;
       showToast(msg, fail ? "warning" : "success");
-
       if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
       close();
       window.AtharCore.renderCurrentView();
@@ -1172,26 +983,16 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("rej-close").onclick = close;
     document.getElementById("rej-cancel").onclick = close;
-    document.getElementById("rej-backdrop").onclick = (e) => {
-      if (e.target.id === "rej-backdrop") close();
-    };
+    document.getElementById("rej-backdrop").onclick = (e) => { if (e.target.id === "rej-backdrop") close(); };
 
     document.getElementById("rej-form").onsubmit = async (e) => {
       e.preventDefault();
       const reason = document.getElementById("rej-reason").value.trim();
       const errEl = document.getElementById("rej-reason-err");
-
-      if (reason.length < 5) {
-        errEl.style.display = "block";
-        return;
-      }
+      if (reason.length < 5) { errEl.style.display = "block"; return; }
       errEl.style.display = "none";
-
       const btn = document.getElementById("rej-submit");
       btn.disabled = true;
-      const orig = btn.textContent;
-      btn.textContent = "…";
-
       try {
         await window.AtharAPI.hours.reject(hoursId, reason);
         await window.AtharStore.refreshHours();
@@ -1199,13 +1000,8 @@ window.AtharModals = (function () {
         close();
         window.AtharCore.renderCurrentView();
       } catch (err) {
-        if (err.code === "ALREADY_REJECTED") {
-          showToast("Hours already rejected", "warning");
-        } else {
-          showToast(err.message || "Rejection failed", "error");
-        }
+        showToast(err.message || "Rejection failed", "error");
         btn.disabled = false;
-        btn.textContent = orig;
       }
     };
 
@@ -1213,7 +1009,7 @@ window.AtharModals = (function () {
   }
 
   // =========================================================
-  // 17. Edit Hours Modal (adjust / subtract / zero-out)
+  // 17. Edit Hours Modal
   // =========================================================
   function openEditHoursModal(hoursId) {
     const state = window.AtharStore.getState();
@@ -1236,15 +1032,12 @@ window.AtharModals = (function () {
                 <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${entry.activity}</div>
                 <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
                 <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الحالي' : 'Current'}:</strong> <span class="num-ltr" style="color:var(--primary); font-weight:700;">${entry.hours} h</span></div>
-                <div style="margin-top:4px;"><strong>${t("status")}:</strong> <span class="badge ${entry.status === 'approved' ? 'badge-success' : entry.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${t(entry.status)}</span></div>
               </div>
-
               <div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة (ساعات)' : 'New hours value'}</label>
                 <input type="number" step="0.25" min="0" id="eh-hours" class="form-control num-ltr" value="${entry.hours}" required>
                 <span class="field-hint">${App.currentLang === 'ar' ? 'اضبط القيمة، أو اكتب 0 لإلغاء الساعات.' : 'Set to a new value, or 0 to zero them out.'}</span>
               </div>
-
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="0">Set to 0</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="-0.5">− 0.5h</button>
@@ -1265,13 +1058,11 @@ window.AtharModals = (function () {
     `;
 
     const hoursInput = document.getElementById("eh-hours");
-
     modal.querySelectorAll("[data-quick]").forEach(btn => {
       btn.onclick = () => {
         const q = btn.getAttribute("data-quick");
-        if (q === "0") {
-          hoursInput.value = 0;
-        } else {
+        if (q === "0") hoursInput.value = 0;
+        else {
           const delta = Number(q);
           const cur = Number(hoursInput.value) || 0;
           hoursInput.value = Math.max(0, +(cur + delta).toFixed(2));
@@ -1282,16 +1073,12 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("eh-close").onclick = close;
     document.getElementById("eh-cancel").onclick = close;
-    document.getElementById("eh-backdrop").onclick = (e) => {
-      if (e.target.id === "eh-backdrop") close();
-    };
+    document.getElementById("eh-backdrop").onclick = (e) => { if (e.target.id === "eh-backdrop") close(); };
 
     document.getElementById("eh-delete").onclick = () => {
       showConfirmModal({
         title: t("confirm_destructive"),
-        message: App.currentLang === 'ar'
-          ? 'سيتم حذف هذا السجل نهائياً.'
-          : 'This hours entry will be permanently deleted.',
+        message: App.currentLang === 'ar' ? 'سيتم حذف هذا السجل نهائياً.' : 'This hours entry will be permanently deleted.',
         confirmText: t("delete"),
         isDanger: true,
         onConfirm: async () => {
@@ -1301,9 +1088,7 @@ window.AtharModals = (function () {
             showToast(App.currentLang === 'ar' ? 'تم حذف السجل' : 'Entry deleted', "warning");
             close();
             window.AtharCore.renderCurrentView();
-          } catch (err) {
-            showToast(err.message || "Delete failed", "error");
-          }
+          } catch (err) { showToast(err.message || "Delete failed", "error"); }
         },
       });
     };
@@ -1311,22 +1096,10 @@ window.AtharModals = (function () {
     document.getElementById("eh-form").onsubmit = async (e) => {
       e.preventDefault();
       const newHours = Number(hoursInput.value);
-
-      if (isNaN(newHours) || newHours < 0) {
-        showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error");
-        return;
-      }
-
-      if (newHours === 0) {
-        document.getElementById("eh-delete").click();
-        return;
-      }
-
+      if (isNaN(newHours) || newHours < 0) { showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error"); return; }
+      if (newHours === 0) { document.getElementById("eh-delete").click(); return; }
       const btn = document.getElementById("eh-submit");
       btn.disabled = true;
-      const orig = btn.textContent;
-      btn.textContent = "…";
-
       try {
         await window.AtharAPI.hours.update(hoursId, { hours: newHours });
         await window.AtharStore.refreshHours();
@@ -1334,31 +1107,26 @@ window.AtharModals = (function () {
         close();
         window.AtharCore.renderCurrentView();
       } catch (err) {
-        if (err.code === "HOURS_LOCKED") {
-          showToast(App.currentLang === 'ar' ? 'لا يمكن تعديل الساعات المعتمدة إلا من قبل المعتمد.' : 'Approved/rejected hours can only be edited by an approver.', "error");
-        } else {
-          showToast(err.message || "Update failed", "error");
-        }
+        if (err.code === "HOURS_LOCKED") showToast(App.currentLang === 'ar' ? 'لا يمكن تعديل الساعات المعتمدة إلا من قبل المعتمد.' : 'Approved/rejected hours can only be edited by an approver.', "error");
+        else showToast(err.message || "Update failed", "error");
         btn.disabled = false;
-        btn.textContent = orig;
       }
     };
 
     setTimeout(() => hoursInput.focus(), 100);
   }
+
   // =========================================================
-  // 18. Bulk Edit Hours (set same value for many entries)
+  // 18. Bulk Edit Hours
   // =========================================================
   function openBulkEditHoursModal(hoursIds) {
     hoursIds = hoursIds || [];
     if (!hoursIds.length) { showToast("No entries selected", "error"); return; }
-
     const state = window.AtharStore.getState();
     const entries = state.volunteer_hours.filter(h => hoursIds.includes(h.id));
     if (!entries.length) { showToast("No matching entries", "error"); return; }
 
     const totalCurrent = entries.reduce((s, h) => s + Number(h.hours), 0);
-
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
       <div class="overlay-backdrop" id="beh-backdrop">
@@ -1369,24 +1137,18 @@ window.AtharModals = (function () {
           </div>
           <form id="beh-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
-
               <div style="padding:12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); font-size:12.5px; color:var(--warning);">
-                ⚠ ${App.currentLang === 'ar'
-        ? `سيتم تطبيق نفس القيمة على ${entries.length} سجل.`
-        : `The same value will be applied to all ${entries.length} entries.`}
+                ⚠ ${App.currentLang === 'ar' ? `سيتم تطبيق نفس القيمة على ${entries.length} سجل.` : `The same value will be applied to all ${entries.length} entries.`}
               </div>
-
               <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
                 <div><strong>${App.currentLang === 'ar' ? 'عدد السجلات' : 'Entries'}:</strong> ${entries.length}</div>
                 <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'مجموع الساعات الحالي' : 'Current total'}:</strong> <span class="num-ltr">${totalCurrent.toFixed(2)} h</span></div>
               </div>
-
               <div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة لكل سجل' : 'New value per entry'}</label>
                 <input type="number" step="0.25" min="0.25" id="beh-hours" class="form-control num-ltr" value="2" required>
                 <span class="field-hint">${App.currentLang === 'ar' ? 'سيتم تطبيق هذا الرقم على كل سجل محدد.' : 'This number will be applied to every selected entry.'}</span>
               </div>
-
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="0.5">0.5h</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="1">1h</button>
@@ -1409,7 +1171,6 @@ window.AtharModals = (function () {
     `;
 
     const hoursInput = document.getElementById("beh-hours");
-
     modal.querySelectorAll("[data-quick]").forEach(btn => {
       btn.onclick = () => { hoursInput.value = btn.getAttribute("data-quick"); };
     });
@@ -1417,18 +1178,13 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("beh-close").onclick = close;
     document.getElementById("beh-cancel").onclick = close;
-    document.getElementById("beh-backdrop").onclick = (e) => {
-      if (e.target.id === "beh-backdrop") close();
-    };
+    document.getElementById("beh-backdrop").onclick = (e) => { if (e.target.id === "beh-backdrop") close(); };
 
-    // Bulk delete
     document.getElementById("beh-delete").onclick = () => {
       close();
       showConfirmModal({
         title: t("confirm_destructive"),
-        message: App.currentLang === 'ar'
-          ? `سيتم حذف ${entries.length} سجل نهائياً. لا يمكن التراجع.`
-          : `Permanently delete ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}? This cannot be undone.`,
+        message: App.currentLang === 'ar' ? `سيتم حذف ${entries.length} سجل نهائياً. لا يمكن التراجع.` : `Permanently delete ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}? This cannot be undone.`,
         confirmText: t("delete"),
         isDanger: true,
         onConfirm: async () => {
@@ -1443,20 +1199,12 @@ window.AtharModals = (function () {
       });
     };
 
-    // Bulk apply new value
     document.getElementById("beh-form").onsubmit = async (e) => {
       e.preventDefault();
       const newHours = Number(hoursInput.value);
-      if (isNaN(newHours) || newHours <= 0) {
-        showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error");
-        return;
-      }
-
+      if (isNaN(newHours) || newHours <= 0) { showToast(App.currentLang === 'ar' ? 'قيمة غير صحيحة' : 'Invalid value', "error"); return; }
       const btn = document.getElementById("beh-submit");
       btn.disabled = true;
-      const orig = btn.textContent;
-      btn.textContent = "…";
-
       let ok = 0, fail = 0, locked = 0;
       for (const entry of entries) {
         try {
@@ -1467,41 +1215,32 @@ window.AtharModals = (function () {
           else fail++;
         }
       }
-
       await window.AtharStore.refreshHours();
-
-      let msg = App.currentLang === 'ar'
-        ? `تم تحديث ${ok}`
-        : `Updated ${ok}`;
+      let msg = App.currentLang === 'ar' ? `تم تحديث ${ok}` : `Updated ${ok}`;
       if (locked) msg += App.currentLang === 'ar' ? `، ${locked} مقفل` : `, ${locked} locked`;
       if (fail) msg += App.currentLang === 'ar' ? `، فشل ${fail}` : `, ${fail} failed`;
       showToast(msg, fail || locked ? "warning" : "success");
-
       close();
       window.AtharCore.renderCurrentView();
     };
 
     setTimeout(() => hoursInput.focus(), 100);
   }
-    // =========================================================
-  // 19. Attendance Viewer Modal (names of who came)
+
+  // =========================================================
+  // 19. Attendance Viewer Modal
   // =========================================================
   async function openAttendanceModal(meetingId) {
     const state = window.AtharStore.getState();
     const meeting = state.meetings.find(m => m.id === meetingId);
     if (!meeting) return;
-
     const isEvent = (meeting.kind || "meeting") === "event";
 
-    // Load roster from API
     let roster = [];
     try {
       const res = await window.AtharAPI.meetings.getRoster(meetingId);
       roster = res.roster || [];
-    } catch (err) {
-      showToast(err.message || "Failed to load roster", "error");
-      return;
-    }
+    } catch (err) { showToast(err.message || "Failed to load roster", "error"); return; }
 
     const groups = {
       present: roster.filter(r => r.status === "present"),
@@ -1523,11 +1262,7 @@ window.AtharModals = (function () {
           <span style="width:8px; height:8px; border-radius:50%; background:${color};"></span>
           ${title} (${list.length})
         </div>
-        ${list.length === 0
-        ? '<p style="font-size:12px; color:var(--neutral-500); margin:0;">—</p>'
-        : `<div style="display:flex; flex-wrap:wrap; gap:6px;">
-              ${list.map(r => `<span class="tag-chip" style="font-size:12px;">${labelFor(r)}</span>`).join('')}
-            </div>`}
+        ${list.length === 0 ? '<p style="font-size:12px; color:var(--neutral-500); margin:0;">—</p>' : `<div style="display:flex; flex-wrap:wrap; gap:6px;">${list.map(r => `<span class="tag-chip" style="font-size:12px;">${labelFor(r)}</span>`).join('')}</div>`}
       </div>
     `;
 
@@ -1562,17 +1297,13 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("att-close").onclick = close;
     document.getElementById("att-cancel").onclick = close;
-    document.getElementById("att-backdrop").onclick = (e) => {
-      if (e.target.id === "att-backdrop") close();
-    };
+    document.getElementById("att-backdrop").onclick = (e) => { if (e.target.id === "att-backdrop") close(); };
   }
 
   // =========================================================
   // 20. Evaluate Attendees of an Event
-  // Finds present/late attendees who don't have an evaluation
-  // for the current period, opens the bulk rating modal.
   // =========================================================
-    async function openEvaluateAttendeesModal(meetingId) {
+  async function openEvaluateAttendeesModal(meetingId) {
     const state = window.AtharStore.getState();
     const meeting = state.meetings.find(m => m.id === meetingId);
     if (!meeting) return;
@@ -1581,36 +1312,24 @@ window.AtharModals = (function () {
     try {
       const res = await window.AtharAPI.meetings.getRoster(meetingId);
       roster = res.roster || [];
-    } catch (err) {
-      showToast(err.message || "Failed to load roster", "error");
-      return;
-    }
+    } catch (err) { showToast(err.message || "Failed to load roster", "error"); return; }
 
     const attended = roster.filter(r => r.status === "present" || r.status === "late");
-    if (!attended.length) {
-      showToast(App.currentLang === 'ar' ? 'لا يوجد حاضرون لتقييمهم' : 'No attendees to evaluate', 'warning');
-      return;
-    }
+    if (!attended.length) { showToast(App.currentLang === 'ar' ? 'لا يوجد حاضرون لتقييمهم' : 'No attendees to evaluate', 'warning'); return; }
 
-    const eventTs = new Date(meeting.meeting_date).getTime();
+    const endOfDay = new Date(meeting.meeting_date + "T23:59:59.999").getTime();
     const needing = attended.filter(r => {
       const volId = r.volunteerId || (r.volunteer && r.volunteer.id);
       const evals = state.evaluations.filter(e => e.volunteer_id === volId);
       return !evals.some(e => {
         const raw = e.evaluated_at || e.evaluatedAt;
         if (!raw) return false;
-        return new Date(raw).getTime() > eventTs;
+        return new Date(raw).getTime() > endOfDay;
       });
     }).map(r => r.volunteerId || (r.volunteer && r.volunteer.id));
 
-    if (!needing.length) {
-      showToast(App.currentLang === 'ar' ? 'كل الحاضرين تم تقييمهم ✓' : 'All attendees already evaluated ✓', 'success');
-      return;
-    }
+    if (!needing.length) { showToast(App.currentLang === 'ar' ? 'كل الحاضرين تم تقييمهم ✓' : 'All attendees already evaluated ✓', 'success'); return; }
 
-    openBulkRatingModal(needing);
-  }
-    // Reuse the bulk rating modal
     openBulkRatingModal(needing);
   }
 
@@ -1634,9 +1353,9 @@ window.AtharModals = (function () {
     openRejectHoursModal,
     openEditHoursModal,
     openBulkEditHoursModal,
-    buildSamplePreview,
     openAttendanceModal,
     openEvaluateAttendeesModal,
+    buildSamplePreview,
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
   };
