@@ -582,12 +582,43 @@
   // =========================================================================
   // Volunteer Profile — with gender hero, age, split notes
   // =========================================================================
-  function renderVolunteerProfile(container, volunteerId) {
+  async function renderVolunteerProfile(container, volunteerId) {
     const state = window.AtharStore.getState();
     const vol = state.volunteers.find(v => v.id === volunteerId);
     if (!vol) {
       container.innerHTML = `<div class="empty-state"><p>Volunteer not found.</p></div>`;
       return;
+    }
+
+    // Fetch attendance + transfers from the API (they are not in the store cache)
+    let attendanceRecords = [];
+    let transfers = [];
+    try {
+      const detail = await window.AtharAPI.volunteers.get(vol.id);
+      const rawAtt = detail.attendance || [];
+      attendanceRecords = rawAtt.map(a => ({
+        id: a.id,
+        meeting_id: a.meetingId || a.meeting_id,
+        volunteer_id: a.volunteerId || a.volunteer_id,
+        status: a.status,
+        note: a.note,
+        recorded_at: a.recordedAt || a.recorded_at,
+        meeting: a.meeting || null,
+      }));
+
+      const rawTr = detail.transfers || [];
+      transfers = rawTr.map(t => ({
+        id: t.id,
+        volunteer_id: t.volunteerId || t.volunteer_id,
+        from_committee_id: t.fromCommitteeId || t.from_committee_id,
+        to_committee_id: t.toCommitteeId || t.to_committee_id,
+        reason: t.reason,
+        transferred_at: t.transferredAt || t.transferred_at,
+        from_committee: t.fromCommittee || null,
+        to_committee: t.toCommittee || null,
+      }));
+    } catch (err) {
+      console.warn("[profile] Failed to load attendance/transfers", err);
     }
 
     const comm = state.committees.find(c => c.id === vol.committee_id);
@@ -605,8 +636,6 @@
     const canEditHours = hasPermission("volunteer_hours", "edit") || App.currentUser.role === "super_admin";
     const canDeleteHours = hasPermission("volunteer_hours", "delete") || App.currentUser.role === "super_admin";
 
-    const transfers = state.committee_transfers.filter(t => t.volunteer_id === vol.id);
-    const attendanceRecords = state.attendance.filter(a => a.volunteer_id === vol.id);
     const evaluations = state.evaluations.filter(e => e.volunteer_id === vol.id);
     const hoursLog = state.volunteer_hours.filter(h => h.volunteer_id === vol.id);
     const certs = state.certificates.filter(c => c.volunteer_id === vol.id);
@@ -752,12 +781,18 @@
           <div class="table-container"><table class="data-table">
             <thead><tr><th>Meeting</th><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
             <tbody>
-              ${attendanceRecords.length === 0 ? `<tr><td colspan="4" style="text-align:center; padding:24px;">—</td></tr>` : attendanceRecords.map(a => {
-            const mtg = state.meetings.find(m => m.id === a.meeting_id);
+              ${attendanceRecords.length === 0 ? `<tr><td colspan="4" style="text-align:center; padding:24px;">${App.currentLang === 'ar' ? 'لا توجد سجلات حضور' : 'No attendance records'}</td></tr>` : attendanceRecords.map(a => {
+            const mtg = a.meeting || state.meetings.find(m => m.id === a.meeting_id);
+            const title = mtg
+              ? (App.currentLang === 'ar' ? (mtg.titleAr || mtg.title_ar || mtg.titleEn || mtg.title_en) : (mtg.titleEn || mtg.title_en))
+              : '—';
+            const date = mtg
+              ? formatDate(mtg.meetingDate || mtg.meeting_date)
+              : '—';
             return `<tr>
-                  <td style="font-weight:600;">${mtg ? (App.currentLang === 'ar' ? mtg.title_ar : mtg.title_en) : '—'}</td>
-                  <td>${mtg ? formatDate(mtg.meeting_date) : '—'}</td>
-                  <td><span class="badge ${a.status === 'present' ? 'badge-success' : a.status === 'late' ? 'badge-warning' : 'badge-danger'}">${t(a.status)}</span></td>
+                  <td style="font-weight:600;">${title}</td>
+                  <td>${date}</td>
+                  <td><span class="badge ${a.status === 'present' ? 'badge-success' : a.status === 'late' ? 'badge-warning' : a.status === 'excused' ? 'badge-info' : 'badge-danger'}">${t(a.status)}</span></td>
                   <td style="color:var(--neutral-600);">${a.note || '—'}</td>
                 </tr>`;
           }).join('')}
@@ -814,11 +849,11 @@
             ${transfers.length === 0 ? '<p style="color:var(--neutral-500);">—</p>' : `
               <div style="display:flex; flex-direction:column; gap:16px; border-inline-start:2px solid var(--primary-border); padding-inline-start:16px;">
                 ${transfers.map(tr => {
-            const fromComm = state.committees.find(c => c.id === tr.from_committee_id);
-            const toComm = state.committees.find(c => c.id === tr.to_committee_id);
+            const fromComm = tr.from_committee || state.committees.find(c => c.id === tr.from_committee_id);
+            const toComm = tr.to_committee || state.committees.find(c => c.id === tr.to_committee_id);
             return `<div>
                     <div style="font-size:12px; color:var(--neutral-500);">${tr.transferred_at}</div>
-                    <div style="font-weight:700;">${fromComm ? (App.currentLang === 'ar' ? fromComm.name_ar : fromComm.name_en) : '—'} → ${toComm ? (App.currentLang === 'ar' ? toComm.name_ar : toComm.name_en) : '—'}</div>
+                    <div style="font-weight:700;">${fromComm ? (App.currentLang === 'ar' ? (fromComm.nameAr || fromComm.name_ar) : (fromComm.nameEn || fromComm.name_en)) : '—'} → ${toComm ? (App.currentLang === 'ar' ? (toComm.nameAr || toComm.name_ar) : (toComm.nameEn || toComm.name_en)) : '—'}</div>
                     <div style="font-size:13px; color:var(--neutral-700);">${tr.reason || '—'}</div>
                   </div>`;
           }).join('')}
