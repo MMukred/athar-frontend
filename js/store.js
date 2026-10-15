@@ -98,6 +98,7 @@ window.AtharStore = (function () {
   function adaptMeeting(m) {
     return {
       id: m.id,
+      kind: m.kind || "meeting",           // ← NEW — defaults to "meeting" if API omits
       title_en: m.titleEn,
       title_ar: m.titleAr,
       description: m.description,

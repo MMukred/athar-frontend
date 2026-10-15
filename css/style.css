@@ -2252,3 +2252,478 @@ body.is-logged-out .main-layout {
 .nav-icon svg {
   display: block;
 }
+
+/* ==========================================================================
+   Path C — Polish Layer
+   Typography refinements, loading skeletons, empty states,
+   print CSS, toast polish, focus rings, scrollbars
+   ========================================================================== */
+
+/* ---------- C2.1 Typography ---------- */
+body {
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern", "liga", "calt", "tnum";
+}
+
+/* Better baseline for long-form content */
+.view-subtitle,
+.card p,
+.modal-body p {
+  line-height: 1.65;
+}
+
+/* Numeric alignment */
+.num-ltr,
+.kpi-value,
+.stat-box-value,
+.badge-number,
+.diff-table,
+.cert-no {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Heading rhythm */
+h1,
+h2,
+h3,
+h4,
+.view-title,
+.card-title,
+.modal-title,
+.drawer-title {
+  letter-spacing: -0.015em;
+}
+
+.view-title {
+  font-weight: 750;
+}
+
+/* Links */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- C2.2 Toast polish ---------- */
+.toast {
+  font-size: 13.5px;
+  line-height: 1.4;
+  animation: toastEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast.toast-success {
+  border-color: var(--success);
+}
+
+.toast.toast-error {
+  border-color: var(--danger);
+}
+
+.toast.toast-warning {
+  border-color: var(--warning);
+}
+
+.toast.toast-info {
+  border-color: var(--info);
+}
+
+/* Toast progress bar */
+.toast {
+  position: relative;
+  overflow: hidden;
+}
+
+.toast::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--neutral-300);
+  animation: toastProgress 3.5s linear forwards;
+}
+
+.toast.toast-success::after {
+  background: var(--success);
+}
+
+.toast.toast-error::after {
+  background: var(--danger);
+}
+
+.toast.toast-warning::after {
+  background: var(--warning);
+}
+
+.toast.toast-info::after {
+  background: var(--info);
+}
+
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  to {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+}
+
+[dir="rtl"] .toast::after {
+  transform-origin: right;
+}
+
+/* ---------- C3.1 Loading skeletons ---------- */
+.skeleton {
+  background: linear-gradient(90deg,
+      var(--neutral-100) 25%,
+      var(--neutral-200) 50%,
+      var(--neutral-100) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-text {
+  height: 14px;
+  margin: 4px 0;
+}
+
+.skeleton-title {
+  height: 22px;
+  width: 60%;
+  margin: 8px 0;
+}
+
+.skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.skeleton-row {
+  height: 48px;
+  margin-bottom: 8px;
+}
+
+/* Skeleton table rows in-place of empty container */
+.skeleton-table {
+  padding: 16px;
+}
+
+.skeleton-table .skeleton-row:nth-child(odd) {
+  background: var(--neutral-50);
+}
+
+/* ---------- C3.2 Empty state polish ---------- */
+.empty-state {
+  padding: 56px 24px;
+  gap: 14px;
+}
+
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--neutral-100);
+  color: var(--neutral-400);
+  margin-bottom: 4px;
+}
+
+.empty-state-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--neutral-800);
+}
+
+.empty-state-desc {
+  font-size: 13.5px;
+  color: var(--neutral-500);
+  max-width: 420px;
+  line-height: 1.55;
+}
+
+.empty-state .btn {
+  margin-top: 6px;
+}
+
+/* ---------- C3.3 Inline loading spinner ---------- */
+.btn.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  color: var(--white);
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Card-level loading overlay (keeps layout stable while fetching) */
+.card.is-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.card.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- C2.3 Custom scrollbar (desktop) ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-400);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* Table wrapper should use the same scrollbar */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+/* ---------- C2.4 Focus and selection ---------- */
+::selection {
+  background: var(--primary-light);
+  color: var(--primary-active);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ---------- C2.5 Truncation helpers ---------- */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- C5.1 Print-friendly CSS ---------- */
+@media print {
+
+  /* Reset backgrounds — most printers won't render them anyway */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Hide interactive chrome */
+  .top-bar,
+  .sidebar,
+  .sidebar-nav,
+  .filter-bar,
+  .pagination-bar,
+  .bulk-action-bar,
+  .view-header-actions,
+  .row-actions-cell,
+  .no-print,
+  button,
+  .btn,
+  .btn-icon,
+  #toast-container,
+  #modal-container,
+  #slideover-container {
+    display: none !important;
+  }
+
+  /* Full-width content area */
+  html,
+  body {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt;
+    color: #000 !important;
+  }
+
+  .main-layout,
+  .content-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Headings + tables */
+  .view-title {
+    font-size: 18pt;
+    margin-bottom: 4mm;
+  }
+
+  .view-subtitle {
+    font-size: 10pt;
+    color: #444 !important;
+  }
+
+  .card,
+  .table-container {
+    border: 1px solid #999 !important;
+    border-radius: 0 !important;
+    page-break-inside: avoid;
+  }
+
+  .data-table th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border-bottom: 1px solid #333 !important;
+  }
+
+  .data-table td {
+    border-bottom: 1px solid #ccc !important;
+    color: #000 !important;
+  }
+
+  /* Certificate: always print in color, full-page landscape */
+  .cert-preview-card,
+  #printable-certificate-document {
+    page-break-inside: avoid;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  @page :first {
+    margin-top: 12mm;
+  }
+
+  /* Optional report header */
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid #333;
+    padding-bottom: 3mm;
+    margin-bottom: 6mm;
+  }
+
+  .print-header .org-name {
+    font-size: 16pt;
+    font-weight: 700;
+  }
+
+  .print-header .print-meta {
+    font-size: 9pt;
+    color: #555;
+  }
+
+  /* Avoid breaking key elements mid-page */
+  tr,
+  .cert-sig-box,
+  .cert-qr-box,
+  .kpi-card {
+    page-break-inside: avoid;
+  }
+
+  /* Links */
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #555;
+  }
+
+  a[href^="#"]::after {
+    content: "";
+  }
+}
+
+/* ---------- C2.6 Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
