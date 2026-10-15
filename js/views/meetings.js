@@ -7,18 +7,20 @@
   const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo } = window.AtharCore;
 
   // =========================================================================
-  // Has this volunteer received an evaluation AFTER the given date?
+  // Has this volunteer received an evaluation AFTER the given meeting day?
+  // Compares against end-of-day so same-day evals after the meeting count.
   // =========================================================================
-  function hasRecentEval(volunteerId, afterDate) {
+  function hasRecentEval(volunteerId, meetingDate) {
     const state = window.AtharStore.getState();
     const evals = state.evaluations.filter(e => e.volunteer_id === volunteerId);
     if (!evals.length) return false;
-    const ts = new Date(afterDate).getTime();
+    // End of the meeting day (23:59:59.999 local time)
+    const endOfDay = new Date(meetingDate + "T23:59:59.999").getTime();
     return evals.some(e => {
       const raw = e.evaluated_at || e.evaluatedAt;
       if (!raw) return false;
       const evalTs = new Date(raw).getTime();
-      return evalTs > ts;
+      return evalTs > endOfDay;
     });
   }
 
@@ -297,7 +299,7 @@
     const eventTs = meeting.meeting_date;
     const attended = roster.filter(r => r.status === "present" || r.status === "late");
     const pendingEvalIds = isEvent && isCompleted
-      ? attended.filter(r => !hasRecentEval(r.volunteerId, eventTs)).map(r => r.volunteerId)
+      ? attended.filter(r => !hasRecentEval(r.volunteerId || (r.volunteer && r.volunteer.id), eventTs)).map(r => r.volunteerId || (r.volunteer && r.volunteer.id))
       : [];
     const pendingEvalCount = pendingEvalIds.length;
     const evalComplete = isEvent && isCompleted && attended.length > 0 && pendingEvalCount === 0;
@@ -408,7 +410,6 @@
         const volId = rec.volunteerId || vol.id;
         const attendedHere = rec.status === "present" || rec.status === "late";
         const needsEval = isEvent && isCompleted && attendedHere && !hasRecentEval(volId, eventTs);
-        const isEvaluated = isEvent && isCompleted && attendedHere && !needsEval;
 
         const waNumber = (vol.whatsapp || vol.phone || "").replace(/[^0-9]/g, "");
         const tmpl = state.whatsapp_templates.find(x => x.name && x.name.includes("Invitation") && x.language === App.currentLang) || state.whatsapp_templates[0];
