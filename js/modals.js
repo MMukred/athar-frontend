@@ -994,8 +994,7 @@ window.AtharModals = (function () {
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
-                  <input type="text" id="brt-period" class="form-control" required value="${defaultPeriod}" placeholder="e.g. 2026-Q4 or October 2026">
-                  <span class="field-hint">${App.currentLang === 'ar' ? 'نص حر' : 'Free text'}</span>
+                  <input type="text" id="brt-period" class="form-control" required value="" placeholder="${App.currentLang === 'ar' ? 'مثال: فعالية اليوم المفتوح ٢٠٢٦' : 'e.g. Open Day Event 2026'}">                  <span class="field-hint">${App.currentLang === 'ar' ? 'نص حر' : 'Free text'}</span>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("notes")}</label>
@@ -1573,37 +1572,44 @@ window.AtharModals = (function () {
   // Finds present/late attendees who don't have an evaluation
   // for the current period, opens the bulk rating modal.
   // =========================================================
-  function openEvaluateAttendeesModal(meetingId) {
+    async function openEvaluateAttendeesModal(meetingId) {
     const state = window.AtharStore.getState();
     const meeting = state.meetings.find(m => m.id === meetingId);
     if (!meeting) return;
 
-    const now = new Date();
-    const period = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+    let roster = [];
+    try {
+      const res = await window.AtharAPI.meetings.getRoster(meetingId);
+      roster = res.roster || [];
+    } catch (err) {
+      showToast(err.message || "Failed to load roster", "error");
+      return;
+    }
 
-    const attendance = state.attendance.filter(a =>
-      a.meeting_id === meetingId && (a.status === "present" || a.status === "late")
-    );
-    const attendeeIds = Array.from(new Set(attendance.map(a => a.volunteer_id)));
-
-    if (!attendeeIds.length) {
+    const attended = roster.filter(r => r.status === "present" || r.status === "late");
+    if (!attended.length) {
       showToast(App.currentLang === 'ar' ? 'لا يوجد حاضرون لتقييمهم' : 'No attendees to evaluate', 'warning');
       return;
     }
 
-    const evaluated = new Set(
-      state.evaluations
-        .filter(e => e.period_label === period)
-        .map(e => e.volunteer_id)
-    );
-
-    const needing = attendeeIds.filter(id => !evaluated.has(id));
+    const eventTs = new Date(meeting.meeting_date).getTime();
+    const needing = attended.filter(r => {
+      const volId = r.volunteerId || (r.volunteer && r.volunteer.id);
+      const evals = state.evaluations.filter(e => e.volunteer_id === volId);
+      return !evals.some(e => {
+        const raw = e.evaluated_at || e.evaluatedAt;
+        if (!raw) return false;
+        return new Date(raw).getTime() > eventTs;
+      });
+    }).map(r => r.volunteerId || (r.volunteer && r.volunteer.id));
 
     if (!needing.length) {
-      showToast(App.currentLang === 'ar' ? 'كل الحاضرين تم تقييمهم لهذه الفترة ✓' : 'All attendees already evaluated for this period ✓', 'success');
+      showToast(App.currentLang === 'ar' ? 'كل الحاضرين تم تقييمهم ✓' : 'All attendees already evaluated ✓', 'success');
       return;
     }
 
+    openBulkRatingModal(needing);
+  }
     // Reuse the bulk rating modal
     openBulkRatingModal(needing);
   }
