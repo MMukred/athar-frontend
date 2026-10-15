@@ -969,7 +969,7 @@ window.AtharModals = (function () {
     if (!criteria.length) { showToast("No active criteria — add them in Evaluation Criteria", "error"); return; }
 
     const now = new Date();
-    const defaultPeriod = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+    const defaultPeriod = "";
 
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
