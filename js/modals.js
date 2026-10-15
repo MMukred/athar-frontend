@@ -1484,6 +1484,129 @@ window.AtharModals = (function () {
 
     setTimeout(() => hoursInput.focus(), 100);
   }
+    // =========================================================
+  // 19. Attendance Viewer Modal (names of who came)
+  // =========================================================
+  async function openAttendanceModal(meetingId) {
+    const state = window.AtharStore.getState();
+    const meeting = state.meetings.find(m => m.id === meetingId);
+    if (!meeting) return;
+
+    const isEvent = (meeting.kind || "meeting") === "event";
+
+    // Load roster from API
+    let roster = [];
+    try {
+      const res = await window.AtharAPI.meetings.getRoster(meetingId);
+      roster = res.roster || [];
+    } catch (err) {
+      showToast(err.message || "Failed to load roster", "error");
+      return;
+    }
+
+    const groups = {
+      present: roster.filter(r => r.status === "present"),
+      late: roster.filter(r => r.status === "late"),
+      absent: roster.filter(r => r.status === "absent"),
+      excused: roster.filter(r => r.status === "excused"),
+    };
+
+    const labelFor = (rec) => {
+      const v = rec.volunteer || {};
+      return App.currentLang === 'ar'
+        ? (v.fullNameAr || v.full_name_ar || v.fullName || v.full_name || "—")
+        : (v.fullName || v.full_name || "—");
+    };
+
+    const section = (title, list, color) => `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:13px; font-weight:700; color:${color}; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:${color};"></span>
+          ${title} (${list.length})
+        </div>
+        ${list.length === 0
+        ? '<p style="font-size:12px; color:var(--neutral-500); margin:0;">—</p>'
+        : `<div style="display:flex; flex-wrap:wrap; gap:6px;">
+              ${list.map(r => `<span class="tag-chip" style="font-size:12px;">${labelFor(r)}</span>`).join('')}
+            </div>`}
+      </div>
+    `;
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="att-backdrop">
+        <div class="modal-dialog modal-lg" style="max-width:720px;">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              ${ic(isEvent ? "sparkles" : "calendar", 18)}
+              ${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}
+            </h3>
+            <button class="btn-icon" id="att-close">&times;</button>
+          </div>
+          <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+            <div style="padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); margin-bottom:16px; font-size:12.5px;">
+              <div><strong>${t("date")}:</strong> ${meeting.meeting_date} &bull; <strong>${App.currentLang === 'ar' ? 'الوقت' : 'Time'}:</strong> <span class="num-ltr">${meeting.start_time}${meeting.end_time ? ' - ' + meeting.end_time : ''}</span></div>
+              <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الموقع' : 'Location'}:</strong> ${meeting.location || '—'}</div>
+            </div>
+            ${section(App.currentLang === 'ar' ? 'حاضر' : 'Present', groups.present, "var(--success)")}
+            ${section(App.currentLang === 'ar' ? 'متأخر' : 'Late', groups.late, "var(--warning)")}
+            ${section(App.currentLang === 'ar' ? 'غائب' : 'Absent', groups.absent, "var(--danger)")}
+            ${section(App.currentLang === 'ar' ? 'معذور' : 'Excused', groups.excused, "var(--info)")}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="att-cancel">${t("close")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("att-close").onclick = close;
+    document.getElementById("att-cancel").onclick = close;
+    document.getElementById("att-backdrop").onclick = (e) => {
+      if (e.target.id === "att-backdrop") close();
+    };
+  }
+
+  // =========================================================
+  // 20. Evaluate Attendees of an Event
+  // Finds present/late attendees who don't have an evaluation
+  // for the current period, opens the bulk rating modal.
+  // =========================================================
+  function openEvaluateAttendeesModal(meetingId) {
+    const state = window.AtharStore.getState();
+    const meeting = state.meetings.find(m => m.id === meetingId);
+    if (!meeting) return;
+
+    const now = new Date();
+    const period = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+
+    const attendance = state.attendance.filter(a =>
+      a.meeting_id === meetingId && (a.status === "present" || a.status === "late")
+    );
+    const attendeeIds = Array.from(new Set(attendance.map(a => a.volunteer_id)));
+
+    if (!attendeeIds.length) {
+      showToast(App.currentLang === 'ar' ? 'لا يوجد حاضرون لتقييمهم' : 'No attendees to evaluate', 'warning');
+      return;
+    }
+
+    const evaluated = new Set(
+      state.evaluations
+        .filter(e => e.period_label === period)
+        .map(e => e.volunteer_id)
+    );
+
+    const needing = attendeeIds.filter(id => !evaluated.has(id));
+
+    if (!needing.length) {
+      showToast(App.currentLang === 'ar' ? 'كل الحاضرين تم تقييمهم لهذه الفترة ✓' : 'All attendees already evaluated for this period ✓', 'success');
+      return;
+    }
+
+    // Reuse the bulk rating modal
+    openBulkRatingModal(needing);
+  }
 
   return {
     openAddVolunteerSlideover,
@@ -1506,6 +1629,8 @@ window.AtharModals = (function () {
     openEditHoursModal,
     openBulkEditHoursModal,
     buildSamplePreview,
+    openAttendanceModal,
+    openEvaluateAttendeesModal,
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,
   };

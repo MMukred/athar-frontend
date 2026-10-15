@@ -1,25 +1,23 @@
 /**
- * View: Meetings + Events (list + detail + attendance + auto-hours + delete)
+ * View: Meetings + Events
+ * - Visual differentiation (meetings = blue/calendar, events = purple/sparkles)
+ * - Cross-link tabs at top
+ * - Attendance viewer (click count → modal with names)
+ * - "Needs evaluation" indicator on completed events
+ * - "Evaluate Attendees" button on completed event detail
  */
 (function () {
   "use strict";
 
   const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo } = window.AtharCore;
 
-  // =========================================================================
-  // Confirm + delete a session (shared by list and detail)
-  // =========================================================================
   function confirmDeleteSession(session, onDeleted) {
     const isEvent = (session.kind || "meeting") === "event";
-    const label = isEvent
-      ? (App.currentLang === 'ar' ? 'الفعالية' : 'event')
-      : (App.currentLang === 'ar' ? 'الاجتماع' : 'meeting');
-    const title = App.currentLang === 'ar'
-      ? `حذف ${label}`
-      : `Delete ${label}`;
+    const label = isEvent ? (App.currentLang === 'ar' ? 'الفعالية' : 'event') : (App.currentLang === 'ar' ? 'الاجتماع' : 'meeting');
+    const title = App.currentLang === 'ar' ? `حذف ${label}` : `Delete ${label}`;
     const msg = App.currentLang === 'ar'
-      ? `سيتم حذف "${session.title_ar || session.title_en}" نهائياً مع كل سجلات الحضور. لا يمكن التراجع.`
-      : `Permanently delete "${session.title_en}" and all its attendance records. This cannot be undone.`;
+      ? `سيتم حذف "${session.title_ar || session.title_en}" نهائياً مع كل سجلات الحضور والساعات المرتبطة. لا يمكن التراجع.`
+      : `Permanently delete "${session.title_en}" and all its attendance + auto-logged hours. This cannot be undone.`;
 
     showConfirmModal({
       title,
@@ -30,22 +28,39 @@
         try {
           await window.AtharAPI.meetings.delete(session.id);
           await window.AtharStore.refreshMeetings();
-          showToast(
-            App.currentLang === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully',
-            'warning'
-          );
+          showToast(App.currentLang === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully', 'warning');
           if (onDeleted) onDeleted();
         } catch (err) {
-          if (err.status === 403) {
-            showToast(t("permission_denied"), "error");
-          } else if (err.status === 404) {
-            showToast(App.currentLang === 'ar' ? 'غير موجود' : 'Not found', "error");
-          } else {
-            showToast(err.message || "Delete failed", "error");
-          }
+          showToast(err.message || "Delete failed", "error");
         }
       },
     });
+  }
+
+  // =========================================================================
+  // Helper: does this event still need evaluations?
+  // =========================================================================
+  function attendeesNeedingEval(meetingId) {
+    const state = window.AtharStore.getState();
+    const now = new Date();
+    const period = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+
+    const attendance = state.attendance.filter(a =>
+      a.meeting_id === meetingId && (a.status === "present" || a.status === "late")
+    );
+    const attendeeIds = new Set(attendance.map(a => a.volunteer_id));
+
+    const evaluated = new Set(
+      state.evaluations
+        .filter(e => e.period_label === period)
+        .map(e => e.volunteer_id)
+    );
+
+    return {
+      period,
+      total: attendeeIds.size,
+      pending: Array.from(attendeeIds).filter(id => !evaluated.has(id)),
+    };
   }
 
   // =========================================================================
@@ -58,9 +73,16 @@
     const canDelete = hasPermission("meetings", "delete");
     const sessions = state.meetings.filter(m => (m.kind || "meeting") === kind);
 
+    const meetingCount = state.meetings.filter(m => (m.kind || "meeting") === "meeting").length;
+    const eventCount = state.meetings.filter(m => m.kind === "event").length;
+
     const label = isEvent
       ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events')
       : t("nav_meetings");
+
+    const kindColor = isEvent ? "#8A3FFC" : "var(--primary)";
+    const kindBg = isEvent ? "#F1E8FF" : "var(--primary-light)";
+    const kindIcon = isEvent ? "sparkles" : "calendar";
 
     container.innerHTML = `
       <div class="view-header">
@@ -70,7 +92,12 @@
             <span class="breadcrumb-separator">/</span>
             <span>${label}</span>
           </div>
-          <h1 class="view-title">${label}</h1>
+          <h1 class="view-title">
+            <span style="color:${kindColor}; display:inline-flex; align-items:center; vertical-align:middle; margin-inline-end:6px;">
+              ${ic(kindIcon, 24)}
+            </span>
+            ${label}
+          </h1>
           <p class="view-subtitle">
             ${isEvent
         ? (App.currentLang === 'ar' ? 'فعاليات بمدة زمنية وساعات تطوعية تلقائية' : 'Time-bounded events with auto-logged volunteer hours')
@@ -78,6 +105,12 @@
           </p>
         </div>
         <div class="view-header-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-crosslink">
+            ${ic(isEvent ? "calendar" : "sparkles", 14)}
+            ${isEvent
+        ? (App.currentLang === 'ar' ? `الاجتماعات (${meetingCount})` : `Meetings (${meetingCount})`)
+        : (App.currentLang === 'ar' ? `الفعاليات (${eventCount})` : `Events (${eventCount})`)}
+          </button>
           ${canCreate ? `<button class="btn btn-primary" id="btn-add-session">
             ${ic("plus", 14)} ${isEvent ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event') : t("add_meeting")}
           </button>` : ''}
@@ -86,7 +119,7 @@
 
       ${sessions.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
-          <div style="color:var(--neutral-400); margin-bottom:12px;">${ic(isEvent ? "sparkles" : "calendar", 42, { strokeWidth: 1.5 })}</div>
+          <div style="color:${kindColor}; margin-bottom:12px;">${ic(kindIcon, 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">
             ${isEvent
           ? (App.currentLang === 'ar' ? 'لا توجد فعاليات بعد' : 'No events yet')
@@ -98,13 +131,15 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Title</th>
-                <th>Committee</th>
-                <th>Time & Location</th>
-                <th>Status</th>
-                <th>Attendance</th>
-                <th style="text-align:right;">Actions</th>
+                <th style="width:60px;">${App.currentLang === 'ar' ? 'النوع' : 'Kind'}</th>
+                <th>${t("date")}</th>
+                <th>${App.currentLang === 'ar' ? 'العنوان' : 'Title'}</th>
+                <th>${t("committee")}</th>
+                <th>${App.currentLang === 'ar' ? 'الوقت' : 'Time'}</th>
+                <th>${t("status")}</th>
+                <th>${App.currentLang === 'ar' ? 'الحضور' : 'Attendance'}</th>
+                ${isEvent ? `<th>${App.currentLang === 'ar' ? 'التقييم' : 'Eval'}</th>` : ''}
+                <th style="text-align:right;">${t("actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,8 +148,18 @@
             const summary = m.attendance_summary;
             const presentCount = summary ? (summary.present + summary.late) : 0;
             const totalAttendees = summary ? summary.total : 0;
+            const completed = m.status === "completed";
+
+            const evalInfo = isEvent && completed ? attendeesNeedingEval(m.id) : null;
+            const pendingEvalCount = evalInfo ? evalInfo.pending.length : 0;
+
             return `
                   <tr>
+                    <td>
+                      <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:${kindBg}; color:${kindColor};">
+                        ${ic(kindIcon, 16, { strokeWidth: 2.2 })}
+                      </span>
+                    </td>
                     <td><span style="font-weight:700;">${formatDate(m.meeting_date)}</span></td>
                     <td>
                       <div style="font-weight:700; color:var(--neutral-900);">${App.currentLang === 'ar' ? m.title_ar : m.title_en}</div>
@@ -122,7 +167,7 @@
                     </td>
                     <td><span>${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—'}</span></td>
                     <td>
-                      <div style="font-size:12px;">${ic("clock", 12)} <span class="num-ltr">${m.start_time} - ${m.end_time || ''}</span></div>
+                      <div style="font-size:12px;">${ic("clock", 12)} <span class="num-ltr">${m.start_time}${m.end_time ? ' - ' + m.end_time : ''}</span></div>
                       <div style="font-size:11px; color:var(--neutral-500);">${m.location || '—'}</div>
                     </td>
                     <td>
@@ -131,10 +176,25 @@
                       </span>
                     </td>
                     <td>
-                      ${m.status === 'completed' && summary ? `
-                        <span class="badge badge-success num-ltr">${presentCount} / ${totalAttendees}</span>
+                      ${completed && summary ? `
+                        <button class="btn btn-secondary btn-sm" data-attendance-meeting="${m.id}" title="${App.currentLang === 'ar' ? 'عرض كشف الحضور' : 'View attendance roster'}" style="padding:3px 8px;">
+                          ${ic("users", 12)} <span class="num-ltr" style="font-weight:700;">${presentCount}/${totalAttendees}</span>
+                        </button>
                       ` : `<span style="color:var(--neutral-400);">—</span>`}
                     </td>
+                    ${isEvent ? `
+                      <td>
+                        ${!completed
+                ? `<span style="color:var(--neutral-400); font-size:11px;">—</span>`
+                : pendingEvalCount > 0
+                  ? `<button class="btn btn-warning-outline btn-sm" data-eval-meeting="${m.id}" style="padding:3px 8px; background:var(--warning-light); color:var(--warning); border:1px solid var(--warning-border); border-radius:6px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                              ${ic("alert", 12)} ${pendingEvalCount} ${App.currentLang === 'ar' ? 'بانتظار التقييم' : 'pending'}
+                            </button>`
+                  : `<span class="badge badge-success" style="font-size:10px;">
+                              ${ic("check", 10)} ${App.currentLang === 'ar' ? 'مكتمل' : 'Complete'}
+                            </span>`}
+                      </td>
+                    ` : ''}
                     <td>
                       <div class="row-actions-cell">
                         <button class="btn btn-primary btn-sm" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">
@@ -156,6 +216,12 @@
       `}
     `;
 
+    // Cross-link
+    const cross = document.getElementById("btn-crosslink");
+    if (cross) {
+      cross.onclick = () => navigateTo(isEvent ? "meetings" : "events");
+    }
+
     const addBtn = document.getElementById("btn-add-session");
     if (addBtn) {
       addBtn.onclick = () => {
@@ -167,7 +233,23 @@
       };
     }
 
-    // Delete buttons
+    // Attendance viewer
+    container.querySelectorAll("[data-attendance-meeting]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-attendance-meeting");
+        window.AtharModals.openAttendanceModal(id);
+      };
+    });
+
+    // Evaluate attendees (only on events)
+    container.querySelectorAll("[data-eval-meeting]").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-eval-meeting");
+        window.AtharModals.openEvaluateAttendeesModal(id);
+      };
+    });
+
+    // Delete
     container.querySelectorAll("[data-delete-session]").forEach(btn => {
       btn.onclick = () => {
         const id = btn.getAttribute("data-delete-session");
@@ -179,7 +261,7 @@
   }
 
   // =========================================================================
-  // Session detail — attendance + auto-hours + delete
+  // Session detail
   // =========================================================================
   async function renderMeetingDetail(container, meetingId) {
     const state = window.AtharStore.getState();
@@ -192,10 +274,10 @@
     const isEvent = (meeting.kind || "meeting") === "event";
     const comm = state.committees.find(c => c.id === meeting.committee_id);
     const backView = isEvent ? "events" : "meetings";
-    const backLabel = isEvent
-      ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events')
-      : t("nav_meetings");
+    const backLabel = isEvent ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events') : t("nav_meetings");
     const canDelete = hasPermission("meetings", "delete");
+
+    const kindColor = isEvent ? "#8A3FFC" : "var(--primary)";
 
     // Loading state
     container.innerHTML = `
@@ -237,8 +319,10 @@
     const absentCount = roster.filter(r => r.status === "absent").length;
     const excusedCount = roster.filter(r => r.status === "excused").length;
     const isCompleted = meeting.status === "completed";
-    // Auto-hours button only needs a valid duration (end_time).
     const showAutoHours = isCompleted && !!meeting.end_time;
+
+    const evalInfo = isEvent && isCompleted ? attendeesNeedingEval(meetingId) : null;
+    const pendingEvalCount = evalInfo ? evalInfo.pending.length : 0;
 
     container.innerHTML = `
       <div class="view-header">
@@ -249,21 +333,28 @@
             <span>${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}</span>
           </div>
           <h1 class="view-title">
-            ${ic(isEvent ? "sparkles" : "calendar", 22)}
+            <span style="color:${kindColor}; display:inline-flex; align-items:center; vertical-align:middle; margin-inline-end:6px;">
+              ${ic(isEvent ? "sparkles" : "calendar", 22)}
+            </span>
             ${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}
           </h1>
           <p class="view-subtitle">
-            ${formatDate(meeting.meeting_date)} &bull; ${meeting.start_time} - ${meeting.end_time || ''} &bull; ${meeting.location || '—'}
+            ${formatDate(meeting.meeting_date)} &bull; ${meeting.start_time}${meeting.end_time ? ' - ' + meeting.end_time : ''} &bull; ${meeting.location || '—'}
             ${isDraft && !isCompleted ? '&bull; <span class="badge badge-warning">DRAFT ROSTER</span>' : ''}
             ${isCompleted ? '&bull; <span class="badge badge-success">COMPLETED</span>' : ''}
           </p>
         </div>
         <div class="view-header-actions">
+          ${pendingEvalCount > 0 ? `
+            <button class="btn btn-primary" id="btn-evaluate-attendees" style="background:#8A3FFC; border-color:#8A3FFC;">
+              ${ic("star", 14)} ${App.currentLang === 'ar' ? `تقييم الحاضرين (${pendingEvalCount})` : `Evaluate Attendees (${pendingEvalCount})`}
+            </button>
+          ` : ''}
           <button class="btn btn-secondary btn-sm" id="btn-bulk-present">${ic("check", 14)} ${t("mark_all_present")}</button>
           <button class="btn btn-secondary btn-sm" id="btn-bulk-absent">${ic("x", 14)} ${t("mark_all_absent")}</button>
           <button class="btn btn-success" id="btn-save-attendance">${ic("check_circle", 14)} ${t("save")}</button>
           ${showAutoHours ? `
-            <button class="btn btn-secondary" id="btn-auto-hours" title="${App.currentLang === 'ar' ? 'إعادة تسجيل الساعات لغير المسجلين' : 'Re-run auto-log for anyone not yet logged'}">
+            <button class="btn btn-secondary" id="btn-auto-hours" title="${App.currentLang === 'ar' ? 'إعادة تسجيل الساعات لغير المسجلين' : 'Re-run auto-log'}">
               ${ic("refresh", 14)} ${App.currentLang === 'ar' ? 'تسجيل الساعات المتبقية' : 'Re-log Hours'}
             </button>
           ` : ''}
@@ -276,12 +367,16 @@
       </div>
 
       ${isEvent ? `
-        <div style="padding:10px 14px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); margin-bottom:16px; font-size:12.5px; color:var(--primary); display:flex; align-items:center; gap:8px;">
-          ${ic("info", 14)}
+        <div style="padding:10px 14px; background:${pendingEvalCount > 0 ? 'var(--warning-light)' : 'var(--primary-light)'}; border:1px solid ${pendingEvalCount > 0 ? 'var(--warning-border)' : 'var(--primary-border)'}; border-radius:var(--radius-md); margin-bottom:16px; font-size:12.5px; color:${pendingEvalCount > 0 ? 'var(--warning)' : 'var(--primary)'}; display:flex; align-items:center; gap:8px;">
+          ${ic(pendingEvalCount > 0 ? "alert" : "info", 14)}
           <span>
-            ${App.currentLang === 'ar'
+            ${pendingEvalCount > 0
+        ? (App.currentLang === 'ar'
+          ? `${pendingEvalCount} حاضر بانتظار التقييم لهذه الفعالية (${evalInfo.period}).`
+          : `${pendingEvalCount} attendee(s) still need evaluation for this event (${evalInfo.period}).`)
+        : (App.currentLang === 'ar'
           ? 'عند الحفظ، سيتم تسجيل الساعات تلقائياً لكل من حضر أو تأخر، حسب مدة الفعالية.'
-          : 'On save, hours will be auto-logged for everyone Present or Late, based on event duration.'}
+          : 'On save, hours will be auto-logged for everyone Present or Late.')}
           </span>
         </div>
       ` : ''}
@@ -309,28 +404,27 @@
         <table class="data-table" id="attendance-roster-table">
           <thead>
             <tr>
-              <th>Volunteer</th>
-              <th style="width:180px;">Status</th>
+              <th>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}</th>
+              <th style="width:180px;">${t("status")}</th>
               <th>${t("note")}</th>
-              <th style="text-align:right;">Quick Actions</th>
+              <th style="text-align:right;">${t("actions")}</th>
             </tr>
           </thead>
           <tbody>
             ${roster.length === 0 ? `
-              <tr><td colspan="4" style="text-align:center; padding:24px;">No eligible volunteers.</td></tr>
+              <tr><td colspan="4" style="text-align:center; padding:24px;">${App.currentLang === 'ar' ? 'لا يوجد متطوعون مؤهلون.' : 'No eligible volunteers.'}</td></tr>
             ` : roster.map(rec => {
-            const vol = rec.volunteer || {};
-            const waNumber = (vol.whatsapp || vol.phone || "").replace(/[^0-9]/g, "");
-            const tmpl = state.whatsapp_templates.find(x => x.name && x.name.includes("Invitation") && x.language === App.currentLang)
-              || state.whatsapp_templates[0];
-            let waMessage = tmpl ? tmpl.body : "Meeting invite";
-            waMessage = waMessage
-              .replace("{name}", vol.fullName || vol.full_name || "")
-              .replace("{committee}", comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : "Athar")
-              .replace("{date}", meeting.meeting_date || "");
-            const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}` : '#';
+        const vol = rec.volunteer || {};
+        const waNumber = (vol.whatsapp || vol.phone || "").replace(/[^0-9]/g, "");
+        const tmpl = state.whatsapp_templates.find(x => x.name && x.name.includes("Invitation") && x.language === App.currentLang) || state.whatsapp_templates[0];
+        let waMessage = tmpl ? tmpl.body : "Meeting invite";
+        waMessage = waMessage
+          .replace("{name}", vol.fullName || vol.full_name || "")
+          .replace("{committee}", comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : "Athar")
+          .replace("{date}", meeting.meeting_date || "");
+        const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}` : '#';
 
-            return `
+        return `
                 <tr data-vol-id="${vol.id || rec.volunteerId}">
                   <td>
                     <div style="font-weight:700;">${App.currentLang === 'ar' ? (vol.fullNameAr || vol.full_name_ar || vol.fullName || vol.full_name) : (vol.fullName || vol.full_name)}</div>
@@ -352,7 +446,7 @@
                   </td>
                 </tr>
               `;
-          }).join('')}
+      }).join('')}
           </tbody>
         </table>
       </div>
@@ -391,7 +485,13 @@
       recalcCounts();
     };
 
-    // Save attendance + auto-log hours
+    // Evaluate attendees button
+    const evalBtn = document.getElementById("btn-evaluate-attendees");
+    if (evalBtn) {
+      evalBtn.onclick = () => window.AtharModals.openEvaluateAttendeesModal(meetingId);
+    }
+
+    // Save
     const saveBtn = document.getElementById("btn-save-attendance");
     if (saveBtn) {
       saveBtn.onclick = async () => {
@@ -430,52 +530,29 @@
                   : '';
                 showToast(base + suffix, "success");
               } else if (res.skipped > 0) {
-                showToast(
-                  App.currentLang === 'ar'
-                    ? `تم حفظ الحضور · الساعات مسجلة مسبقاً لـ ${res.skipped}`
-                    : `Saved attendance · Hours already logged for ${res.skipped}`,
-                  "info"
-                );
+                showToast(App.currentLang === 'ar'
+                  ? `تم حفظ الحضور · الساعات مسجلة مسبقاً لـ ${res.skipped}`
+                  : `Saved attendance · Hours already logged for ${res.skipped}`, "info");
               } else {
-                showToast(
-                  App.currentLang === 'ar'
-                    ? `تم حفظ ${records.length} سجل حضور`
-                    : `Saved ${records.length} attendance records`,
-                  "success"
-                );
+                showToast(App.currentLang === 'ar'
+                  ? `تم حفظ ${records.length} سجل حضور`
+                  : `Saved ${records.length} attendance records`, "success");
               }
             } catch (autoErr) {
-              console.warn("[auto-hours] failed", autoErr);
               if (autoErr.code === "NO_END_TIME") {
-                showToast(
-                  App.currentLang === 'ar'
-                    ? "تم حفظ الحضور · أضف وقت انتهاء لتسجيل الساعات تلقائياً"
-                    : "Attendance saved · Add an end time to auto-log hours",
-                  "warning"
-                );
-              } else if (autoErr.status === 403) {
-                showToast(
-                  App.currentLang === 'ar'
-                    ? "تم حفظ الحضور · لا توجد صلاحية لتسجيل الساعات"
-                    : "Attendance saved · No permission to log hours",
-                  "warning"
-                );
+                showToast(App.currentLang === 'ar'
+                  ? "تم حفظ الحضور · أضف وقت انتهاء لتسجيل الساعات تلقائياً"
+                  : "Attendance saved · Add an end time to auto-log hours", "warning");
               } else {
-                showToast(
-                  App.currentLang === 'ar'
-                    ? `تم حفظ الحضور · فشل تسجيل الساعات: ${autoErr.message || 'خطأ'}`
-                    : `Attendance saved · Auto-log failed: ${autoErr.message || 'unknown error'}`,
-                  "warning"
-                );
+                showToast(App.currentLang === 'ar'
+                  ? `تم حفظ الحضور · فشل تسجيل الساعات`
+                  : `Attendance saved · Auto-log failed`, "warning");
               }
             }
           } else {
-            showToast(
-              App.currentLang === 'ar'
-                ? `تم حفظ ${records.length} سجل حضور`
-                : `Saved ${records.length} attendance records`,
-              "success"
-            );
+            showToast(App.currentLang === 'ar'
+              ? `تم حفظ ${records.length} سجل حضور`
+              : `Saved ${records.length} attendance records`, "success");
           }
 
           renderMeetingDetail(container, meetingId);
@@ -487,7 +564,7 @@
       };
     }
 
-    // Re-log hours (manual fallback)
+    // Re-log hours
     const autoBtn = document.getElementById("btn-auto-hours");
     if (autoBtn) {
       autoBtn.onclick = async () => {
@@ -498,31 +575,16 @@
           const res = await window.AtharAPI.meetings.autoHours(meetingId, false);
           await window.AtharStore.refreshHours();
           if (res.created === 0 && res.skipped === 0) {
-            showToast(
-              App.currentLang === 'ar' ? "لا يوجد حاضرون أو متأخرون لتسجيل ساعاتهم" : "No one was marked Present or Late",
-              "warning"
-            );
+            showToast(App.currentLang === 'ar' ? "لا يوجد حاضرون لتسجيل ساعاتهم" : "No one was marked Present or Late", "warning");
           } else if (res.created === 0) {
-            showToast(
-              App.currentLang === 'ar' ? `تم تخطي ${res.skipped} (مسجل مسبقاً)` : `Skipped ${res.skipped} (already logged)`,
-              "info"
-            );
+            showToast(App.currentLang === 'ar' ? `تم تخطي ${res.skipped}` : `Skipped ${res.skipped}`, "info");
           } else {
-            let msg = App.currentLang === 'ar'
-              ? `تم تسجيل ${res.hours} ساعة لـ ${res.created} متطوع`
-              : `Logged ${res.hours}h for ${res.created} volunteer(s)`;
+            let msg = App.currentLang === 'ar' ? `تم تسجيل ${res.hours} ساعة لـ ${res.created}` : `Logged ${res.hours}h for ${res.created}`;
             if (res.skipped) msg += App.currentLang === 'ar' ? ` — تم تخطي ${res.skipped}` : ` — skipped ${res.skipped}`;
             showToast(msg, "success");
           }
         } catch (err) {
-          if (err.code === "NO_END_TIME") {
-            showToast(
-              App.currentLang === 'ar' ? "أضف وقت انتهاء أولاً" : "Set an end time first",
-              "error"
-            );
-          } else {
-            showToast(err.message || "Auto-log failed", "error");
-          }
+          showToast(err.message || "Auto-log failed", "error");
         } finally {
           autoBtn.disabled = false;
           autoBtn.innerHTML = orig;
@@ -530,18 +592,15 @@
       };
     }
 
-    // Delete this session
+    // Delete
     const deleteBtn = document.getElementById("btn-delete-session");
     if (deleteBtn) {
       deleteBtn.onclick = () => {
-        confirmDeleteSession(meeting, () => {
-          navigateTo(backView);
-        });
+        confirmDeleteSession(meeting, () => navigateTo(backView));
       };
     }
   }
 
-  // Register all three views
   window.AtharViews.meetings = (c, p) => renderSessionList(c, "meeting");
   window.AtharViews.events = (c, p) => renderSessionList(c, "event");
   window.AtharViews.meetingDetail = (c, p) => renderMeetingDetail(c, p.id);
