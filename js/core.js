@@ -168,8 +168,9 @@ window.AtharCore = (function () {
   // ===========================================================
   // Toast notifications
   // ===========================================================
-  function showToast(message, type) {
+  function showToast(message, type, options) {
     type = type || "success";
+    options = options || {};
     const container = document.getElementById("toast-container");
     if (!container) return;
 
@@ -181,18 +182,43 @@ window.AtharCore = (function () {
     if (type === "warning") { iconName = "alert"; iconColor = "var(--warning)"; }
     if (type === "info") { iconName = "info"; iconColor = "var(--info)"; }
 
+    const action = options.action;
+    const duration = options.duration || (action ? 7000 : 3500);
+
     toast.innerHTML = `
       <span style="color:${iconColor}; display:flex; align-items:center;">${ic(iconName, 18)}</span>
       <span style="flex:1;">${message}</span>
+      ${action ? `<button type="button" class="toast-action-btn" id="toast-action-btn">${action.label}</button>` : ""}
     `;
 
     container.appendChild(toast);
-    setTimeout(() => {
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
       toast.style.opacity = "0";
       toast.style.transform = "translateY(8px)";
       toast.style.transition = "all 0.2s ease";
       setTimeout(() => toast.remove(), 250);
-    }, 3500);
+    };
+    if (action) {
+      const btn = toast.querySelector("#toast-action-btn");
+      if (btn) btn.onclick = (e) => {
+        e.stopPropagation();
+        try { action.onClick(); } catch (err) { console.error(err); }
+        dismiss();
+      };
+    }
+    const timer = setTimeout(dismiss, duration);
+    toast.addEventListener("click", (e) => { if (e.target === toast) dismiss(); });
+  }
+
+  // Convenience wrapper for undo-style toasts.
+  function showUndoToast(message, undoCallback, type) {
+    return showToast(message, type || "warning", {
+      duration: 8000,
+      action: { label: t("undo") || "Undo", onClick: undoCallback },
+    });
   }
 
   // ===========================================================
@@ -571,6 +597,7 @@ window.AtharCore = (function () {
     escapeHtml,
     ic,
     showToast,
+    showUndoToast,
     showConfirmModal,
     hasPermission,
     setLanguage,

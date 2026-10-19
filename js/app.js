@@ -120,6 +120,35 @@
     if (themeBtn) themeBtn.onclick = function () { window.AtharCore.toggleTheme(); };
     if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
+    // ---- Quick add menu ----
+    const quickAddBtn = document.getElementById("quick-add-btn");
+    const quickAddMenu = document.getElementById("quick-add-menu");
+    function closeQuickAdd() { if (quickAddMenu) quickAddMenu.hidden = true; }
+    function renderQuickAddMenu() {
+      if (!quickAddMenu) return;
+      const items = [];
+      if (window.AtharCore.hasPermission("volunteers", "create")) items.push({ label: t("quick_add_volunteer"), icon: "users", onClick: () => window.AtharModals.openAddVolunteerSlideover() });
+      if (window.AtharCore.hasPermission("volunteer_hours", "create")) items.push({ label: t("quick_add_hours"), icon: "clock", onClick: () => window.AtharModals.openLogHoursSlideover() });
+      if (window.AtharCore.hasPermission("meetings", "create")) items.push({ label: t("quick_add_meeting"), icon: "calendar", onClick: () => window.AtharModals.openCreateMeetingSlideover() });
+      quickAddMenu.innerHTML = items.length
+        ? items.map((it, i) => `<button type="button" class="quick-add-item" data-idx="${i}">${ic(it.icon, 16)} <span>${it.label}</span></button>`).join("")
+        : `<div class="quick-add-empty">—</div>`;
+      quickAddMenu.querySelectorAll(".quick-add-item").forEach((btn, i) => {
+        btn.onclick = () => { items[i].onClick(); closeQuickAdd(); };
+      });
+    }
+    if (quickAddBtn) {
+      quickAddBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (!quickAddMenu) return;
+        if (quickAddMenu.hidden) { renderQuickAddMenu(); quickAddMenu.hidden = false; }
+        else quickAddMenu.hidden = true;
+      };
+    }
+    document.addEventListener("click", (e) => {
+      if (quickAddMenu && !quickAddMenu.hidden && !e.target.closest("#quick-add-wrap")) closeQuickAdd();
+    });
+
     // ---- Global search (quick-jump: volunteers, committees, meetings, certificates) ----
     if (window.AtharSearch) window.AtharSearch.init();
 
@@ -275,7 +304,18 @@
           try {
             await window.AtharAPI.volunteers.archive(volId);
             await window.AtharStore.refreshVolunteers();
-            showToast(t("deleted_successfully"), "warning");
+            window.AtharCore.showUndoToast(
+              (App.currentLang === "ar" ? "تمت أرشفة " : "Archived ") + v.full_name,
+              async function () {
+                try {
+                  await window.AtharAPI.volunteers.restore(volId);
+                  await window.AtharStore.refreshVolunteers();
+                  renderCurrentView();
+                } catch (err) {
+                  window.AtharCore.showToast(err.message || "Restore failed", "error");
+                }
+              }
+            );
             renderCurrentView();
           } catch (err) {
             showToast(err.message || "Archive failed", "error");
@@ -333,6 +373,8 @@
     },
 
     deleteHoursEntry: function (hoursId) {
+      const state = window.AtharStore.getState();
+      const entry = state.volunteer_hours.find(function (h) { return h.id === hoursId; });
       window.AtharCore.showConfirmModal({
         title: t("confirm_destructive"),
         message: App.currentLang === 'ar'
@@ -344,7 +386,28 @@
           try {
             await window.AtharAPI.hours.delete(hoursId);
             await window.AtharStore.refreshHours();
-            showToast(App.currentLang === 'ar' ? 'تم الحذف' : 'Entry deleted', "warning");
+            window.AtharCore.showUndoToast(
+              App.currentLang === 'ar' ? 'تم حذف سجل الساعات' : 'Hours entry deleted',
+              async function () {
+                if (!entry) return;
+                try {
+                  const created = await window.AtharAPI.hours.create({
+                    volunteerId: entry.volunteer_id,
+                    activity: entry.activity,
+                    hours: entry.hours,
+                    date: String(entry.date || "").slice(0, 10),
+                    description: entry.description || entry.notes || undefined,
+                  });
+                  if (entry.status === "approved" && created && created.id) {
+                    try { await window.AtharAPI.hours.approve(created.id); } catch (e) { /* already approved */ }
+                  }
+                  await window.AtharStore.refreshHours();
+                  renderCurrentView();
+                } catch (err) {
+                  window.AtharCore.showToast(err.message || "Undo failed", "error");
+                }
+              }
+            );
             renderCurrentView();
           } catch (err) {
             showToast(err.message || "Delete failed", "error");
@@ -353,9 +416,20 @@
       });
     },
 
-    // =========================================================
-    // Evaluation actions
-    // =========================================================
+goVolunteersFilter: function (status, flags) {
+      const App = window.AtharCore.App;
+      App.volFilterStatus = status || "all";
+      App.volFilterFollowup = !!(flags && flags.followup);
+      App.volFilterReady = !!(flags && flags.ready);
+      App.volFilterDup = !!(flags && flags.dup);
+      App.volFilterNew = !!(flags && flags.newMonth);
+      window.AtharCore.navigateTo("volunteers");
+    },
+    goHoursFilter: function (status) {
+      const App = window.AtharCore.App;
+      App.hoursFilterStatus = status || "all";
+      window.AtharCore.navigateTo("volunteer-hours");
+    },
     deleteEvaluation: function (evalId) {
       const state = window.AtharStore.getState();
       const ev = state.evaluations.find(function (e) { return e.id === evalId; });

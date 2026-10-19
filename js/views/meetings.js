@@ -397,6 +397,20 @@
         </div>
       </div>
 
+      <div class="filter-bar" style="margin-bottom:12px;">
+        <div class="filter-group">
+          <input type="search" id="att-search" class="form-control" placeholder="${t("att_search")}" style="min-width:180px;">
+          <select id="att-filter-comm" class="form-control">
+            <option value="all">${t("all_committees")}</option>
+            ${Array.from(new Set(roster.map(r => (r.volunteer || {}).committee_id || (r.volunteer || {}).committeeId).filter(Boolean))).map(cid => {
+              const c = state.committees.find(x => x.id === cid);
+              const name = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : cid;
+              return `<option value="${cid}">${name}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
       <div class="table-container">
         <table class="data-table" id="attendance-roster-table">
           <thead>
@@ -427,7 +441,7 @@
         const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}` : '#';
 
         return `
-                <tr data-vol-id="${volId}">
+                <tr data-vol-id="${volId}" data-att-search="${String((vol.fullName || vol.full_name || '') + ' ' + (vol.fullNameAr || vol.full_name_ar || '') + ' ' + (vol.phone || '')).toLowerCase().replace(/"/g, '&quot;')}" data-att-comm="${vol.committee_id || vol.committeeId || ''}">
                   <td>
                     <div style="font-weight:700;">${App.currentLang === 'ar' ? (vol.fullNameAr || vol.full_name_ar || vol.fullName || vol.full_name) : (vol.fullName || vol.full_name)}</div>
                     <div style="font-size:11px; color:var(--neutral-500);">${vol.phone || '—'}</div>
@@ -487,6 +501,23 @@
     }
 
     container.querySelectorAll(".att-status-select").forEach(sel => sel.addEventListener("change", recalcCounts));
+
+    // Roster search + committee filter
+    function applyAttFilter() {
+      const q = (document.getElementById("att-search")?.value || "").trim().toLowerCase();
+      const comm = document.getElementById("att-filter-comm")?.value || "all";
+      container.querySelectorAll("#attendance-roster-table tbody tr").forEach(tr => {
+        const hay = (tr.getAttribute("data-att-search") || "").toLowerCase();
+        const c = tr.getAttribute("data-att-comm") || "";
+        const matchQ = !q || hay.includes(q);
+        const matchC = comm === "all" || c === comm;
+        tr.style.display = (matchQ && matchC) ? "" : "none";
+      });
+    }
+    const attSearchEl = document.getElementById("att-search");
+    if (attSearchEl) attSearchEl.oninput = applyAttFilter;
+    const attCommEl = document.getElementById("att-filter-comm");
+    if (attCommEl) attCommEl.onchange = applyAttFilter;
 
     // Warn if the user navigates away with un-saved attendance marks.
     const attTable = container.querySelector("#attendance-roster-table");

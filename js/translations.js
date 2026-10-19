@@ -466,7 +466,28 @@ window.Translations = {
     leadership_transfer_warning: "This volunteer holds a committee leadership role — transferring will remove it.",
     hours_trend: "Hours per Month (approved)",
     committee_distribution: "Members per Committee",
-    top_volunteers: "Top Volunteers (hours)"
+    top_volunteers: "Top Volunteers (hours)",
+
+    // Round 8 — dashboard action center / hours pack / quick add / undo
+    undo: "Undo",
+    dash_action_title: "Needs your action",
+    dash_pending_vols: "Volunteers awaiting approval",
+    dash_pending_hours: "Hours awaiting approval",
+    dash_needs_followup: "Need follow-up",
+    dash_ready_certs: "Ready for certificate",
+    dash_possible_dupes: "Possible duplicates",
+    dash_no_actions: "Nothing needs your action right now",
+    hours_search: "Search volunteer...",
+    hours_filter_from: "From date",
+    hours_filter_to: "To date",
+    hours_approve_visible: "Approve visible",
+    hours_summary_by_committee: "Summary by committee",
+    hours_displayed_total: "Displayed total",
+    quick_add: "Quick add",
+    quick_add_volunteer: "New volunteer",
+    quick_add_hours: "Log hours",
+    quick_add_meeting: "New meeting",
+    att_search: "Search roster..."
   },
 
   ar: {
@@ -931,6 +952,27 @@ window.Translations = {
     leadership_transfer_warning: "هذا المتطوع لديه دور قيادي في اللجنة — سيؤدي النقل إلى إزالته.",
     hours_trend: "الساعات المعتمدة شهرياً",
     committee_distribution: "الأعضاء حسب اللجنة",
-    top_volunteers: "الأكثر نشاطاً (ساعات)"
+    top_volunteers: "الأكثر نشاطاً (ساعات)",
+
+    // الجولة 8 — مركز الإجراءات / حزمة الساعات / إضافة سريعة / تراجع
+    undo: "تراجع",
+    dash_action_title: "بحاجة لإجراء",
+    dash_pending_vols: "متطوعون بانتظار القبول",
+    dash_pending_hours: "ساعات بانتظار الاعتماد",
+    dash_needs_followup: "يحتاجون متابعة",
+    dash_ready_certs: "جاهزون لشهادة",
+    dash_possible_dupes: "تكرارات محتملة",
+    dash_no_actions: "لا توجد إجراءات مطلوبة حالياً",
+    hours_search: "بحث عن متطوع...",
+    hours_filter_from: "من تاريخ",
+    hours_filter_to: "إلى تاريخ",
+    hours_approve_visible: "اعتماد المعروض",
+    hours_summary_by_committee: "ملخص حسب اللجان",
+    hours_displayed_total: "إجمالي المعروض",
+    quick_add: "إضافة سريعة",
+    quick_add_volunteer: "متطوع جديد",
+    quick_add_hours: "تسجيل ساعات",
+    quick_add_meeting: "اجتماع جديد",
+    att_search: "بحث في الحضور..."
   }
 };

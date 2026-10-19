@@ -121,6 +121,39 @@
       .slice(0, 5);
     const maxTopHours = Math.max(...topVolunteers.map(v => v.hours), 1);
 
+const certTarget = Number(state.settings.certificate_ready_hours) || 50;
+    const hasActiveCert = (v) => state.certificates.some(c => c.volunteer_id === v.id && (c.status === "issued" || c.status === "approved"));
+    const approvedHoursOf = (v) => { const s = window.AtharStore.getVolunteerStats(v.id); return s ? (s.totalHours || 0) : 0; };
+    const isCertReady = (v) => approvedHoursOf(v) >= certTarget && !hasActiveCert(v);
+
+    const pendingVols = state.volunteers.filter(v => v.status === "pending").length;
+
+    const FOLLOWUP_DAYS = 30, DAY_MS = 86400000;
+    const activityMap = state.volunteer_activity || {};
+    const lastActivityDate = (v) => { const a = activityMap[v.id]; if (!a) return null; const ds = [a.lastHours, a.lastAttendance].filter(Boolean); if (!ds.length) return null; return ds.slice().sort().pop(); };
+    const lastActivityTs = (v) => { const d = lastActivityDate(v); if (!d) return null; const ts = new Date(d).getTime(); return isNaN(ts) ? null : ts; };
+    const idleDaysOf = (v) => { const last = Math.max(lastActivityTs(v) || 0, v.join_date ? new Date(v.join_date).getTime() : 0); if (!last) return null; return Math.floor((Date.now() - last) / DAY_MS); };
+    const isIdle = (v) => { if (!state.activityLoaded) return false; const d = idleDaysOf(v); return d !== null && d >= FOLLOWUP_DAYS; };
+    const followupCount = state.volunteers.filter(v => v.status === "active" && isIdle(v)).length;
+    const readyCount = state.volunteers.filter(v => v.status !== "archived" && isCertReady(v)).length;
+
+    let dupCount = 0;
+    try {
+      const groups = (window.AtharVolunteers && window.AtharVolunteers.buildDuplicateGroups)
+        ? window.AtharVolunteers.buildDuplicateGroups(state.volunteers.filter(v => v.status !== "archived"))
+        : [];
+      const dupMembers = new Set();
+      groups.forEach(g => g.members.forEach(m => { if (m.status !== "archived") dupMembers.add(m.id); }));
+      dupCount = dupMembers.size;
+    } catch (e) { dupCount = 0; }
+
+    const actionItems = [];
+    if (pendingVols > 0) actionItems.push({ key: "pendingVols", icon: "users", color: "var(--warning)", bg: "var(--warning-light)", count: pendingVols, label: t("dash_pending_vols"), onClick: "window.AtharApp.goVolunteersFilter('pending', {})" });
+    if (pendingHours > 0) actionItems.push({ key: "pendingHours", icon: "clock", color: "var(--info)", bg: "var(--info-light)", count: pendingHours, label: t("dash_pending_hours"), onClick: "window.AtharApp.goHoursFilter('pending')" });
+    if (followupCount > 0) actionItems.push({ key: "followup", icon: "message_circle", color: "var(--primary)", bg: "var(--primary-light)", count: followupCount, label: t("dash_needs_followup"), onClick: "window.AtharApp.goVolunteersFilter('active', { followup: true })" });
+    if (readyCount > 0) actionItems.push({ key: "ready", icon: "award", color: "var(--success)", bg: "var(--success-light)", count: readyCount, label: t("dash_ready_certs"), onClick: "window.AtharApp.goVolunteersFilter('all', { ready: true })" });
+    if (dupCount > 0) actionItems.push({ key: "dup", icon: "alert", color: "var(--warning)", bg: "var(--warning-light)", count: dupCount, label: t("dash_possible_dupes"), onClick: "window.AtharApp.goVolunteersFilter('all', { dup: true })" });
+
     const hBarRow = (name, value, max, color, onClick) => {
       const pct = Math.max(4, Math.round((value / max) * 100));
       const safeName = String(name || "").replace(/[<>&"]/g, "");
@@ -189,6 +222,26 @@
           <div class="kpi-value num-ltr" data-count-to="${totalCerts}">${totalCerts}</div>
           ${trend(certsThisMonth, "")}
         </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">${ic("alert", 18)} ${t("dash_action_title")}</div>
+        </div>
+        ${actionItems.length === 0
+          ? `<div class="empty-state" style="padding:20px 16px;"><div class="empty-state-desc">${t("dash_no_actions")}</div></div>`
+          : `<div class="action-tiles-grid">
+              ${actionItems.map(a => `
+                <button type="button" class="action-tile" onclick="${a.onClick}" style="--tile-color:${a.color};">
+                  <div class="action-tile-icon" style="color:${a.color}; background:${a.bg};">${ic(a.icon, 20)}</div>
+                  <div class="action-tile-body">
+                    <div class="action-tile-count num-ltr">${a.count}</div>
+                    <div class="action-tile-label">${a.label}</div>
+                  </div>
+                  <span class="action-tile-arrow">${ic("chevron_right", 14)}</span>
+                </button>
+              `).join("")}
+            </div>`}
       </div>
 
       <div class="charts-grid">
@@ -368,6 +421,14 @@
     document.getElementById("kpi-card-hours").onclick = () => navigateTo("volunteer-hours");
     document.getElementById("kpi-card-certs").onclick = () => navigateTo("certificates");
     document.getElementById("btn-goto-meetings").onclick = () => navigateTo("meetings");
+
+    // Lazy-load activity for follow-up counts (re-render once available).
+    if (!state.activityLoaded && !App.__dashActivityTried) {
+      App.__dashActivityTried = true;
+      window.AtharStore.refreshActivity().then(() => {
+        if (App.currentView === "dashboard") renderDashboard(container);
+      }).catch(() => { });
+    }
 
     // -------- KPI count-up (skipped when reduced motion is preferred) --------
     const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

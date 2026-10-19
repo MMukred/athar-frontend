@@ -395,6 +395,7 @@
   window.AtharVolunteers = window.AtharVolunteers || {};
   window.AtharVolunteers.openDetails = openVolunteerDetailsModal;
   window.AtharVolunteers.openDuplicatesFinder = openDuplicatesFinder;
+  window.AtharVolunteers.buildDuplicateGroups = buildDuplicateGroups;
 
   // =========================================================================
   // Volunteers List
@@ -1130,11 +1131,24 @@
             const results = await Promise.allSettled(ids.map((id) => window.AtharAPI.volunteers.archive(id)));
             const ok = results.filter((r) => r.status === "fulfilled").length;
             const fail = results.length - ok;
+            const archivedIds = ids.filter((id, i) => results[i].status === "fulfilled");
             App.selectedVolunteerIds.clear();
             await window.AtharStore.refreshVolunteers();
             if (fail === 0) showToast(`Archived ${ok} volunteer${ok > 1 ? 's' : ''}`, "success");
             else if (ok === 0) showToast("Failed to archive volunteers", "error");
             else showToast(`Archived ${ok}, failed ${fail}`, "warning");
+            if (archivedIds.length) {
+              window.AtharCore.showUndoToast(
+                App.currentLang === "ar" ? `تمت أرشفة ${archivedIds.length} متطوع` : `Archived ${archivedIds.length} volunteer${archivedIds.length > 1 ? 's' : ''}`,
+                async () => {
+                  for (const id of archivedIds) {
+                    try { await window.AtharAPI.volunteers.restore(id); } catch (e) { console.warn(e); }
+                  }
+                  await window.AtharStore.refreshVolunteers();
+                  renderVolunteersList(container);
+                }
+              );
+            }
             renderVolunteersList(container);
           },
         });
