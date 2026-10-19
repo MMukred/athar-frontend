@@ -34,6 +34,14 @@
     }
 
     if (!App.currentUser) {
+      // Anonymous visitors landing on a certificate verification link get the
+      // standalone public verification page instead of the login screen.
+      const hashParts = (window.location.hash || "").replace(/^#/, "").split("/");
+      if (hashParts[0] === "public-verify" && window.AtharViews && window.AtharViews.showPublicVerifyStandalone) {
+        document.body.classList.add("is-logged-out");
+        window.AtharViews.showPublicVerifyStandalone(hashParts[1] || "");
+        return;
+      }
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
       return;
     }
@@ -76,10 +84,38 @@
     const userBtn = document.getElementById("user-profile-btn");
     const searchInput = document.getElementById("global-search-input");
 
+    // ---- Sidebar: desktop collapse / mobile off-canvas drawer ----
+    const sidebarEl = document.getElementById("app-sidebar");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
+    const mobileNavMq = window.matchMedia("(max-width: 900px)");
+
+    function closeMobileSidebar() {
+      if (sidebarEl) sidebarEl.classList.remove("mobile-open");
+      if (sidebarOverlay) sidebarOverlay.classList.remove("show");
+      document.body.classList.remove("sidebar-open");
+    }
+
     if (sidebarBtn) sidebarBtn.onclick = function () {
+      if (mobileNavMq.matches && sidebarEl) {
+        const open = !sidebarEl.classList.contains("mobile-open");
+        sidebarEl.classList.toggle("mobile-open", open);
+        if (sidebarOverlay) sidebarOverlay.classList.toggle("show", open);
+        document.body.classList.toggle("sidebar-open", open);
+        return;
+      }
       App.sidebarCollapsed = !App.sidebarCollapsed;
-      document.getElementById("app-sidebar").classList.toggle("collapsed", App.sidebarCollapsed);
+      if (sidebarEl) sidebarEl.classList.toggle("collapsed", App.sidebarCollapsed);
     };
+    if (sidebarOverlay) sidebarOverlay.onclick = closeMobileSidebar;
+    if (sidebarEl) sidebarEl.addEventListener("click", function (e) {
+      if (mobileNavMq.matches && e.target.closest(".nav-item")) closeMobileSidebar();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMobileSidebar();
+    });
+    if (mobileNavMq.addEventListener) {
+      mobileNavMq.addEventListener("change", function () { closeMobileSidebar(); });
+    }
     if (brandBtn) brandBtn.onclick = function () { navigateTo("dashboard"); };
     if (langBtn) langBtn.onclick = function () { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
     if (themeBtn) themeBtn.onclick = function () { window.AtharCore.toggleTheme(); };
@@ -175,6 +211,15 @@
         window.AtharAuth.startSessionWatcher();
         return;
       }
+    }
+
+    // Anonymous visitors arriving from a certificate QR / verify link get the
+    // standalone public verification page instead of the login screen.
+    const hashParts = (window.location.hash || "").replace(/^#/, "").split("/");
+    if (hashParts[0] === "public-verify" && window.AtharViews && window.AtharViews.showPublicVerifyStandalone) {
+      document.body.classList.add("is-logged-out");
+      window.AtharViews.showPublicVerifyStandalone(hashParts[1] || "");
+      return;
     }
 
     if (window.AtharAuth) window.AtharAuth.showLoginScreen();
@@ -369,7 +414,7 @@
       msg = msg.replace("{name}", vol.full_name)
         .replace("{certificate_no}", cert.certificate_no)
         .replace("{hours}", cert.total_hours)
-        .replace("{verify_url}", cert.qr_code || `https://athar.org/verify/${cert.certificate_no}`);
+        .replace("{verify_url}", cert.qr_code || `${window.location.origin}${window.location.pathname}#public-verify/${cert.certificate_no}`);
       window.open(`https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, "_blank");
     },
 

@@ -206,7 +206,8 @@
         : computeApprovedHours(targetVolId, startDate, endDate);
       const certNumber = existingCert ? (existingCert.certificate_no || "DRAFT (Unassigned)") : "DRAFT (Unassigned)";
       const qrSvg = window.generateQRCodeSVG(
-        (existingCert && existingCert.qr_code) || `https://athar.org/verify/${certNumber}`,
+        (existingCert && existingCert.qr_code) ||
+          `${window.location.origin}${window.location.pathname}#public-verify/${certNumber}`,
         100,
       );
 
@@ -555,19 +556,154 @@
   }
 
   // =========================================================================
-  // Public Verification (unchanged — API endpoint not yet on backend)
+  // Public Verification — reads from the public API so it also works for
+  // anonymous visitors (certificate QR scans / shared links).
   // =========================================================================
+  function verifyEsc(v) {
+    return window.AtharCore.escapeHtml(String(v == null ? "" : v));
+  }
+
+  function verifyCertName(cert) {
+    const ar = App.currentLang === "ar";
+    const vol = cert.volunteer || {};
+    const name = ar ? (vol.fullNameAr || vol.fullName) : (vol.fullName || vol.fullNameAr);
+    return name || t("verify_unknown");
+  }
+
+  function verifyCommitteeName(cert) {
+    const ar = App.currentLang === "ar";
+    const c = cert.committee;
+    if (!c) return t("verify_unknown");
+    return (ar ? (c.nameAr || c.nameEn) : (c.nameEn || c.nameAr)) || t("verify_unknown");
+  }
+
+  function verifyResultHtml(result) {
+    const phase = (result && result.phase) || "idle";
+
+    if (phase === "loading") {
+      return `
+        <div class="card" style="text-align:center; padding:36px;">
+          <div class="skeleton-row" style="width:56%; margin:0 auto 10px;"></div>
+          <div class="skeleton-row" style="width:36%; margin:0 auto 14px;"></div>
+          <p style="color:var(--neutral-500); font-size:13px;">${t("verify_loading")}</p>
+        </div>`;
+    }
+
+    if (phase === "idle") {
+      return `
+        <div class="card" style="text-align:center; padding:36px;">
+          <div style="color:var(--neutral-400); margin-bottom:10px;">${ic("shield", 40, { strokeWidth: 1.5 })}</div>
+          <p style="color:var(--neutral-500);">${t("verify_intro")}</p>
+        </div>`;
+    }
+
+    if (phase === "not_found") {
+      return `
+        <div class="card" style="border:2px solid var(--danger); text-align:center; padding:32px;">
+          <div style="color:var(--danger); margin-bottom:8px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
+          <h3 style="color:var(--danger); font-size:16px; margin-bottom:6px;">${t("verify_not_found")}</h3>
+          <p style="color:var(--neutral-600); font-size:13px;">${t("verify_not_found_desc").replace("{no}", verifyEsc(result.no))}</p>
+        </div>`;
+    }
+
+    if (phase === "error") {
+      return `
+        <div class="card" style="border:2px solid var(--warning); text-align:center; padding:32px;">
+          <div style="color:var(--warning); margin-bottom:8px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
+          <h3 style="color:var(--warning); font-size:16px; margin-bottom:6px;">${t("verify_error_title")}</h3>
+          <p style="color:var(--neutral-600); font-size:13px;">${t("verify_error_desc")}</p>
+        </div>`;
+    }
+
+    const cert = result.cert;
+    const valid = cert.status === "issued";
+    const color = valid ? "var(--success)" : "var(--danger)";
+    return `
+      <div class="card" style="border:2px solid ${color};">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--neutral-300);">
+          <div style="color:${color};">
+            ${ic(valid ? "check_circle" : "x_circle", 44, { strokeWidth: 1.5 })}
+          </div>
+          <div>
+            <h3 style="font-size:18px; font-weight:800; color:${color};">
+              ${valid ? t("verify_status_valid") : t("verify_status_revoked")}
+            </h3>
+            <div style="font-family:var(--font-mono); font-weight:700; color:var(--neutral-600);" dir="ltr">${verifyEsc(cert.certificateNo)}</div>
+          </div>
+        </div>
+        <div class="verify-grid">
+          <div>
+            <span style="font-size:12px; color:var(--neutral-500);">${t("volunteer_name")}</span>
+            <div style="font-weight:700; font-size:16px;">${verifyEsc(verifyCertName(cert))}</div>
+          </div>
+          <div>
+            <span style="font-size:12px; color:var(--neutral-500);">${t("committee")}</span>
+            <div style="font-weight:700; font-size:16px;">${verifyEsc(verifyCommitteeName(cert))}</div>
+          </div>
+          <div>
+            <span style="font-size:12px; color:var(--neutral-500);">${t("kpi_total_hours")}</span>
+            <div style="font-weight:700; font-size:16px; color:var(--primary);">${verifyEsc(cert.totalHours)} ${t("verify_hours_suffix")}</div>
+          </div>
+          <div>
+            <span style="font-size:12px; color:var(--neutral-500);">${t("issue_date")}</span>
+            <div style="font-weight:700; font-size:16px;">${verifyEsc(cert.issueDate)}</div>
+          </div>
+        </div>
+        ${valid ? `
+          <div class="alert-soft alert-success-soft" style="padding:14px; border-radius:var(--radius-md); font-size:13px;">
+            ${t("verify_authenticated")}
+          </div>
+        ` : `
+          <div class="alert-soft alert-warning-soft" style="padding:14px; border-radius:var(--radius-md);">
+            <div style="font-weight:700; margin-bottom:4px;">${t("verify_revocation_record")}</div>
+            <div style="font-size:13px;">${verifyEsc(cert.revokedReason || t("verify_revoked_default"))}</div>
+          </div>
+        `}
+      </div>`;
+  }
+
+  async function lookupCertificate(certNo) {
+    try {
+      const cert = await window.AtharAPI.certificates.verify(certNo);
+      return { phase: "found", cert: cert };
+    } catch (err) {
+      if (err && err.status === 404) return { phase: "not_found", no: certNo };
+      return { phase: "error", no: certNo };
+    }
+  }
+
+  function verifySearchFormHtml(queryNo) {
+    return `
+      <form id="verify-search-form" class="verify-search-form" autocomplete="off">
+        <input type="text" id="verify-search-input" class="form-control verify-search-input"
+          placeholder="${t("verify_search_placeholder")}" value="${verifyEsc(queryNo)}" dir="ltr" spellcheck="false">
+        <button class="btn btn-primary" type="submit">${t("verify_now")}</button>
+      </form>`;
+  }
+
+  function bindVerifyForm(root, run) {
+    const form = root.querySelector("#verify-search-form");
+    if (!form) return;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const input = root.querySelector("#verify-search-input");
+      const no = input ? (input.value || "").trim() : "";
+      if (no) run(no);
+    });
+  }
+
+  function loadVerifyResult(no, resultEl) {
+    if (resultEl) resultEl.innerHTML = verifyResultHtml({ phase: "loading" });
+    lookupCertificate(no).then(function (res) {
+      if (resultEl && resultEl.isConnected) resultEl.innerHTML = verifyResultHtml(res);
+    });
+  }
+
   function renderPublicVerify(container, certNoParam) {
-    const state = window.AtharStore.getState();
-    let queryNo = certNoParam || App.verifyLookupNo || "";
-    const cert = queryNo
-      ? state.certificates.find(c => c.certificate_no && c.certificate_no.toLowerCase() === queryNo.trim().toLowerCase())
-      : null;
-    const vol = cert ? state.volunteers.find(v => v.id === cert.volunteer_id) : null;
-    const comm = vol ? state.committees.find(c => c.id === vol.committee_id) : null;
+    const queryNo = String(certNoParam || App.verifyLookupNo || "").trim();
 
     container.innerHTML = `
-      <div style="max-width: 680px; margin: 20px auto;">
+      <div class="public-verify-wrap" style="max-width: 680px; margin: 20px auto;">
         <div class="view-header" style="justify-content:center; text-align:center;">
           <div>
             <h1 class="view-title" style="justify-content:center;">${ic("shield", 24)} ${t("verify_page_title")}</h1>
@@ -576,78 +712,93 @@
         </div>
 
         <div class="card" style="margin-bottom:24px;">
-          <div style="display:flex; gap:10px;">
-            <input type="text" id="verify-search-input" class="form-control" style="font-family:var(--font-mono); font-size:15px;" placeholder="e.g. ATHAR-2026-0001" value="${queryNo}">
-            <button class="btn btn-primary" id="btn-do-verify">Verify Now</button>
-          </div>
+          ${verifySearchFormHtml(queryNo)}
         </div>
 
-        ${!queryNo ? `
-          <div class="card" style="text-align:center; padding:36px;">
-            <p style="color:var(--neutral-500);">Enter a certificate reference number or scan the QR code to verify credential authenticity.</p>
-          </div>
-        ` : cert ? `
-          <div class="card" style="border: 2px solid ${cert.status === 'issued' ? 'var(--success)' : 'var(--danger)'};">
-            <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--neutral-300);">
-              <div style="color:${cert.status === 'issued' ? 'var(--success)' : 'var(--danger)'};">
-                ${ic(cert.status === 'issued' ? 'check_circle' : 'x_circle', 44, { strokeWidth: 1.5 })}
-              </div>
-              <div>
-                <h3 style="font-size:18px; font-weight:800; color:${cert.status === 'issued' ? 'var(--success)' : 'var(--danger)'};">
-                  ${cert.status === 'issued' ? t("verify_status_valid") : t("verify_status_revoked")}
-                </h3>
-                <div style="font-family:var(--font-mono); font-weight:700; color:var(--neutral-600);">${cert.certificate_no}</div>
-              </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-              <div>
-                <span style="font-size:12px; color:var(--neutral-500);">${t("volunteer_name")}</span>
-                <div style="font-weight:700; font-size:16px;">${vol ? vol.full_name : 'Unknown'}</div>
-              </div>
-              <div>
-                <span style="font-size:12px; color:var(--neutral-500);">${t("committee")}</span>
-                <div style="font-weight:700; font-size:16px;">${comm ? comm.name_en : 'General'}</div>
-              </div>
-              <div>
-                <span style="font-size:12px; color:var(--neutral-500);">${t("kpi_total_hours")}</span>
-                <div style="font-weight:700; font-size:16px; color:var(--primary);">${cert.total_hours} approved hours</div>
-              </div>
-              <div>
-                <span style="font-size:12px; color:var(--neutral-500);">${t("issue_date")}</span>
-                <div style="font-weight:700; font-size:16px;">${cert.issue_date}</div>
-              </div>
-            </div>
-            ${cert.status === 'revoked' ? `
-              <div style="padding:14px; background:var(--danger-light); border:1px solid var(--danger-border); border-radius:var(--radius-md);">
-                <div style="font-weight:700; color:var(--danger);">Revocation Record:</div>
-                <div style="font-size:13px; color:var(--neutral-800);">${cert.revoked_reason || 'Certificate revoked by administrative order'}</div>
-              </div>
-            ` : `
-              <div style="padding:14px; background:var(--success-light); border:1px solid var(--success-border); border-radius:var(--radius-md); font-size:13px; color:var(--success);">
-                This volunteer credential is authenticated and backed by verified institutional logs in the Athar system.
-              </div>
-            `}
-          </div>
-        ` : `
-          <div class="card" style="border: 2px solid var(--danger); text-align:center; padding:32px;">
-            <div style="color:var(--danger); margin-bottom:8px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
-            <h3 style="color:var(--danger); font-size:16px; margin-bottom:6px;">${t("verify_not_found")}</h3>
-            <p style="color:var(--neutral-600); font-size:13px;">No record matching "${queryNo}" was found in the central ledger.</p>
-          </div>
-        `}
+        <div id="verify-result">${verifyResultHtml(queryNo ? { phase: "loading" } : { phase: "idle" })}</div>
       </div>
     `;
 
-    const doVerify = document.getElementById("btn-do-verify");
-    if (doVerify) {
-      doVerify.onclick = () => {
-        App.verifyLookupNo = document.getElementById("verify-search-input").value;
-        renderPublicVerify(container, App.verifyLookupNo);
-      };
+    bindVerifyForm(container, function (no) {
+      App.verifyLookupNo = no;
+      try { window.history.replaceState(null, "", `#public-verify/${encodeURIComponent(no)}`); } catch (e) { }
+      loadVerifyResult(no, document.getElementById("verify-result"));
+    });
+
+    if (queryNo) loadVerifyResult(queryNo, document.getElementById("verify-result"));
+  }
+
+  // Standalone shell for anonymous visitors arriving from a QR scan or link.
+  function showPublicVerifyStandalone(certNo) {
+    let screen = document.getElementById("public-verify-screen");
+    if (!screen) {
+      screen = document.createElement("div");
+      screen.id = "public-verify-screen";
+      screen.className = "public-verify-screen";
+      document.body.appendChild(screen);
     }
+
+    const queryNo = String(certNo || "").trim();
+
+    screen.innerHTML = `
+      <header class="pv-topbar">
+        <div class="pv-brand">
+          <img src="assets/logo.svg" alt="Athar" class="pv-logo">
+          <span>${t("app_name")}</span>
+        </div>
+        <button type="button" id="pv-theme-btn" class="lang-toggle-btn theme-toggle-btn"
+          title="${t("verify_theme_toggle")}" aria-label="Toggle theme">
+          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l1.41 1.41"></path>
+          </svg>
+        </button>
+      </header>
+      <main class="pv-main">
+        <div class="pv-card">
+          <div class="pv-head">
+            <div class="pv-head-icon">${ic("shield", 28)}</div>
+            <h1>${t("verify_page_title")}</h1>
+            <p>${t("verify_subtitle")}</p>
+          </div>
+          ${verifySearchFormHtml(queryNo)}
+          <div id="verify-result" style="margin-top:18px;">${verifyResultHtml(queryNo ? { phase: "loading" } : { phase: "idle" })}</div>
+        </div>
+        <div class="pv-links">
+          <a href="#" id="pv-login-link">${t("verify_login_link")}</a>
+          <span class="pv-dot">&bull;</span>
+          <a href="apply.html">${t("verify_apply_link")}</a>
+        </div>
+      </main>
+    `;
+
+    const themeBtn = document.getElementById("pv-theme-btn");
+    if (themeBtn) themeBtn.onclick = function () { window.AtharCore.toggleTheme(); };
+
+    const loginLink = document.getElementById("pv-login-link");
+    if (loginLink) loginLink.onclick = function (e) {
+      e.preventDefault();
+      try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (err) { }
+      const s = document.getElementById("public-verify-screen");
+      if (s) s.remove();
+      if (window.AtharAuth) window.AtharAuth.showLoginScreen();
+    };
+
+    bindVerifyForm(screen, function (no) {
+      try { window.history.replaceState(null, "", `#public-verify/${encodeURIComponent(no)}`); } catch (e) { }
+      loadVerifyResult(no, document.getElementById("verify-result"));
+    });
+
+    if (queryNo) loadVerifyResult(queryNo, document.getElementById("verify-result"));
   }
 
   window.AtharViews.certificates = (c, p) => renderCertificatesList(c);
   window.AtharViews.generateCertificate = (c, p) => renderGenerateCertificate(c, p.id, p.sub);
   window.AtharViews.publicVerify = (c, p) => renderPublicVerify(c, p.id);
+  window.AtharViews.showPublicVerifyStandalone = (certNo) => showPublicVerifyStandalone(certNo);
 })();

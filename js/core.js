@@ -363,7 +363,8 @@ window.AtharCore = (function () {
     }
 
     const targetModule = VIEW_MODULE_MAP[view];
-    if (targetModule && !hasPermission(targetModule, "view")) {
+    // Public verification is open to everyone (mirrors the public API endpoint).
+    if (view !== "public-verify" && targetModule && !hasPermission(targetModule, "view")) {
       showToast(t("permission_denied"), "error");
       view = "dashboard";
       params = {};
@@ -386,10 +387,22 @@ window.AtharCore = (function () {
 
   function handleHashChange() {
     const hash = window.location.hash.replace(/^#/, "");
+    const parts = hash ? hash.split("/") : [];
+    if (!App.currentUser) {
+      // Anonymous visitors can only reach the public verification page.
+      if (parts[0] === "public-verify" && window.AtharViews && window.AtharViews.showPublicVerifyStandalone) {
+        window.AtharViews.showPublicVerifyStandalone(parts[1] || "");
+      }
+      return;
+    }
     if (!hash) { navigateTo("dashboard", {}, false); return; }
-    const parts = hash.split("/");
     navigateTo(parts[0] || "dashboard", { id: parts[1], sub: parts[2] }, false);
   }
+
+  // Keep the anonymous flow in sync with hash changes (e.g. #public-verify links).
+  window.addEventListener("hashchange", function () {
+    if (!App.currentUser) handleHashChange();
+  });
 
   // ===========================================================
   // Sidebar — with live counts + kind-aware Events entry
