@@ -194,6 +194,10 @@ window.AtharAPI = (function () {
       restore: async (id) => (await post(`/committees/${id}/restore`)).committee,
     },
 
+    users: {
+      list: () => get("/users"),
+    },
+
     meetings: {
       list: (params) => get(`/meetings${qs(params)}`),
       get: async (id) => (await get(`/meetings/${id}`)).meeting,

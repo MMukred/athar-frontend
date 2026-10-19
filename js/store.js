@@ -87,8 +87,13 @@ window.AtharStore = (function () {
       name_ar: c.nameAr,
       description_en: c.descriptionEn,
       description_ar: c.descriptionAr,
-      manager_id: c.managerId,
+      manager_id: c.managerId ?? (c.manager ? c.manager.id : null),
       manager_name: c.manager?.fullName || null,
+      co_managers: (c.coManagers || []).map((u) => ({
+        id: u.id,
+        full_name: u.fullName || u.full_name,
+        email: u.email,
+      })),
       status: c.status,
       member_count: c.memberCount ?? 0,
       created_at: c.createdAt,
@@ -377,31 +382,56 @@ window.AtharStore = (function () {
 
   // ---------------------------------------------------------
   // Volunteer stats (computed from cache)
+  // attendanceOverride: optional list of attendance records
+  // ({ volunteer_id, status }) — used by the profile page, which
+  // fetches fresh records from the API. Falls back to the cache.
   // ---------------------------------------------------------
-  function getVolunteerStats(volunteerId) {
-    const approvedHours = state.volunteer_hours
-      .filter((h) => h.volunteer_id === volunteerId && h.status === "approved")
+  function getVolunteerStats(volunteerId, attendanceOverride) {
+    const hrs = state.volunteer_hours.filter((h) => h.volunteer_id === volunteerId);
+    const approvedHours = hrs
+      .filter((h) => h.status === "approved")
+      .reduce((s, h) => s + Number(h.hours), 0);
+    const pendingHours = hrs
+      .filter((h) => h.status === "pending")
+      .reduce((s, h) => s + Number(h.hours), 0);
+    const rejectedHours = hrs
+      .filter((h) => h.status === "rejected")
       .reduce((s, h) => s + Number(h.hours), 0);
 
-    const volAtt = state.attendance.filter((a) => a.volunteer_id === volunteerId);
-    const present = volAtt.filter((a) => a.status === "present" || a.status === "late").length;
-    const rate = volAtt.length > 0 ? Math.round((present / volAtt.length) * 100) : 100;
+    const attSource = attendanceOverride || state.attendance || [];
+    const volAtt = attSource.filter((a) => a.volunteer_id === volunteerId);
+    const present = volAtt.filter((a) => a.status === "present").length;
+    const late = volAtt.filter((a) => a.status === "late").length;
+    const excused = volAtt.filter((a) => a.status === "excused").length;
+    const absent = volAtt.filter((a) => a.status === "absent").length;
+    const attended = present + late;
+    const rate = volAtt.length > 0 ? Math.round((attended / volAtt.length) * 100) : null;
 
     const evs = state.evaluations.filter((e) => e.volunteer_id === volunteerId);
     const avg = evs.length > 0
       ? (evs.reduce((s, e) => s + Number(e.overall_score), 0) / evs.length).toFixed(1)
-      : "5.0";
+      : null;
 
-    const certs = state.certificates.filter(
-      (c) => c.volunteer_id === volunteerId && c.status === "issued"
-    ).length;
+    const volCerts = state.certificates.filter((c) => c.volunteer_id === volunteerId);
+    const certs = volCerts.filter((c) => c.status === "issued").length;
+    const draftCerts = volCerts.filter((c) => c.status === "draft").length;
 
     return {
       totalHours: approvedHours,
+      pendingHours,
+      rejectedHours,
+      hoursEntries: hrs.length,
       attendanceRate: rate,
+      attTotal: volAtt.length,
+      attPresent: present,
+      attLate: late,
+      attExcused: excused,
+      attAbsent: absent,
+      attAttended: attended,
       avgEvaluation: avg,
+      evalsCount: evs.length,
       certsCount: certs,
-      streak: 6,
+      draftCerts,
     };
   }
 

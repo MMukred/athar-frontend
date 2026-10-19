@@ -450,12 +450,52 @@ window.AtharModals = (function () {
   // =========================================================
   // 5. Add / Edit Committee
   // =========================================================
-  function openAddCommitteeModal(committeeId) {
+  async function openAddCommitteeModal(committeeId) {
     committeeId = committeeId || null;
     const state = window.AtharStore.getState();
     const existing = committeeId ? state.committees.find(c => c.id === committeeId) : null;
     const isEdit = !!existing;
     const modal = document.getElementById("modal-container");
+
+    // ---- Load selectable users (leader / co-leaders) ----
+    let users = [];
+    try {
+      const res = await window.AtharAPI.users.list();
+      users = (res && res.items ? res.items : []).map(u => ({
+        id: u.id,
+        full_name: u.fullName || u.full_name,
+        email: u.email,
+        role: u.role,
+      }));
+    } catch (err) {
+      console.warn("[committee] Failed to load users for the picker", err);
+    }
+    // Always include the current admin so the picker is never empty
+    if (App.currentUser && !users.some(u => u.id === App.currentUser.id)) {
+      users.unshift({
+        id: App.currentUser.id,
+        full_name: App.currentUser.full_name,
+        email: App.currentUser.email,
+        role: App.currentUser.role,
+      });
+    }
+
+    const currentLeaderId = existing ? existing.manager_id : null;
+    const currentCoIds = existing ? (existing.co_managers || []).map(u => u.id) : [];
+
+    const userOptionsHtml = users.map(u =>
+      `<option value="${escapeHtml(u.id)}" ${currentLeaderId === u.id ? 'selected' : ''}>${escapeHtml(u.full_name)} ${u.role === 'super_admin' ? '(Super Admin)' : ''}</option>`
+    ).join('');
+
+    const coListHtml = users.length === 0
+      ? `<span style="font-size:12px; color:var(--neutral-500);">${App.currentLang === 'ar' ? 'لا يوجد مستخدمون متاحون' : 'No users available'}</span>`
+      : users.map(u => `
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" class="cm-co-cb" value="${escapeHtml(u.id)}" ${currentCoIds.includes(u.id) ? 'checked' : ''}>
+            <span style="font-weight:600;">${escapeHtml(u.full_name)}</span>
+            <span style="color:var(--neutral-500); font-size:11px;">${escapeHtml(u.email || '')}</span>
+          </label>
+        `).join('');
 
     modal.innerHTML = `
       <div class="overlay-backdrop" id="cm-backdrop">
@@ -468,19 +508,35 @@ window.AtharModals = (function () {
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
               <div class="form-field">
                 <label class="field-label">${t("committee_name_en")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="cm-name-en" class="form-control" required value="${existing ? existing.name_en : ''}">
+                <input type="text" id="cm-name-en" class="form-control" required value="${existing ? escapeHtml(existing.name_en) : ''}">
               </div>
               <div class="form-field">
                 <label class="field-label">${t("committee_name_ar")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="cm-name-ar" class="form-control" required value="${existing ? existing.name_ar : ''}">
+                <input type="text" id="cm-name-ar" class="form-control" required value="${existing ? escapeHtml(existing.name_ar) : ''}">
               </div>
               <div class="form-field">
                 <label class="field-label">${t("committee_desc_en")}</label>
-                <textarea id="cm-desc-en" class="form-control" rows="2">${existing ? (existing.description_en || '') : ''}</textarea>
+                <textarea id="cm-desc-en" class="form-control" rows="2">${existing ? escapeHtml(existing.description_en || '') : ''}</textarea>
               </div>
               <div class="form-field">
                 <label class="field-label">${t("committee_desc_ar")}</label>
-                <textarea id="cm-desc-ar" class="form-control" rows="2">${existing ? (existing.description_ar || '') : ''}</textarea>
+                <textarea id="cm-desc-ar" class="form-control" rows="2">${existing ? escapeHtml(existing.description_ar || '') : ''}</textarea>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${ic("shield", 13)} ${t("leader")}</label>
+                <select id="cm-manager" class="form-control">
+                  <option value="">${t("none_option")}</option>
+                  ${userOptionsHtml}
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${ic("users", 13)} ${t("co_leaders")}</label>
+                <div style="max-height:170px; overflow-y:auto; border:1px solid var(--neutral-300); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:8px; background:var(--neutral-50);">
+                  ${coListHtml}
+                </div>
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">${t("co_leaders_hint")}</div>
               </div>
             </div>
             <div class="modal-footer">
@@ -503,10 +559,32 @@ window.AtharModals = (function () {
       const nameAr = document.getElementById("cm-name-ar").value.trim();
       const descEn = document.getElementById("cm-desc-en").value;
       const descAr = document.getElementById("cm-desc-ar").value;
+      const managerId = document.getElementById("cm-manager").value || null;
+      // A person holds exactly one role: the leader is never also a co-leader.
+      const coManagerIds = Array.from(document.querySelectorAll(".cm-co-cb:checked"))
+        .map(cb => cb.value)
+        .filter(id => id !== managerId);
       if (!nameEn || !nameAr) { showToast("Both names required", "error"); return; }
       try {
-        if (isEdit) { await window.AtharAPI.committees.update(existing.id, { nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined }); showToast(t("updated_successfully"), "success"); }
-        else { await window.AtharAPI.committees.create({ nameEn, nameAr, descriptionEn: descEn || undefined, descriptionAr: descAr || undefined }); showToast(t("saved_successfully"), "success"); }
+        if (isEdit) {
+          await window.AtharAPI.committees.update(existing.id, {
+            nameEn, nameAr,
+            descriptionEn: descEn || undefined,
+            descriptionAr: descAr || undefined,
+            managerId,
+            coManagerIds,
+          });
+          showToast(t("updated_successfully"), "success");
+        } else {
+          await window.AtharAPI.committees.create({
+            nameEn, nameAr,
+            descriptionEn: descEn || undefined,
+            descriptionAr: descAr || undefined,
+            managerId,
+            coManagerIds,
+          });
+          showToast(t("saved_successfully"), "success");
+        }
         await window.AtharStore.refreshCommittees();
         close();
         window.AtharCore.renderCurrentView();

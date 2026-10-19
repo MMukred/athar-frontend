@@ -41,13 +41,26 @@
   // =========================================================================
   // Volunteer Details Modal
   // =========================================================================
-  function openVolunteerDetailsModal(volunteerId) {
+  async function openVolunteerDetailsModal(volunteerId) {
     const state = window.AtharStore.getState();
     const v = state.volunteers.find(x => x.id === volunteerId);
     if (!v) return;
 
+    // Pull fresh attendance so the stats below are accurate
+    // (the store cache does not hold per-volunteer attendance records).
+    let attendanceRecords = [];
+    try {
+      const detail = await window.AtharAPI.volunteers.get(v.id);
+      attendanceRecords = (detail.attendance || []).map(a => ({
+        volunteer_id: a.volunteerId || a.volunteer_id,
+        status: a.status,
+      }));
+    } catch (err) {
+      console.warn("[volunteer-details] Failed to load attendance", err);
+    }
+
     const comm = state.committees.find(c => c.id === v.committee_id);
-    const stats = window.AtharStore.getVolunteerStats(v.id);
+    const stats = window.AtharStore.getVolunteerStats(v.id, attendanceRecords);
     const a = age(v.dob);
     const gs = genderStyle(v.gender);
 
@@ -110,10 +123,10 @@
             </div>
 
             <div class="profile-stats-grid" style="margin-bottom:18px;">
-              <div class="stat-box"><span class="stat-box-label">${t("kpi_total_hours")}</span><span class="stat-box-value num-ltr">${stats ? stats.totalHours : 0}</span></div>
-              <div class="stat-box"><span class="stat-box-label">${t("attendance_rate")}</span><span class="stat-box-value num-ltr">${stats ? stats.attendanceRate : 0}%</span></div>
-              <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr">${stats ? stats.avgEvaluation : 0}</span></div>
-              <div class="stat-box"><span class="stat-box-label">${t("kpi_certificates")}</span><span class="stat-box-value num-ltr">${stats ? stats.certsCount : 0}</span></div>
+              <div class="stat-box"><span class="stat-box-label">${t("kpi_total_hours")}</span><span class="stat-box-value num-ltr">${stats.totalHours} h</span>${stats.pendingHours > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">+${stats.pendingHours} ${t("pending")}</span>` : ''}</div>
+              <div class="stat-box"><span class="stat-box-label">${t("attendance_rate")}</span><span class="stat-box-value num-ltr">${stats.attendanceRate != null ? stats.attendanceRate + '%' : '—'}</span>${stats.attTotal > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${stats.attAttended} / ${stats.attTotal}</span>` : ''}</div>
+              <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr">${stats.avgEvaluation != null ? stats.avgEvaluation + ' / 5' : '—'}</span></div>
+              <div class="stat-box"><span class="stat-box-label">${t("kpi_certificates")}</span><span class="stat-box-value num-ltr">${stats.certsCount}</span></div>
             </div>
 
             ${splitNotes(v.notes).length > 0 ? `
@@ -590,11 +603,15 @@
       return;
     }
 
-    // Fetch attendance + transfers from the API (they are not in the store cache)
+    // Fetch attendance + transfers + full stats from the API.
+    // Attendance is not in the store cache; the stats block is aggregated
+    // server-side over ALL records so nothing is cut off by list limits.
     let attendanceRecords = [];
     let transfers = [];
+    let serverStats = null;
     try {
       const detail = await window.AtharAPI.volunteers.get(vol.id);
+      serverStats = detail.stats || null;
       const rawAtt = detail.attendance || [];
       attendanceRecords = rawAtt.map(a => ({
         id: a.id,
@@ -622,7 +639,24 @@
     }
 
     const comm = state.committees.find(c => c.id === vol.committee_id);
-    const stats = window.AtharStore.getVolunteerStats(vol.id);
+    // Store fallback (gets the fresh attendance too, so the rate is never a fake 100%)
+    const stats = window.AtharStore.getVolunteerStats(vol.id, attendanceRecords);
+    // Prefer complete server-side aggregates when available
+    const ps = serverStats ? {
+      totalHours: serverStats.hours.approved,
+      pendingHours: serverStats.hours.pending,
+      rejectedHours: serverStats.hours.rejected,
+      hoursEntries: serverStats.hours.entries,
+      attendanceRate: serverStats.attendance.rate,
+      attTotal: serverStats.attendance.total,
+      attAttended: serverStats.attendance.present + serverStats.attendance.late,
+      attAbsent: serverStats.attendance.absent,
+      attExcused: serverStats.attendance.excused,
+      avgEvaluation: serverStats.evaluations.avgScore != null ? Number(serverStats.evaluations.avgScore).toFixed(1) : null,
+      evalsCount: serverStats.evaluations.count,
+      certsCount: serverStats.certificates.issued,
+      draftCerts: serverStats.certificates.draft,
+    } : stats;
     const a = age(vol.dob);
     const gs = genderStyle(vol.gender);
     const notesArr = splitNotes(vol.notes);
@@ -741,10 +775,12 @@
       <div id="profile-tab-content">
         ${activeTab === "overview" ? `
           <div class="profile-stats-grid">
-            <div class="stat-box"><span class="stat-box-label">${t("kpi_total_hours")}</span><span class="stat-box-value num-ltr" style="color:var(--primary);">${stats.totalHours} h</span></div>
-            <div class="stat-box"><span class="stat-box-label">${t("attendance_rate")}</span><span class="stat-box-value num-ltr" style="color:var(--success);">${stats.attendanceRate}%</span></div>
-            <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr" style="color:#F59E0B;">${stats.avgEvaluation} / 5</span></div>
-            <div class="stat-box"><span class="stat-box-label">${t("kpi_certificates")}</span><span class="stat-box-value num-ltr">${stats.certsCount}</span></div>
+            <div class="stat-box"><span class="stat-box-label">${t("kpi_total_hours")}</span><span class="stat-box-value num-ltr" style="color:var(--primary);">${ps.totalHours} h</span><span style="font-size:11px; color:var(--neutral-500);">${ps.hoursEntries} ${App.currentLang === 'ar' ? 'سجل ساعات' : 'hour entries'}</span></div>
+            <div class="stat-box"><span class="stat-box-label">${t("pending_hours")}</span><span class="stat-box-value num-ltr" style="color:#F59E0B;">${ps.pendingHours} h</span>${ps.rejectedHours > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.rejectedHours} ${t("rejected")}</span>` : ''}</div>
+            <div class="stat-box"><span class="stat-box-label">${t("attendance_rate")}</span><span class="stat-box-value num-ltr" style="color:var(--success);">${ps.attendanceRate != null ? ps.attendanceRate + '%' : '—'}</span>${ps.attTotal > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.attAttended} / ${ps.attTotal}</span>` : ''}</div>
+            <div class="stat-box"><span class="stat-box-label">${t("meetings_attended")}</span><span class="stat-box-value num-ltr">${ps.attAttended}</span>${ps.attTotal > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.attAbsent} ${t("absent")}${ps.attExcused ? ` · ${ps.attExcused} ${t("excused")}` : ''}</span>` : ''}</div>
+            <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr" style="color:#F59E0B;">${ps.avgEvaluation != null ? ps.avgEvaluation + ' / 5' : '—'}</span><span style="font-size:11px; color:var(--neutral-500);">${ps.evalsCount} ${t("tab_evaluations")}</span></div>
+            <div class="stat-box"><span class="stat-box-label">${t("kpi_certificates")}</span><span class="stat-box-value num-ltr">${ps.certsCount}</span>${ps.draftCerts > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.draftCerts} ${t("draft")}</span>` : ''}</div>
           </div>
 
           <div class="card" style="margin-bottom:16px;">

@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
   // =========================================================================
   // Committees List
@@ -96,8 +96,14 @@
                     </div>
                     <div class="committee-stat-item">
                       <span class="committee-stat-val" style="font-size:13px; font-weight:600;">${comm.manager_name || '—'}</span>
-                      <span class="committee-stat-lbl">${t("manager")}</span>
+                      <span class="committee-stat-lbl">${t("leader")}</span>
                     </div>
+                  </div>
+                  <div style="font-size:12px; color:var(--neutral-600); margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <span style="font-weight:700; color:var(--neutral-500);">${t("co_leaders")}:</span>
+                    ${comm.co_managers && comm.co_managers.length
+          ? comm.co_managers.map(u => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(u.full_name)}</span>`).join('')
+          : `<span style="color:var(--neutral-400);">${t("none_option")}</span>`}
                   </div>
                   <div style="display:flex; gap:8px;">
                     <button class="btn btn-secondary" style="flex:1;" onclick="window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
@@ -119,7 +125,7 @@
             <thead>
               <tr>
                 <th>Committee Name</th>
-                <th>Manager</th>
+                <th>${t("leader")}</th>
                 <th>Active Members</th>
                 <th>Total Hours</th>
                 <th>Status</th>
@@ -137,8 +143,12 @@
                       <div style="font-weight:700;">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</div>
                       <div style="font-size:11px; color:var(--neutral-500);">${comm.name_en}</div>
                     </td>
-                    <td>${comm.manager_name || '—'}</td>
-                    <td><span class="num-ltr" style="font-weight:700;">${count}</span></td>
+                    <td>
+                      <div style="font-weight:600;">${escapeHtml(comm.manager_name) || '—'}</div>
+                      ${comm.co_managers && comm.co_managers.length
+          ? `<div style="font-size:11px; color:var(--neutral-500);">+${comm.co_managers.length} ${t("co_leaders")}</div>`
+          : ''}
+                    </td>
                     <td><span class="num-ltr" style="font-weight:700;">${hours} h</span></td>
                     <td><span class="badge ${comm.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t(comm.status)}</span></td>
                     <td>
@@ -262,7 +272,7 @@
           </div>
           <h1 class="view-title">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</h1>
           <p class="view-subtitle">
-            ${comm.name_en} &bull; Manager: ${comm.manager_name || '—'}
+            ${comm.name_en} &bull; ${t("leader")}: ${escapeHtml(comm.manager_name) || '—'}
             ${isArchived ? '&bull; <span class="badge badge-neutral">' + t("archived") + '</span>' : ''}
           </p>
         </div>
@@ -288,8 +298,26 @@
           <span class="stat-box-value num-ltr">${commMeetings.length}</span>
         </div>
         <div class="stat-box">
-          <span class="stat-box-label">Manager</span>
-          <span style="font-size:16px; font-weight:700; color:var(--neutral-900);">${comm.manager_name || '—'}</span>
+          <span class="stat-box-label">${t("leader")}</span>
+          <span style="font-size:16px; font-weight:700; color:var(--neutral-900);">${escapeHtml(comm.manager_name) || '—'}</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:12px;">${ic("shield", 16)} ${t("leadership")}</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("leader")}:</span>
+            ${comm.manager_name
+          ? `<span class="tag-chip" style="font-size:13px; font-weight:700;">${escapeHtml(comm.manager_name)}</span>`
+          : `<span style="color:var(--neutral-400); font-size:13px;">${t("no_leader")}</span>`}
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("co_leaders")}:</span>
+            ${comm.co_managers && comm.co_managers.length
+          ? comm.co_managers.map(u => `<span class="tag-chip" style="font-size:13px;">${escapeHtml(u.full_name)}</span>`).join('')
+          : `<span style="color:var(--neutral-400); font-size:13px;">${t("none_option")}</span>`}
+          </div>
         </div>
       </div>
 
