@@ -89,9 +89,9 @@
       const x = pos * (barW + gap);
       const y = chartH - barH;
       return `
-            <rect x="${x}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="6" fill="var(--primary)" opacity="${h > 0 ? 0.9 : 0.15}"></rect>
-            <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">${h > 0 ? Math.round(h) : ""}</text>
-            <text x="${x + barW / 2}" y="${chartH + 20}" text-anchor="middle" font-size="11" fill="#94A3B8">${monthLabels[i]}</text>
+            <rect class="chart-bar" x="${x}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="6" fill="var(--primary)" opacity="${h > 0 ? 0.9 : 0.15}"></rect>
+            <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--neutral-600)">${h > 0 ? Math.round(h) : ""}</text>
+            <text x="${x + barW / 2}" y="${chartH + 20}" text-anchor="middle" font-size="11" fill="var(--neutral-500)">${monthLabels[i]}</text>
           `;
     }).join("")}
       </svg>
@@ -159,7 +159,7 @@
             <span class="kpi-title">${t("kpi_volunteers")}</span>
             <div class="kpi-icon-badge">${ic("users", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr">${totalVolunteers}</div>
+          <div class="kpi-value num-ltr" data-count-to="${totalVolunteers}">${totalVolunteers}</div>
           ${trend(newVolsThisMonth, "")}
         </div>
 
@@ -168,7 +168,7 @@
             <span class="kpi-title">${t("kpi_committees")}</span>
             <div class="kpi-icon-badge">${ic("building", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr">${totalCommittees}</div>
+          <div class="kpi-value num-ltr" data-count-to="${totalCommittees}">${totalCommittees}</div>
           <div class="kpi-trend" style="color:var(--neutral-500);">${totalCommittees === 1 ? '1 active unit' : `${totalCommittees} active units`}</div>
         </div>
 
@@ -177,7 +177,7 @@
             <span class="kpi-title">${t("kpi_total_hours")}</span>
             <div class="kpi-icon-badge">${ic("clock", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr">${totalHours.toLocaleString()} h</div>
+          <div class="kpi-value num-ltr" data-count-to="${totalHours}" data-count-suffix=" h">${totalHours.toLocaleString()} h</div>
           ${trend(hoursThisMonth, " h")}
         </div>
 
@@ -186,7 +186,7 @@
             <span class="kpi-title">${t("kpi_certificates")}</span>
             <div class="kpi-icon-badge">${ic("award", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr">${totalCerts}</div>
+          <div class="kpi-value num-ltr" data-count-to="${totalCerts}">${totalCerts}</div>
           ${trend(certsThisMonth, "")}
         </div>
       </div>
@@ -368,6 +368,25 @@
     document.getElementById("kpi-card-hours").onclick = () => navigateTo("volunteer-hours");
     document.getElementById("kpi-card-certs").onclick = () => navigateTo("certificates");
     document.getElementById("btn-goto-meetings").onclick = () => navigateTo("meetings");
+
+    // -------- KPI count-up (skipped when reduced motion is preferred) --------
+    const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const counters = container.querySelectorAll("[data-count-to]");
+    if (!reducedMotion && counters.length) {
+      const duration = 700;
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        counters.forEach((el) => {
+          const target = Number(el.getAttribute("data-count-to")) || 0;
+          const suffix = el.getAttribute("data-count-suffix") || "";
+          el.textContent = Math.round(target * eased).toLocaleString() + suffix;
+        });
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
   }
 
   window.AtharViews.dashboard = (c, p) => renderDashboard(c);

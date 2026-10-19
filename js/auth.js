@@ -246,6 +246,7 @@ window.AtharAuth = (function () {
     const submitBtn = document.getElementById("login-submit-btn");
     const toggleBtn = document.getElementById("password-toggle");
     const langBtn = document.getElementById("login-lang-toggle");
+    const themeBtn = document.getElementById("login-theme-toggle");
 
     if (!form) return;
 
@@ -253,6 +254,12 @@ window.AtharAuth = (function () {
       toggleBtn.onclick = function () {
         const pw = document.getElementById("login-password");
         pw.type = pw.type === "password" ? "text" : "password";
+      };
+    }
+
+    if (themeBtn) {
+      themeBtn.onclick = function () {
+        if (window.AtharCore && window.AtharCore.toggleTheme) window.AtharCore.toggleTheme();
       };
     }
 

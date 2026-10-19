@@ -17,12 +17,14 @@
   --success-light: #E8F8ED;
   --success-subtle: rgba(45, 164, 78, 0.12);
   --success-border: #87D79C;
+  --success-strong: #065F46;
 
   --warning: #D29922;
   --warning-hover: #B57F18;
   --warning-light: #FFF8E6;
   --warning-subtle: rgba(210, 153, 34, 0.12);
   --warning-border: #F3CE79;
+  --warning-strong: #92400E;
 
   --danger: #CF222E;
   --danger-hover: #A41923;
@@ -45,6 +47,10 @@
   --neutral-100: #F6F8FA;
   --neutral-50: #FBFCFD;
   --white: #FFFFFF;
+  --surface: #FFFFFF;
+  --app-bg: #F3F4F6;
+
+  color-scheme: light;
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(27, 31, 36, 0.04);
@@ -72,6 +78,64 @@
   --transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ==========================================================================
+   Dark Theme — token overrides (toggle sets data-theme="dark" on <html>)
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --primary: #4493F8;
+  --primary-hover: #58A6FF;
+  --primary-active: #79C0FF;
+  --primary-light: #0C2D48;
+  --primary-subtle: rgba(68, 147, 248, 0.16);
+  --primary-border: #1F4B7F;
+
+  --success: #3FB950;
+  --success-hover: #56D364;
+  --success-light: #0E2A1A;
+  --success-subtle: rgba(63, 185, 80, 0.16);
+  --success-border: #2EA043;
+  --success-strong: #3FB950;
+
+  --warning: #E3B341;
+  --warning-hover: #F0C75E;
+  --warning-light: #2B2413;
+  --warning-subtle: rgba(227, 179, 65, 0.16);
+  --warning-border: #9E6A03;
+  --warning-strong: #E3B341;
+
+  --danger: #F85149;
+  --danger-hover: #FF7B72;
+  --danger-light: #33181B;
+  --danger-subtle: rgba(248, 81, 73, 0.16);
+  --danger-border: #B62324;
+
+  --info: #58A6FF;
+  --info-light: #0C2D48;
+
+  /* Neutrals are inverted so light-theme usage keeps working */
+  --neutral-900: #E6EDF3;
+  --neutral-800: #CDD5DD;
+  --neutral-700: #B1BAC4;
+  --neutral-600: #8B949E;
+  --neutral-500: #7D8590;
+  --neutral-400: #6E7681;
+  --neutral-300: #30363D;
+  --neutral-200: #2D333B;
+  --neutral-100: #21262D;
+  --neutral-50: #1C2128;
+  --white: #FFFFFF;        /* stays literal white: used as text on colored fills */
+  --surface: #161B22;      /* raised surfaces: cards, topbar, sidebar, modals */
+  --app-bg: #0D1117;
+
+  --shadow-xs: 0 1px 2px rgba(1, 4, 9, 0.35);
+  --shadow-sm: 0 1px 3px rgba(1, 4, 9, 0.45), 0 1px 2px rgba(1, 4, 9, 0.35);
+  --shadow-md: 0 4px 12px rgba(1, 4, 9, 0.5), 0 1px 3px rgba(1, 4, 9, 0.35);
+  --shadow-lg: 0 10px 24px rgba(1, 4, 9, 0.6), 0 3px 6px rgba(1, 4, 9, 0.4);
+  --shadow-xl: 0 20px 40px rgba(1, 4, 9, 0.7);
+}
+
 /* Base Styles */
 *,
 *::before,
@@ -89,7 +153,7 @@ body {
   font-family: var(--font-en);
   font-size: 14px;
   color: var(--neutral-900);
-  background-color: #F3F4F6;
+  background-color: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -133,7 +197,7 @@ textarea {
 /* Top Bar */
 .top-bar {
   height: var(--topbar-height);
-  background-color: var(--white);
+  background-color: var(--surface);
   border-bottom: 1px solid var(--neutral-300);
   display: flex;
   align-items: center;
@@ -238,7 +302,7 @@ textarea {
 
 .search-input:focus {
   outline: none;
-  background: var(--white);
+  background: var(--surface);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-subtle);
 }
@@ -248,7 +312,7 @@ textarea {
   right: 10px;
   font-size: 10px;
   color: var(--neutral-500);
-  background: var(--white);
+  background: var(--surface);
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid var(--neutral-300);
@@ -287,7 +351,7 @@ textarea {
   padding: 4px 10px 4px 6px;
   border-radius: var(--radius-full);
   border: 1px solid var(--neutral-300);
-  background: var(--white);
+  background: var(--surface);
   transition: all var(--transition-speed);
 }
 
@@ -329,7 +393,7 @@ textarea {
 /* Sidebar */
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--white);
+  background: var(--surface);
   border-right: 1px solid var(--neutral-300);
   display: flex;
   flex-direction: column;
@@ -560,7 +624,7 @@ textarea {
 }
 
 .btn-secondary {
-  background: var(--white);
+  background: var(--surface);
   color: var(--neutral-700);
   border-color: var(--neutral-300);
 }
@@ -592,7 +656,7 @@ textarea {
 }
 
 .btn-danger-outline {
-  background: var(--white);
+  background: var(--surface);
   color: var(--danger);
   border-color: var(--danger-border);
 }
@@ -630,7 +694,7 @@ textarea {
   border-radius: var(--radius-md);
   color: var(--neutral-600);
   border: 1px solid var(--neutral-300);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .btn-icon:hover {
@@ -640,7 +704,7 @@ textarea {
 
 /* Cards & Surface Containers */
 .card {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -678,7 +742,7 @@ textarea {
 }
 
 .kpi-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -862,7 +926,7 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 18px;
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   margin-bottom: 16px;
@@ -888,7 +952,7 @@ textarea {
 
 .form-control:focus {
   outline: none;
-  background: var(--white);
+  background: var(--surface);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-subtle);
 }
@@ -937,7 +1001,7 @@ select.form-control {
 
 /* Data Tables */
 .table-container {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -1024,7 +1088,7 @@ select.form-control {
   padding: 4px 10px;
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-sm);
-  background: var(--white);
+  background: var(--surface);
   color: var(--neutral-700);
   font-size: 12px;
   font-weight: 500;
@@ -1094,7 +1158,7 @@ select.form-control {
 
 /* Volunteer Profile Header */
 .profile-hero {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   padding: 24px;
@@ -1206,7 +1270,7 @@ select.form-control {
 }
 
 .committee-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-lg);
   padding: 22px;
@@ -1328,7 +1392,7 @@ select.form-control {
   right: 0;
   width: 100%;
   max-width: 580px;
-  background: var(--white);
+  background: var(--surface);
   box-shadow: var(--shadow-xl);
   z-index: 1010;
   display: flex;
@@ -1363,7 +1427,7 @@ select.form-control {
 }
 
 .modal-dialog {
-  background: var(--white);
+  background: var(--surface);
   border-radius: var(--radius-xl);
   width: 90%;
   max-width: 650px;
@@ -1491,7 +1555,7 @@ select.form-control {
 }
 
 .tag-input-container:focus-within {
-  background: var(--white);
+  background: var(--surface);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-subtle);
 }
@@ -1787,7 +1851,7 @@ select.form-control {
 .toast {
   min-width: 300px;
   max-width: 440px;
-  background: var(--white);
+  background: var(--surface);
   border-radius: var(--radius-md);
   padding: 14px 18px;
   box-shadow: var(--shadow-lg);
@@ -1931,7 +1995,7 @@ select.form-control {
   position: relative;
   width: 100%;
   max-width: 440px;
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-xl);
   padding: 40px 36px 28px;
@@ -1994,7 +2058,7 @@ select.form-control {
 
 .login-field input:focus {
   outline: none;
-  background: var(--white);
+  background: var(--surface);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-subtle);
 }
@@ -2839,3 +2903,132 @@ input[type="radio"] {
   .pw-warning-banner { display: none !important; }
   .charts-grid { display: none !important; }
 }
+
+/* ============================================================
+   Theme toggle + dark-mode overrides + motion polish
+   ============================================================ */
+
+/* ---------- Theme toggle button ---------- */
+.theme-toggle-btn {
+  padding: 7px;
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+}
+
+.theme-toggle-btn svg { display: block; }
+.theme-toggle-btn .theme-icon-sun { display: none; }
+[data-theme="dark"] .theme-toggle-btn .theme-icon-moon { display: none; }
+[data-theme="dark"] .theme-toggle-btn .theme-icon-sun { display: block; }
+
+/* ---------- Soft alert chips (theme-aware) ---------- */
+.alert-soft {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.alert-warning-soft {
+  background: var(--warning-light);
+  color: var(--warning-strong);
+}
+
+.alert-success-soft {
+  background: var(--success-light);
+  color: var(--success-strong);
+}
+
+.btn-must-change {
+  border-color: #F59E0B;
+  color: var(--warning-strong);
+}
+
+[data-theme="dark"] .btn-must-change { border-color: #9E6A03; }
+
+/* ---------- Dark overrides for previously hardcoded colors ---------- */
+[data-theme="dark"] .skeleton-row {
+  background: linear-gradient(90deg, #1C2128 25%, #262C34 50%, #1C2128 75%);
+  background-size: 200% 100%;
+}
+
+[data-theme="dark"] .card:hover { border-color: #444C56; }
+[data-theme="dark"] .star-rating .star { color: #3D444D; }
+
+[data-theme="dark"] .kpi-committees .kpi-icon-badge {
+  background: #2A1D47;
+  color: #B692FF;
+}
+
+[data-theme="dark"] .badge-purple {
+  background: #2A1D47;
+  color: #B692FF;
+  border: 1px solid #4B3A7A;
+}
+
+[data-theme="dark"] .card.is-loading::after { background: rgba(13, 17, 23, 0.55); }
+
+[data-theme="dark"] .login-screen {
+  background: linear-gradient(135deg, #0D1117 0%, #121A24 50%, #0D1512 100%);
+}
+
+[data-theme="dark"] .login-screen::before {
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(68, 147, 248, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(63, 185, 80, 0.12) 0%, transparent 40%);
+}
+
+[data-theme="dark"] .pw-warning-banner {
+  background: #2B2413;
+  border-color: #9E6A03;
+  color: #E3B341;
+}
+
+/* Certificate preview keeps its light "paper" look (hardcoded, not tokenized) */
+
+/* ---------- Motion polish ---------- */
+
+/* View enter */
+@keyframes atharViewIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.view-enter { animation: atharViewIn 0.35s var(--transition-ease) both; }
+
+/* Horizontal bar charts grow in */
+@keyframes atharGrowX {
+  from { transform: scaleX(0.02); }
+  to { transform: scaleX(1); }
+}
+
+.hbar-fill {
+  transform-origin: left;
+  animation: atharGrowX 0.65s var(--transition-ease) both;
+}
+
+[dir="rtl"] .hbar-fill { transform-origin: right; }
+
+/* SVG bar charts grow in */
+@keyframes atharGrowY {
+  from { transform: scaleY(0.02); }
+  to { transform: scaleY(1); }
+}
+
+.chart-bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: atharGrowY 0.65s var(--transition-ease) both;
+}
+
+/* KPI cards settle in with a slight stagger */
+@keyframes atharKpiIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kpi-grid .kpi-card { animation: atharKpiIn 0.4s var(--transition-ease) both; }
+.kpi-grid .kpi-card:nth-child(2) { animation-delay: 0.05s; }
+.kpi-grid .kpi-card:nth-child(3) { animation-delay: 0.1s; }
+.kpi-grid .kpi-card:nth-child(4) { animation-delay: 0.15s; }

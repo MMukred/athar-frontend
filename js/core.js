@@ -70,6 +70,19 @@ window.AtharCore = (function () {
   }
 
   // ===========================================================
+  // Theme (light/dark)
+  // ===========================================================
+  function toggleTheme() {
+    const el = document.documentElement;
+    const next = el.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    el.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("athar_theme", next);
+    } catch (e) { /* localStorage unavailable */ }
+    return next;
+  }
+
+  // ===========================================================
   // Date formatting
   // ===========================================================
   function formatDate(dateStr) {
@@ -104,13 +117,20 @@ window.AtharCore = (function () {
   // Gender color tokens
   // ===========================================================
   function genderStyle(gender) {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
     if (gender === "female") {
-      return { border: "#EC4899", bg: "#FCE7F3", text: "#BE185D", ring: "rgba(236,72,153,0.25)" };
+      return dark
+        ? { border: "#9D3B69", bg: "#3B1B2B", text: "#F9A8D4", ring: "rgba(236,72,153,0.30)" }
+        : { border: "#EC4899", bg: "#FCE7F3", text: "#BE185D", ring: "rgba(236,72,153,0.25)" };
     }
     if (gender === "male") {
-      return { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.25)" };
+      return dark
+        ? { border: "#2F5FA8", bg: "#152741", text: "#93C5FD", ring: "rgba(59,130,246,0.30)" }
+        : { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.25)" };
     }
-    return { border: "#D0D7DE", bg: "#F6F8FA", text: "#57606A", ring: "rgba(140,149,159,0.20)" };
+    return dark
+      ? { border: "var(--neutral-300)", bg: "var(--neutral-100)", text: "var(--neutral-500)", ring: "rgba(140,149,159,0.20)" }
+      : { border: "#D0D7DE", bg: "#F6F8FA", text: "#57606A", ring: "rgba(140,149,159,0.20)" };
   }
 
   // ===========================================================
@@ -494,6 +514,11 @@ window.AtharCore = (function () {
     } else {
       container.innerHTML = `<div class="empty-state"><p>View not found: ${App.currentView}</p></div>`;
     }
+
+    // Replay the enter animation on every view change
+    container.classList.remove("view-enter");
+    void container.offsetWidth;
+    container.classList.add("view-enter");
   }
   // ===========================================================
   // Loading skeleton renderer
@@ -540,5 +565,6 @@ window.AtharCore = (function () {
     renderSidebar,
     renderCurrentView,
     renderSkeleton,
+    toggleTheme,
   };
 })();

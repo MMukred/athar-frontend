@@ -240,7 +240,7 @@ window.AtharModals = (function () {
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
               <div><strong>Volunteer:</strong> ${vol.full_name}</div>
               ${(isLeaderHere || isCoLeaderHere) ? `
-                <div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">
+                <div class="alert-soft alert-warning-soft">
                   ⚠️ ${isLeaderHere ? t("leader_badge") : t("coleader_badge")} — ${t("leadership_transfer_warning")}
                 </div>
               ` : ''}
@@ -703,7 +703,7 @@ window.AtharModals = (function () {
               </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
-              <button class="btn btn-secondary" id="um-change-password" style="width:100%; justify-content:flex-start; ${App.currentUser?.must_change_password ? 'border-color:#F59E0B; color:#92400E;' : ''}">
+              <button class="btn btn-secondary${App.currentUser?.must_change_password ? ' btn-must-change' : ''}" id="um-change-password" style="width:100%; justify-content:flex-start;">
                 ${ic("lock", 15)} ${t("change_password")}${App.currentUser?.must_change_password ? ` • ${t("default_password_flag")}` : ''}
               </button>
               <button class="btn btn-danger-outline" id="um-logout" style="width:100%; justify-content:flex-start;">
@@ -1380,7 +1380,7 @@ window.AtharModals = (function () {
           </div>
           <form id="cp-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
-              ${forced ? `<div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">${t("password_change_banner")}</div>` : ""}
+              ${forced ? `<div class="alert-soft alert-warning-soft">${t("password_change_banner")}</div>` : ""}
               <div class="form-field">
                 <label class="field-label">${t("current_password")} <span class="required-asterisk">*</span></label>
                 <input type="password" id="cp-current" class="form-control" required autocomplete="current-password" dir="ltr">
@@ -1545,7 +1545,7 @@ window.AtharModals = (function () {
                 <strong>${vols.length}</strong> ${App.currentLang === "ar" ? "متطوع محدد" : "volunteers selected"}
               </div>
               ${leaderNames.length ? `
-                <div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">
+                <div class="alert-soft alert-warning-soft">
                   ⚠️ ${t("leadership_transfer_warning")}<br>${escapeHtml(leaderNames.join("، "))}
                 </div>
               ` : ""}
@@ -1967,7 +1967,7 @@ window.AtharModals = (function () {
           <div style="font-size:12px; color:var(--danger);">#${er.row} ${escapeHtml(er.name || "")} — ${escapeHtml(er.error)}</div>
         `).join("");
         document.getElementById("im-result").innerHTML = `
-          <div style="padding:12px; border-radius:8px; background:${res.failed ? "#FEF3C7" : "#ECFDF5"}; color:${res.failed ? "#92400E" : "#065F46"}; font-size:13px; font-weight:700;">
+          <div class="alert-soft ${res.failed ? "alert-warning-soft" : "alert-success-soft"}" style="padding:12px; font-weight:700;">
             ${t("imported")}: ${res.imported} • ${t("failed")}: ${res.failed}
           </div>
           ${errorsHtml}

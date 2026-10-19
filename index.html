@@ -9,6 +9,21 @@
     content="نظام مركزي لإدارة المتطوعين، اللجان، الاجتماعات، التقييمات، الساعات التطوعية، والشهادات التقديرية ثنائي اللغة">
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 
+  <!-- Apply saved theme before first paint (prevents flash) -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("athar_theme");
+        var theme = saved === "dark" || saved === "light"
+          ? saved
+          : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -59,6 +74,18 @@
       </form>
 
       <div class="login-footer">
+        <button type="button" id="login-theme-toggle" class="lang-toggle-btn theme-toggle-btn"
+          title="تبديل المظهر / Toggle Theme" aria-label="Toggle theme">
+          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+        </button>
         <button type="button" id="login-lang-toggle" class="lang-toggle-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
@@ -114,6 +141,20 @@
 
       <!-- Top Bar Actions -->
       <div class="top-bar-right">
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" class="lang-toggle-btn theme-toggle-btn"
+          title="تبديل المظهر / Toggle Theme" aria-label="Toggle theme">
+          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+        </button>
+
         <!-- Bilingual Toggle -->
         <button id="lang-toggle-btn" class="lang-toggle-btn" title="تبديل اللغة / Toggle Language">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

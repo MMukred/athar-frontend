@@ -72,6 +72,7 @@
     const sidebarBtn = document.getElementById("sidebar-toggle-btn");
     const brandBtn = document.getElementById("brand-home-btn");
     const langBtn = document.getElementById("lang-toggle-btn");
+    const themeBtn = document.getElementById("theme-toggle-btn");
     const userBtn = document.getElementById("user-profile-btn");
     const searchInput = document.getElementById("global-search-input");
 
@@ -81,6 +82,7 @@
     };
     if (brandBtn) brandBtn.onclick = function () { navigateTo("dashboard"); };
     if (langBtn) langBtn.onclick = function () { setLanguage(App.currentLang === "ar" ? "en" : "ar"); };
+    if (themeBtn) themeBtn.onclick = function () { window.AtharCore.toggleTheme(); };
     if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
     // ---- Global search ----
