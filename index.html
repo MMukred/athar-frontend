@@ -137,11 +137,22 @@
           <input type="text" id="global-search-input" class="search-input"
             placeholder="بحث عن متطوعين، لجان، اجتماعات..." autocomplete="off">
           <span class="search-kbd">Ctrl+K</span>
+          <div class="search-results" id="global-search-results" hidden></div>
         </div>
       </div>
 
       <!-- Top Bar Actions -->
       <div class="top-bar-right">
+        <!-- Mobile search (visible on small screens only) -->
+        <button id="mobile-search-btn" class="lang-toggle-btn mobile-search-btn" title="بحث / Search"
+          aria-label="Search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+
         <!-- Theme Toggle -->
         <button id="theme-toggle-btn" class="lang-toggle-btn theme-toggle-btn"
           title="تبديل المظهر / Toggle Theme" aria-label="Toggle theme">
@@ -176,6 +187,13 @@
         </div>
       </div>
     </header>
+
+    <!-- Mobile global search panel (≤620px) -->
+    <div id="mobile-search-panel" class="mobile-search-panel" hidden>
+      <input type="text" id="mobile-search-input" class="search-input"
+        placeholder="بحث عن متطوعين، لجان، اجتماعات..." autocomplete="off">
+      <div class="search-results" id="mobile-search-results" hidden></div>
+    </div>
 
     <!-- Main Shell -->
     <div class="main-layout">
@@ -214,6 +232,7 @@
   <script src="js/icons.js"></script>
   <script src="js/core.js"></script>
   <script src="js/modals.js"></script>
+  <script src="js/search.js"></script>
 
   <!-- Views -->
   <script src="js/views/index.js"></script>

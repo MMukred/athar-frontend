@@ -82,7 +82,6 @@
     const langBtn = document.getElementById("lang-toggle-btn");
     const themeBtn = document.getElementById("theme-toggle-btn");
     const userBtn = document.getElementById("user-profile-btn");
-    const searchInput = document.getElementById("global-search-input");
 
     // ---- Sidebar: desktop collapse / mobile off-canvas drawer ----
     const sidebarEl = document.getElementById("app-sidebar");
@@ -121,26 +120,8 @@
     if (themeBtn) themeBtn.onclick = function () { window.AtharCore.toggleTheme(); };
     if (userBtn) userBtn.onclick = function () { window.AtharModals.openUserMenuModal(); };
 
-    // ---- Global search ----
-    if (searchInput) {
-      searchInput.onkeydown = function (e) {
-        if (e.key === "Enter") {
-          App.searchQuery = searchInput.value;
-          navigateTo("volunteers");
-        }
-      };
-    }
-
-    if (!window._atharSearchBound) {
-      window.addEventListener("keydown", function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-          e.preventDefault();
-          const si = document.getElementById("global-search-input");
-          if (si) si.focus();
-        }
-      });
-      window._atharSearchBound = true;
-    }
+    // ---- Global search (quick-jump: volunteers, committees, meetings, certificates) ----
+    if (window.AtharSearch) window.AtharSearch.init();
 
     // ---- Router ----
     if (!App._routerBound) {

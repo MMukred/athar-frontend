@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
   // =========================================================
   // Evaluations List — with completion column + bulk rating
@@ -150,6 +150,10 @@
     const now = new Date();
     const defaultPeriod = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
 
+    // Unfinished-draft recovery (crash / refresh / accidental close).
+    const draftKey = "page_eval";
+    const draft = window.AtharDirty.loadDraft(draftKey);
+
     container.innerHTML = `
       <div class="view-header">
         <div class="view-header-left">
@@ -165,17 +169,23 @@
 
       <div class="card" style="max-width: 820px; margin: 0 auto;">
         <form id="new-eval-form">
+          ${draft ? `
+            <div id="pe-draft-banner" style="margin-bottom:18px; padding:10px 12px; background:var(--info-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12.5px; color:var(--info); display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:600;">
+              <span style="display:flex; align-items:center; gap:8px;">${ic("info", 14)} ${t("draft_restored")}</span>
+              <button type="button" class="btn btn-secondary btn-sm" id="pe-draft-discard">${t("discard_draft")}</button>
+            </div>
+          ` : ''}
           <div class="form-grid" style="margin-bottom:20px;">
             <div class="form-field">
               <label class="field-label">${t("volunteer_name")} <span class="required-asterisk">*</span></label>
               <select class="form-control" id="eval-vol-select" required>
                 <option value="">—</option>
-                ${activeVols.map(v => `<option value="${v.id}" ${preSelectedVolId === v.id ? 'selected' : ''}>${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}</option>`).join('')}
+                ${activeVols.map(v => `<option value="${v.id}" ${(preSelectedVolId || (draft && draft.volunteerId)) === v.id ? 'selected' : ''}>${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}</option>`).join('')}
               </select>
             </div>
             <div class="form-field">
               <label class="field-label">${t("period")} <span class="required-asterisk">*</span></label>
-              <input type="text" id="eval-period-input" class="form-control" required value="${defaultPeriod}" placeholder="e.g. 2026-Q4 or October 2026 or Ramadan 2026">
+              <input type="text" id="eval-period-input" class="form-control" required value="${escapeHtml((draft && draft.period) || defaultPeriod)}" placeholder="e.g. 2026-Q4 or October 2026 or Ramadan 2026">
               <span class="field-hint">${App.currentLang === 'ar' ? 'أي نص — ربع، شهر، أو فترة مخصصة' : 'Free text — quarter, month, or custom period'}</span>
             </div>
           </div>
@@ -183,11 +193,11 @@
           <div class="form-grid" style="margin-bottom:20px;">
             <div class="form-field">
               <label class="field-label">${App.currentLang === 'ar' ? 'بداية الفترة (اختياري)' : 'Period Start (optional)'}</label>
-              <input type="date" id="eval-period-start" class="form-control">
+              <input type="date" id="eval-period-start" class="form-control" value="${draft && draft.start ? draft.start : ''}">
             </div>
             <div class="form-field">
               <label class="field-label">${App.currentLang === 'ar' ? 'نهاية الفترة (اختياري)' : 'Period End (optional)'}</label>
-              <input type="date" id="eval-period-end" class="form-control">
+              <input type="date" id="eval-period-end" class="form-control" value="${draft && draft.end ? draft.end : ''}">
             </div>
           </div>
 
@@ -224,7 +234,7 @@
 
           <div class="form-field" style="margin-bottom:24px;">
             <label class="field-label">${t("notes")}</label>
-            <textarea id="eval-general-notes" class="form-control" rows="3" placeholder="Executive assessment and feedback remarks..."></textarea>
+            <textarea id="eval-general-notes" class="form-control" rows="3" placeholder="Executive assessment and feedback remarks...">${draft && draft.notes ? escapeHtml(draft.notes) : ''}</textarea>
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:12px;">
@@ -236,6 +246,35 @@
     `;
 
     const criterionScores = {};
+
+    const peCollectComments = () => {
+      const comments = {};
+      container.querySelectorAll(".eval-criterion-row").forEach(row => {
+        const cid = row.getAttribute("data-crit-id");
+        const el = row.querySelector(".crit-comment");
+        if (el && el.value.trim()) comments[cid] = el.value;
+      });
+      return comments;
+    };
+    const saveDraftNow = () => window.AtharDirty.saveDraft(draftKey, {
+      volunteerId: document.getElementById("eval-vol-select").value || null,
+      period: document.getElementById("eval-period-input").value,
+      start: document.getElementById("eval-period-start").value,
+      end: document.getElementById("eval-period-end").value,
+      notes: document.getElementById("eval-general-notes").value,
+      scores: criterionScores,
+      comments: peCollectComments(),
+    });
+    const markDirtyEval = () => window.AtharDirty.mark("page-eval", () => window.AtharDirty.clearDraft(draftKey));
+    const applyStarFill = (stars, score) => {
+      stars.forEach(s => {
+        const sc = Number(s.getAttribute("data-score"));
+        if (sc <= score) s.classList.add("filled");
+        else s.classList.remove("filled");
+      });
+    };
+
+    window.AtharDirty.bind(document.getElementById("new-eval-form"), "page-eval", () => window.AtharDirty.clearDraft(draftKey));
 
     function recalculateOverall() {
       const scored = criteria.filter(c => criterionScores[c.id] !== undefined);
@@ -260,15 +299,49 @@
         star.onclick = () => {
           const score = Number(star.getAttribute("data-score"));
           criterionScores[critId] = score;
-          stars.forEach(s => {
-            const sc = Number(s.getAttribute("data-score"));
-            if (sc <= score) s.classList.add("filled");
-            else s.classList.remove("filled");
-          });
+          applyStarFill(stars, score);
           recalculateOverall();
+          markDirtyEval();
+          saveDraftNow();
         };
       });
     });
+
+    // Restore an unfinished draft.
+    if (draft) {
+      Object.keys(draft.scores || {}).forEach(critId => {
+        const val = draft.scores[critId];
+        if (typeof val !== "number") return;
+        criterionScores[critId] = val;
+        const ratingEl = container.querySelector('.star-rating[data-crit-id="' + critId + '"]');
+        if (ratingEl) applyStarFill(ratingEl.querySelectorAll(".star"), val);
+      });
+      Object.keys(draft.comments || {}).forEach(critId => {
+        const row = container.querySelector('.eval-criterion-row[data-crit-id="' + critId + '"]');
+        const el = row ? row.querySelector(".crit-comment") : null;
+        if (el) el.value = draft.comments[critId];
+      });
+      recalculateOverall();
+      const discardDraftBtn = document.getElementById("pe-draft-discard");
+      if (discardDraftBtn) discardDraftBtn.onclick = () => {
+        window.AtharDirty.clearDraft(draftKey);
+        Object.keys(criterionScores).forEach(k => delete criterionScores[k]);
+        container.querySelectorAll(".star-rating").forEach(r => applyStarFill(r.querySelectorAll(".star"), 0));
+        container.querySelectorAll(".crit-comment").forEach(el => { el.value = ""; });
+        ["eval-vol-select", "eval-period-start", "eval-period-end", "eval-general-notes"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        const periodEl = document.getElementById("eval-period-input");
+        if (periodEl) periodEl.value = defaultPeriod;
+        recalculateOverall();
+        window.AtharDirty.clear();
+        const banner = document.getElementById("pe-draft-banner");
+        if (banner) banner.remove();
+      };
+    }
+
+    document.getElementById("new-eval-form").addEventListener("input", saveDraftNow);
 
     const cancelBtn = document.getElementById("btn-cancel-eval");
     if (cancelBtn) cancelBtn.onclick = () => navigateTo("evaluations");
@@ -317,6 +390,8 @@
         });
         await window.AtharStore.refreshEvaluations();
         showToast(t("saved_successfully"), "success");
+        window.AtharDirty.clearDraft(draftKey);
+        window.AtharDirty.clear();
         navigateTo("volunteer-profile", { id: volId, sub: "evaluations" });
       } catch (err) {
         if (err.code === "EVALUATION_EXISTS") {

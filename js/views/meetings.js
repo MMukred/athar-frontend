@@ -252,6 +252,7 @@
     const backView = isEvent ? "events" : "meetings";
     const backLabel = isEvent ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events') : t("nav_meetings");
     const canDelete = hasPermission("meetings", "delete");
+    const canCreate = hasPermission("meetings", "create");
     const kindColor = isEvent ? "#8A3FFC" : "var(--primary)";
 
     container.innerHTML = `
@@ -337,6 +338,11 @@
             <button class="btn btn-secondary" id="btn-auto-hours" title="${App.currentLang === 'ar' ? 'إعادة تسجيل الساعات لغير المسجلين' : 'Re-run auto-log'}">
               ${ic("refresh", 14)} ${App.currentLang === 'ar' ? 'تسجيل الساعات المتبقية' : 'Re-log Hours'}
             </button>
+          ` : ''}
+          <button class="btn btn-secondary btn-sm" id="btn-print-attendance">${ic("printer", 14)} ${t("print_attendance_sheet")}</button>
+          <button class="btn btn-secondary btn-sm" id="btn-ics-session">${ic("download", 14)} ${t("add_to_calendar")}</button>
+          ${canCreate ? `
+            <button class="btn btn-secondary btn-sm" id="btn-duplicate-session">${ic("copy", 14)} ${t("duplicate")}</button>
           ` : ''}
           ${canDelete ? `
             <button class="btn btn-danger-outline" id="btn-delete-session" title="${t("delete")}">
@@ -482,16 +488,22 @@
 
     container.querySelectorAll(".att-status-select").forEach(sel => sel.addEventListener("change", recalcCounts));
 
+    // Warn if the user navigates away with un-saved attendance marks.
+    const attTable = container.querySelector("#attendance-roster-table");
+    if (attTable) window.AtharDirty.bind(attTable, "attendance-roster");
+
     const bulkPresent = document.getElementById("btn-bulk-present");
     if (bulkPresent) bulkPresent.onclick = () => {
       container.querySelectorAll(".att-status-select").forEach(s => s.value = "present");
       recalcCounts();
+      window.AtharDirty.mark("attendance-roster");
     };
 
     const bulkAbsent = document.getElementById("btn-bulk-absent");
     if (bulkAbsent) bulkAbsent.onclick = () => {
       container.querySelectorAll(".att-status-select").forEach(s => s.value = "absent");
       recalcCounts();
+      window.AtharDirty.mark("attendance-roster");
     };
 
     // Batch evaluate
@@ -554,6 +566,7 @@
             showToast(App.currentLang === 'ar' ? `تم حفظ ${records.length} سجل` : `Saved ${records.length} records`, "success");
           }
 
+          window.AtharDirty.clear();
           renderMeetingDetail(container, meetingId);
         } catch (err) {
           showToast(err.message || "Save failed", "error");
@@ -590,7 +603,175 @@
     if (deleteBtn) {
       deleteBtn.onclick = () => confirmDeleteSession(meeting, () => navigateTo(backView));
     }
+
+    // ---- Time-savers: duplicate / print sheet / add to calendar ----
+    const dupBtn = document.getElementById("btn-duplicate-session");
+    if (dupBtn) {
+      dupBtn.onclick = () => {
+        window.AtharModals.openCreateMeetingSlideover(meeting.committee_id, meeting.kind || "meeting", meeting);
+      };
+    }
+
+    const printSheetBtn = document.getElementById("btn-print-attendance");
+    if (printSheetBtn) {
+      printSheetBtn.onclick = () => {
+        const sheetTitle = (App.currentLang === "ar" ? "كشف الحضور — " : "Attendance Sheet — ") +
+          (App.currentLang === "ar" ? (meeting.title_ar || meeting.title_en) : (meeting.title_en || meeting.title_ar));
+        let el = document.getElementById("printable-attendance-sheet");
+        if (!el) {
+          el = document.createElement("div");
+          el.id = "printable-attendance-sheet";
+          document.body.appendChild(el);
+        }
+        el.innerHTML = buildAttendanceSheetHtml(meeting, container, comm);
+        window.ExportUtil.printElement("printable-attendance-sheet", sheetTitle);
+        setTimeout(() => {
+          const stale = document.getElementById("printable-attendance-sheet");
+          if (stale) stale.remove();
+        }, 2500);
+      };
+    }
+
+    const icsBtn = document.getElementById("btn-ics-session");
+    if (icsBtn) {
+      icsBtn.onclick = () => {
+        const datePart = (meeting.meeting_date || "").replace(/-/g, "");
+        const filename = "Athar-" + (isEvent ? "Event-" : "Meeting-") + (datePart || "session") + ".ics";
+        window.ExportUtil.downloadFile(filename, buildICS(meeting, comm), "text/calendar;charset=utf-8");
+      };
+    }
   }
+
+  // =========================================================================
+  // Time-savers — ICS calendar invite + printable attendance sheet
+  // =========================================================================
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+  function buildICS(meeting, committee) {
+    const title = App.currentLang === "ar"
+      ? (meeting.title_ar || meeting.title_en)
+      : (meeting.title_en || meeting.title_ar);
+    const dateCompact = (meeting.meeting_date || "").replace(/-/g, "");
+    const startHHMM = (meeting.start_time || "09:00").slice(0, 5);
+    let endHHMM = meeting.end_time ? meeting.end_time.slice(0, 5) : null;
+    if (!endHHMM) {
+      const parts = startHHMM.split(":").map(Number);
+      const total = parts[0] * 60 + parts[1] + 90; // default 90-minute slot
+      endHHMM = pad2(Math.floor(total / 60) % 24) + ":" + pad2(total % 60);
+    }
+    const esc = (s) => String(s == null ? "" : s)
+      .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,")
+      .replace(/\r?\n/g, "\\n");
+    const now = new Date();
+    const stamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) +
+      "T" + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + pad2(now.getUTCSeconds()) + "Z";
+    const descParts = [];
+    if (meeting.description) descParts.push(meeting.description);
+    if (committee) descParts.push(App.currentLang === "ar" ? committee.name_ar : committee.name_en);
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Athar Volunteer Management//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      "UID:" + (meeting.id || "athar-session") + "@athar",
+      "DTSTAMP:" + stamp,
+      "DTSTART;VALUE=DATE-TIME:" + dateCompact + "T" + startHHMM.replace(":", "") + "00",
+      "DTEND;VALUE=DATE-TIME:" + dateCompact + "T" + endHHMM.replace(":", "") + "00",
+      "SUMMARY:" + esc(title || "Athar"),
+      "LOCATION:" + esc(meeting.location || ""),
+      "DESCRIPTION:" + esc(descParts.join(" — ")),
+      "END:VEVENT",
+      "END:VCALENDAR",
+      ""
+    ];
+    return lines.join("\r\n");
+  }
+
+  /**
+   * Build a print-friendly attendance sheet that mirrors what is currently
+   * marked on screen (name / phone are read from the rendered roster table).
+   */
+  function buildAttendanceSheetHtml(meeting, container, committee) {
+    const isEvent = (meeting.kind || "meeting") === "event";
+    const settings = window.AtharStore.getState().settings;
+    const titleAr = meeting.title_ar || meeting.title_en || "";
+    const titleEn = meeting.title_en || meeting.title_ar || "";
+
+    const box = '<span style="display:inline-block; width:13px; height:13px; border:1.4px solid #444; border-radius:3px; vertical-align:middle;"></span>';
+    const cell = 'border:1px solid #bbb; padding:6px 8px;';
+    const th = 'border:1px solid #bbb; padding:7px 8px; background:#f1f3f5; font-size:12px;';
+
+    let body = "";
+    let count = 0;
+    const rows = container.querySelectorAll("#attendance-roster-table tbody tr");
+    rows.forEach(row => {
+      const firstTd = row.querySelector("td");
+      if (!firstTd) return;
+      const divs = firstTd.querySelectorAll("div");
+      const name = divs[0] ? divs[0].textContent.trim() : "";
+      let phone = divs[1] ? divs[1].textContent.trim() : "";
+      if (!name || name === "—") return;
+      if (phone === "—") phone = "";
+      count++;
+      body += "<tr>" +
+        '<td style="' + cell + ' text-align:center;">' + count + "</td>" +
+        '<td style="' + cell + ' font-weight:600;">' + escHtml(name) + "</td>" +
+        '<td style="' + cell + ' direction:ltr; text-align:left;">' + escHtml(phone) + "</td>" +
+        '<td style="' + cell + ' text-align:center; height:30px;">' + box + "</td>" +
+        '<td style="' + cell + ' height:30px;"></td>' +
+        "</tr>";
+    });
+
+    const metaRows = [
+      ["التاريخ / Date", formatDate(meeting.meeting_date)],
+      ["الوقت / Time", (meeting.start_time || "—") + (meeting.end_time ? " - " + meeting.end_time : "")],
+      ["المكان / Location", meeting.location || "—"],
+      ["اللجنة / Committee", committee ? (App.currentLang === "ar" ? committee.name_ar : committee.name_en) : "—"],
+    ].map(([k, v]) =>
+      '<div style="font-size:12.5px; margin:2px 0;"><strong>' + escHtml(k) + ":</strong> " + escHtml(v) + "</div>"
+    ).join("");
+
+    return `
+      <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color:#111;" dir="rtl">
+        <div style="text-align:center; margin-bottom:14px;">
+          <div style="font-size:17px; font-weight:800;">${escHtml(settings.org_name_ar || "مؤسسة أثر")}</div>
+          <div style="font-size:12px; color:#555;">${escHtml(settings.org_name_en || "")}</div>
+          <div style="font-size:15px; font-weight:700; margin-top:10px;">كشف الحضور — ${isEvent ? "فعالية" : "اجتماع"} / Attendance Sheet</div>
+          <div style="font-size:13px; margin-top:4px;">${escHtml(titleAr)}${titleEn && titleEn !== titleAr ? " — " + escHtml(titleEn) : ""}</div>
+        </div>
+        <div style="border:1px solid #bbb; border-radius:6px; padding:10px 12px; margin-bottom:14px; display:flex; flex-wrap:wrap; gap:4px 26px;">${metaRows}</div>
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead>
+            <tr>
+              <th style="${th} width:34px;">#</th>
+              <th style="${th}">الاسم / Name</th>
+              <th style="${th} width:120px;">الجوال / Phone</th>
+              <th style="${th} width:110px;">الحضور / Present</th>
+              <th style="${th} width:150px;">التوقيع / Signature</th>
+            </tr>
+          </thead>
+          <tbody>${body || '<tr><td colspan="5" style="' + cell + ' text-align:center; padding:10px;">—</td></tr>'}</tbody>
+        </table>
+        <div style="margin-top:16px; font-size:11.5px; color:#555;">
+          الإجمالي / Total: ${count} &nbsp;&bull;&nbsp; أمين اللجنة / Committee Secretary: ____________________
+        </div>
+      </div>
+    `;
+  }
+
+  // Exposed for tests / other views
+  window.AtharMeetingsUtil = {
+    buildICS: buildICS,
+    buildAttendanceSheet: buildAttendanceSheetHtml,
+  };
 
   window.AtharViews.meetings = (c, p) => renderSessionList(c, "meeting");
   window.AtharViews.events = (c, p) => renderSessionList(c, "event");

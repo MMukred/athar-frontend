@@ -153,10 +153,12 @@ window.AtharModals = (function () {
       </div>
     `;
 
-    const close = () => { slideover.innerHTML = ""; };
-    document.getElementById("vol-close").onclick = close;
-    document.getElementById("vol-cancel").onclick = close;
-    document.getElementById("vol-backdrop").onclick = (e) => { if (e.target.id === "vol-backdrop") close(); };
+    const unbindDirty = window.AtharDirty.bind(document.getElementById("vol-form"), "volunteer-form");
+    const close = () => { unbindDirty(); window.AtharDirty.clear(); slideover.innerHTML = ""; };
+    const requestClose = () => { window.AtharDirty.guard(close); };
+    document.getElementById("vol-close").onclick = requestClose;
+    document.getElementById("vol-cancel").onclick = requestClose;
+    document.getElementById("vol-backdrop").onclick = (e) => { if (e.target.id === "vol-backdrop") requestClose(); };
 
     const clearErr = (id) => { const el = document.getElementById(id + "-err"); if (el) { el.textContent = ""; el.style.display = "none"; } };
     ["vol-name-en", "vol-wa", "vol-email"].forEach((id) => {
@@ -336,10 +338,12 @@ window.AtharModals = (function () {
       </div>
     `;
 
-    const close = () => { slideover.innerHTML = ""; };
-    document.getElementById("hr-close").onclick = close;
-    document.getElementById("hr-cancel").onclick = close;
-    document.getElementById("hr-backdrop").onclick = (e) => { if (e.target.id === "hr-backdrop") close(); };
+    const unbindDirty = window.AtharDirty.bind(document.getElementById("hr-form"), "log-hours-form");
+    const close = () => { unbindDirty(); window.AtharDirty.clear(); slideover.innerHTML = ""; };
+    const requestClose = () => { window.AtharDirty.guard(close); };
+    document.getElementById("hr-close").onclick = requestClose;
+    document.getElementById("hr-cancel").onclick = requestClose;
+    document.getElementById("hr-backdrop").onclick = (e) => { if (e.target.id === "hr-backdrop") requestClose(); };
 
     document.getElementById("hr-form").onsubmit = async (e) => {
       e.preventDefault();
@@ -362,12 +366,22 @@ window.AtharModals = (function () {
   // =========================================================
   // 4. Create Meeting / Event
   // =========================================================
-  function openCreateMeetingSlideover(committeeId, kind) {
+  function openCreateMeetingSlideover(committeeId, kind, prefill) {
     committeeId = committeeId || null;
     kind = kind === "event" ? "event" : "meeting";
     const isEvent = kind === "event";
     const state = window.AtharStore.getState();
     const slideover = document.getElementById("slideover-container");
+
+    // Optional pre-fill (used by "Duplicate" on the session detail page).
+    prefill = prefill || null;
+    const pf = prefill || {};
+    const pfTitleEn = pf.title_en || "";
+    const pfTitleAr = pf.title_ar || "";
+    const pfCommittee = pf.committee_id || committeeId;
+    const pfStart = pf.start_time || "18:00";
+    const pfEnd = pf.end_time || "19:30";
+    const pfLoc = pf.location || "Room 3";
 
     slideover.innerHTML = `
       <div class="overlay-backdrop" id="mt-backdrop">
@@ -381,19 +395,24 @@ window.AtharModals = (function () {
           </div>
           <div class="drawer-body">
             <form id="mt-form" style="display:flex; flex-direction:column; gap:16px;">
+              ${prefill ? `
+                <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary); display:flex; gap:8px; align-items:center;">
+                  ${ic("info", 14)} <span>${t("duplicate_prefilled_note")}</span>
+                </div>
+              ` : ''}
               <div class="form-field">
                 <label class="field-label">${t("meeting_title_en")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="mt-title-en" class="form-control" required>
+                <input type="text" id="mt-title-en" class="form-control" value="${escapeHtml(pfTitleEn)}" required>
               </div>
               <div class="form-field">
                 <label class="field-label">${t("meeting_title_ar")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="mt-title-ar" class="form-control" required>
+                <input type="text" id="mt-title-ar" class="form-control" value="${escapeHtml(pfTitleAr)}" required>
               </div>
               <div class="form-field">
                 <label class="field-label">${t("committee")}</label>
                 <select id="mt-comm" class="form-control">
                   <option value="">${t("all_committees")}</option>
-                  ${state.committees.map(c => `<option value="${c.id}" ${committeeId === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                  ${state.committees.map(c => `<option value="${c.id}" ${pfCommittee === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
                 </select>
               </div>
               <div class="form-field">
@@ -403,11 +422,11 @@ window.AtharModals = (function () {
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("start_time")} <span class="required-asterisk">*</span></label>
-                  <input type="time" id="mt-start" class="form-control" value="18:00" required>
+                  <input type="time" id="mt-start" class="form-control" value="${pfStart}" required>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("end_time")} ${isEvent ? '<span class="required-asterisk">*</span>' : ''}</label>
-                  <input type="time" id="mt-end" class="form-control" value="19:30" ${isEvent ? 'required' : ''}>
+                  <input type="time" id="mt-end" class="form-control" value="${pfEnd}" ${isEvent ? 'required' : ''}>
                 </div>
               </div>
               ${isEvent ? `
@@ -417,7 +436,7 @@ window.AtharModals = (function () {
               ` : ''}
               <div class="form-field">
                 <label class="field-label">${t("location")}</label>
-                <input type="text" id="mt-loc" class="form-control" value="Room 3">
+                <input type="text" id="mt-loc" class="form-control" value="${escapeHtml(pfLoc)}">
               </div>
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="mt-cancel">${t("cancel")}</button>
@@ -429,10 +448,12 @@ window.AtharModals = (function () {
       </div>
     `;
 
-    const close = () => { slideover.innerHTML = ""; };
-    document.getElementById("mt-close").onclick = close;
-    document.getElementById("mt-cancel").onclick = close;
-    document.getElementById("mt-backdrop").onclick = (e) => { if (e.target.id === "mt-backdrop") close(); };
+    const unbindDirty = window.AtharDirty.bind(document.getElementById("mt-form"), "meeting-form");
+    const close = () => { unbindDirty(); window.AtharDirty.clear(); slideover.innerHTML = ""; };
+    const requestClose = () => { window.AtharDirty.guard(close); };
+    document.getElementById("mt-close").onclick = requestClose;
+    document.getElementById("mt-cancel").onclick = requestClose;
+    document.getElementById("mt-backdrop").onclick = (e) => { if (e.target.id === "mt-backdrop") requestClose(); };
 
     document.getElementById("mt-form").onsubmit = async (e) => {
       e.preventDefault();
@@ -847,6 +868,11 @@ window.AtharModals = (function () {
     if (!vols.length) { showToast("No matching volunteers", "error"); return; }
     if (!criteria.length) { showToast("No active criteria — add them in Evaluation Criteria", "error"); return; }
 
+    // Draft key is stable for the same set of volunteers, so an unfinished
+    // rating session can be restored after a refresh / crash.
+    const draftKey = "bulk_eval_" + volunteerIds.slice().sort().join("_");
+    const draft = window.AtharDirty.loadDraft(draftKey);
+
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
       <div class="overlay-backdrop" id="brt-backdrop">
@@ -860,6 +886,12 @@ window.AtharModals = (function () {
               <div style="padding:12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); font-size:12px; color:var(--warning);">
                 ⚠ ${App.currentLang === 'ar' ? `جميع الـ ${vols.length} متطوع سيحصلون على نفس التقييم.` : `All ${vols.length} volunteer(s) get the same rating.`}
               </div>
+              ${draft ? `
+                <div id="brt-draft-banner" style="padding:10px 12px; background:var(--info-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12.5px; color:var(--info); display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:600;">
+                  <span style="display:flex; align-items:center; gap:8px;">${ic("info", 14)} ${t("draft_restored")}</span>
+                  <button type="button" class="btn btn-secondary btn-sm" id="brt-draft-discard">${t("discard_draft")}</button>
+                </div>
+              ` : ''}
               <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:90px; overflow-y:auto;">
                 ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
               </div>
@@ -915,12 +947,59 @@ window.AtharModals = (function () {
       </div>
     `;
 
-    const close = () => { modal.innerHTML = ""; };
-    document.getElementById("brt-close").onclick = close;
-    document.getElementById("brt-cancel").onclick = close;
-    document.getElementById("brt-backdrop").onclick = (e) => { if (e.target.id === "brt-backdrop") close(); };
+    const brtDiscardDraft = () => window.AtharDirty.clearDraft(draftKey);
+    const unbindDirty = window.AtharDirty.bind(document.getElementById("brt-form"), "bulk-rating", brtDiscardDraft);
+    const close = () => { unbindDirty(); window.AtharDirty.clear(); modal.innerHTML = ""; };
+
+    // Inline unsaved-changes guard: the global confirm modal renders into
+    // #modal-container — the same container as this modal — so it would wipe
+    // the form. Ask inside the footer instead.
+    let confirmState = false;
+    const brtFooter = document.querySelector("#brt-form .modal-footer");
+    const originalFooterHtml = brtFooter.innerHTML;
+    const requestClose = () => {
+      if (!window.AtharDirty.isDirty()) { close(); return; }
+      if (confirmState) return; // already asking
+      confirmState = true;
+      brtFooter.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; width:100%; justify-content:space-between; flex-wrap:wrap;">
+          <span style="font-size:12.5px; color:var(--warning); font-weight:600;">${t("unsaved_message")}</span>
+          <span style="display:flex; gap:8px; flex-shrink:0;">
+            <button type="button" class="btn btn-secondary btn-sm" id="brt-unsaved-keep">${t("unsaved_keep_editing")}</button>
+            <button type="button" class="btn btn-danger btn-sm" id="brt-unsaved-discard">${t("unsaved_discard")}</button>
+          </span>
+        </div>`;
+      document.getElementById("brt-unsaved-keep").onclick = () => {
+        confirmState = false;
+        brtFooter.innerHTML = originalFooterHtml;
+        document.getElementById("brt-cancel").onclick = requestClose;
+      };
+      document.getElementById("brt-unsaved-discard").onclick = () => {
+        window.AtharDirty.clearDraft(draftKey);
+        window.AtharDirty.clear();
+        close();
+      };
+    };
+    document.getElementById("brt-close").onclick = requestClose;
+    document.getElementById("brt-cancel").onclick = requestClose;
+    document.getElementById("brt-backdrop").onclick = (e) => { if (e.target.id === "brt-backdrop") requestClose(); };
 
     const criterionScores = {};
+    const saveDraftNow = () => window.AtharDirty.saveDraft(draftKey, {
+      scores: criterionScores,
+      period: document.getElementById("brt-period").value,
+      notes: document.getElementById("brt-notes").value,
+      start: document.getElementById("brt-start").value,
+      end: document.getElementById("brt-end").value,
+    });
+    const applyStarFill = (stars, score) => {
+      stars.forEach(s => {
+        const sc = Number(s.getAttribute("data-score"));
+        if (sc <= score) s.classList.add("filled");
+        else s.classList.remove("filled");
+      });
+    };
+
     modal.querySelectorAll(".star-rating").forEach(ratingEl => {
       const critId = ratingEl.getAttribute("data-crit-id");
       const stars = ratingEl.querySelectorAll(".star");
@@ -928,14 +1007,44 @@ window.AtharModals = (function () {
         star.onclick = () => {
           const score = Number(star.getAttribute("data-score"));
           criterionScores[critId] = score;
-          stars.forEach(s => {
-            const sc = Number(s.getAttribute("data-score"));
-            if (sc <= score) s.classList.add("filled");
-            else s.classList.remove("filled");
-          });
+          applyStarFill(stars, score);
+          window.AtharDirty.mark("bulk-rating", brtDiscardDraft);
+          saveDraftNow();
         };
       });
     });
+
+    // Restore an unfinished draft (crash / refresh recovery).
+    if (draft) {
+      ["period", "notes", "start", "end"].forEach(k => {
+        if (draft[k]) {
+          const el = document.getElementById("brt-" + k);
+          if (el) el.value = draft[k];
+        }
+      });
+      Object.keys(draft.scores || {}).forEach(critId => {
+        const val = draft.scores[critId];
+        if (typeof val !== "number") return;
+        criterionScores[critId] = val;
+        const ratingEl = modal.querySelector('.star-rating[data-crit-id="' + critId + '"]');
+        if (ratingEl) applyStarFill(ratingEl.querySelectorAll(".star"), val);
+      });
+      const discardDraftBtn = document.getElementById("brt-draft-discard");
+      if (discardDraftBtn) discardDraftBtn.onclick = () => {
+        window.AtharDirty.clearDraft(draftKey);
+        Object.keys(criterionScores).forEach(k => delete criterionScores[k]);
+        modal.querySelectorAll(".star-rating").forEach(r => applyStarFill(r.querySelectorAll(".star"), 0));
+        ["period", "notes", "start", "end"].forEach(k => {
+          const el = document.getElementById("brt-" + k);
+          if (el) el.value = "";
+        });
+        const banner = document.getElementById("brt-draft-banner");
+        if (banner) banner.remove();
+        window.AtharDirty.clear();
+      };
+    }
+
+    document.getElementById("brt-form").addEventListener("input", saveDraftNow);
 
     document.getElementById("brt-form").onsubmit = async (e) => {
       e.preventDefault();
@@ -968,6 +1077,8 @@ window.AtharModals = (function () {
       if (fail) msg += `, ${fail} failed`;
       showToast(msg, fail ? "warning" : "success");
       if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
+      window.AtharDirty.clearDraft(draftKey);
+      window.AtharDirty.clear();
       close();
       window.AtharCore.renderCurrentView();
     };

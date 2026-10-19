@@ -54,6 +54,7 @@
 
     const brandingForm = document.getElementById("settings-branding-form");
     if (brandingForm && isSuper) {
+      window.AtharDirty.bind(brandingForm, "settings-form");
       brandingForm.onsubmit = async (e) => {
         e.preventDefault();
         const payload = {
@@ -65,6 +66,7 @@
         try {
           await window.AtharAPI.settings.bulkUpdate(payload);
           await window.AtharStore.refreshSettings?.();
+          window.AtharDirty.clear();
           showToast(t("saved_successfully"), "success");
         } catch (err) {
           showToast(err.message || "Failed to save settings", "error");

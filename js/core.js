@@ -299,6 +299,8 @@ window.AtharCore = (function () {
     if (appNameEl) appNameEl.textContent = t("app_name");
     if (appSubEl) appSubEl.textContent = t("app_subname");
     if (searchEl) searchEl.placeholder = t("search_placeholder");
+    const mobileSearchEl = document.getElementById("mobile-search-input");
+    if (mobileSearchEl) mobileSearchEl.placeholder = t("search_placeholder");
     if (langTextEl) langTextEl.textContent = lang === "ar" ? "English" : "العربية";
 
     updateUserMenuBadge();
@@ -579,5 +581,118 @@ window.AtharCore = (function () {
     renderCurrentView,
     renderSkeleton,
     toggleTheme,
+  };
+})();
+
+/* ============================================================================
+   AtharDirty — unsaved-changes guard + form drafts.
+   navigateTo() consults this module before switching views, so forms can
+   warn the user instead of silently losing half-entered data.
+   ========================================================================== */
+window.AtharDirty = (function () {
+  "use strict";
+
+  const DRAFT_PREFIX = "athar_draft_";
+  const DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+  let dirty = false;
+  let source = null;
+  let onDiscard = null;
+
+  function isDirty() {
+    return dirty;
+  }
+
+  function mark(sourceId, discardCallback) {
+    dirty = true;
+    if (sourceId) source = sourceId;
+    if (typeof discardCallback === "function") onDiscard = discardCallback;
+  }
+
+  function clear() {
+    dirty = false;
+    source = null;
+    onDiscard = null;
+  }
+
+  function guard(proceed) {
+    if (!dirty) { proceed(); return; }
+    const core = window.AtharCore;
+    core.showConfirmModal({
+      title: core.t("unsaved_title"),
+      message: core.t("unsaved_message"),
+      confirmText: core.t("unsaved_discard"),
+      cancelText: core.t("unsaved_keep_editing"),
+      isDanger: true,
+      onConfirm: function () {
+        const cb = onDiscard;
+        clear();
+        if (cb) { try { cb(); } catch (e) { /* ignore */ } }
+        proceed();
+      },
+    });
+  }
+
+  /**
+   * Auto-mark the form as dirty on any user input inside the container.
+   * Returns an unbind function.
+   */
+  function bind(container, sourceId, discardCallback) {
+    if (!container) return function () { };
+    const handler = function (e) {
+      const el = e.target;
+      if (el && el.matches && el.matches("input, select, textarea")) {
+        mark(sourceId, discardCallback);
+      }
+    };
+    container.addEventListener("input", handler);
+    container.addEventListener("change", handler);
+    return function unbind() {
+      container.removeEventListener("input", handler);
+      container.removeEventListener("change", handler);
+    };
+  }
+
+  // ---- Draft storage (localStorage, best-effort) --------------------------
+  function saveDraft(key, data) {
+    try {
+      localStorage.setItem(DRAFT_PREFIX + key, JSON.stringify({ ts: Date.now(), data: data }));
+    } catch (e) { /* storage full / unavailable */ }
+  }
+
+  function loadDraft(key) {
+    try {
+      const raw = localStorage.getItem(DRAFT_PREFIX + key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || (Date.now() - (parsed.ts || 0)) > DRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(DRAFT_PREFIX + key);
+        return null;
+      }
+      return parsed.data || null;
+    } catch (e) { return null; }
+  }
+
+  function clearDraft(key) {
+    try { localStorage.removeItem(DRAFT_PREFIX + key); } catch (e) { /* ignore */ }
+  }
+
+  // Warn before closing/reloading the tab with unsaved changes.
+  window.addEventListener("beforeunload", function (e) {
+    if (dirty) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
+  return {
+    isDirty: isDirty,
+    mark: mark,
+    clear: clear,
+    guard: guard,
+    bind: bind,
+    saveDraft: saveDraft,
+    loadDraft: loadDraft,
+    clearDraft: clearDraft,
   };
 })();

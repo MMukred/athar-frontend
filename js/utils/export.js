@@ -88,6 +88,27 @@ window.ExportUtil = (function () {
   }
 
   /**
+   * Download a text file (e.g. .ics calendar invites).
+   * @param {string} filename
+   * @param {string} content
+   * @param {string} mime
+   */
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+    if (window.AtharApp && window.AtharApp.showToast) {
+      window.AtharApp.showToast("Downloaded: " + filename, "success");
+    }
+  }
+
+  /**
    * Open a print-friendly window for a DOM element.
    */
   function printElement(elementId, title) {
@@ -138,6 +159,7 @@ window.ExportUtil = (function () {
 
   return {
     downloadCSV: downloadCSV,
+    downloadFile: downloadFile,
     printElement: printElement,
     // Exposed for testing
     _sanitizeCell: sanitizeCell
