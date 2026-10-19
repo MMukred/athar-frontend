@@ -32,6 +32,13 @@ window.AtharModals = (function () {
     { token: "{verify_url}", desc_en: "Verify URL", desc_ar: "رابط التحقق" }
   ];
 
+  // ---- Round 7: duplicate detection helpers (slideover + import) ----
+  function normPhoneKey(raw) {
+    const d = String(raw || "").replace(/\D/g, "").replace(/^0+/, "");
+    return d.length >= 9 ? d.slice(-9) : d;
+  }
+  function normEmailKey(raw) { return String(raw || "").trim().toLowerCase(); }
+
   // =========================================================
   // 1. Add / Edit Volunteer
   // =========================================================
@@ -78,16 +85,25 @@ window.AtharModals = (function () {
                   <label class="field-label">${t("whatsapp")}</label>
                   <input type="tel" id="vol-wa" class="form-control" placeholder="+96650..." maxlength="30" value="${existing ? (existing.whatsapp || '') : ''}">
                   <span class="field-hint" id="vol-wa-err" style="color:var(--danger); display:none;"></span>
+                  <div class="dup-warning" id="vol-wa-dup"></div>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("email")}</label>
                   <input type="email" id="vol-email" class="form-control" maxlength="150" value="${existing ? (existing.email || '') : ''}">
                   <span class="field-hint" id="vol-email-err" style="color:var(--danger); display:none;"></span>
+                  <div class="dup-warning" id="vol-email-dup"></div>
                 </div>
               </div>
 
               <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
                 ${App.currentLang === 'ar' ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.' : 'At least one of WhatsApp number or email is required.'}
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">${t("national_id")} <span style="color:var(--neutral-400); font-weight:500;">(${App.currentLang === 'ar' ? 'اختياري' : 'optional'})</span></label>
+                <input type="text" id="vol-national-id" class="form-control num-ltr" maxlength="50" placeholder="${App.currentLang === 'ar' ? 'مثال: 1234567890' : 'e.g. 1234567890'}" value="${existing ? (existing.national_id || '') : ''}">
+                <span class="field-hint" id="vol-national-id-err" style="color:var(--danger); display:none;"></span>
+                <div class="dup-warning" id="vol-national-id-dup"></div>
               </div>
 
               <div class="form-grid">
@@ -161,15 +177,66 @@ window.AtharModals = (function () {
     document.getElementById("vol-backdrop").onclick = (e) => { if (e.target.id === "vol-backdrop") requestClose(); };
 
     const clearErr = (id) => { const el = document.getElementById(id + "-err"); if (el) { el.textContent = ""; el.style.display = "none"; } };
-    ["vol-name-en", "vol-wa", "vol-email"].forEach((id) => {
+    ["vol-name-en", "vol-wa", "vol-email", "vol-national-id"].forEach((id) => {
       const input = document.getElementById(id);
       if (input) input.addEventListener("input", () => clearErr(id));
     });
     const setErr = (id, msg) => { const el = document.getElementById(id + "-err"); if (el) { el.textContent = msg; el.style.display = "block"; } };
 
+    // ---- Round 7: live duplicate warnings (WhatsApp / email / national ID) ----
+    const findDupMatches = (kind, value) => {
+      const all = window.AtharStore.getState().volunteers || [];
+      const others = all.filter(v => !existing || v.id !== existing.id);
+      if (kind === "id") {
+        const k = String(value || "").trim();
+        if (!k) return [];
+        return others.filter(v => v.national_id && String(v.national_id).trim() === k);
+      }
+      if (kind === "email") {
+        const k = normEmailKey(value);
+        if (!k) return [];
+        return others.filter(v => normEmailKey(v.email) === k);
+      }
+      const k = normPhoneKey(value);
+      if (!k) return [];
+      return others.filter(v => normPhoneKey(v.whatsapp) === k || normPhoneKey(v.phone) === k);
+    };
+    const renderDupWarn = (warnId, matches) => {
+      const el = document.getElementById(warnId);
+      if (!el) return;
+      if (!matches.length) { el.style.display = "none"; el.innerHTML = ""; return; }
+      const names = matches.slice(0, 3).map(v => {
+        const nm = App.currentLang === "ar" ? (v.full_name_ar || v.full_name) : (v.full_name || v.full_name_ar);
+        return `<button type="button" class="dup-link" data-dup-id="${v.id}">${escapeHtml(nm)}</button>${v.status === "archived" ? ` <span style="opacity:.75;">(${t("archived")})</span>` : ""}`;
+      }).join(App.currentLang === "ar" ? "، " : ", ");
+      el.innerHTML = `${ic("alert", 12)} <span>${t("dup_registered_under")}</span> <span>${names}${matches.length > 3 ? ` +${matches.length - 3}` : ""}</span>`;
+      el.style.display = "flex";
+    };
+    const refreshDupWarns = () => {
+      renderDupWarn("vol-wa-dup", findDupMatches("phone", (document.getElementById("vol-wa") || {}).value));
+      renderDupWarn("vol-email-dup", findDupMatches("email", (document.getElementById("vol-email") || {}).value));
+      renderDupWarn("vol-national-id-dup", findDupMatches("id", (document.getElementById("vol-national-id") || {}).value));
+    };
+    ["vol-wa", "vol-email", "vol-national-id"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", refreshDupWarns);
+    });
+    refreshDupWarns();
+
+    document.getElementById("vol-form").addEventListener("click", (e) => {
+      const btn = e.target.closest && e.target.closest("[data-dup-id]");
+      if (!btn) return;
+      e.preventDefault();
+      const vid = btn.getAttribute("data-dup-id");
+      unbindDirty();
+      window.AtharDirty.clear();
+      slideover.innerHTML = "";
+      navigateTo("volunteer-profile", { id: vid });
+    });
+
     document.getElementById("vol-form").onsubmit = async (e) => {
       e.preventDefault();
-      ["vol-name-en", "vol-wa", "vol-email"].forEach(clearErr);
+      ["vol-name-en", "vol-wa", "vol-email", "vol-national-id"].forEach(clearErr);
 
       const nameEn = document.getElementById("vol-name-en").value.trim();
       const nameAr = document.getElementById("vol-name-ar").value.trim();
@@ -182,14 +249,16 @@ window.AtharModals = (function () {
       const commId = document.getElementById("vol-comm").value || null;
       const status = document.getElementById("vol-status").value;
       const notes = document.getElementById("vol-notes").value;
+      const nationalId = document.getElementById("vol-national-id").value.trim();
 
       let hasError = false;
       if (nameEn.length < 2) { setErr("vol-name-en", "Name must be at least 2 characters."); hasError = true; }
       if (!wa && !email) { setErr("vol-wa", "Provide a WhatsApp number or an email."); setErr("vol-email", "Provide a WhatsApp number or an email."); hasError = true; }
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("vol-email", "Invalid email format."); hasError = true; }
+      if (nationalId && findDupMatches("id", nationalId).length) { setErr("vol-national-id", t("error_duplicate_id")); hasError = true; }
       if (hasError) { showToast("Please fix the highlighted fields.", "error"); return; }
 
-      const payload = { fullName: nameEn, fullNameAr: nameAr || undefined, whatsapp: wa || undefined, email: email || undefined, gender: gender || undefined, nationality: nationality || undefined, studyLevel: studyLevel || undefined, dob: dob || undefined, committeeId: commId, status, notes: notes || undefined };
+      const payload = { fullName: nameEn, fullNameAr: nameAr || undefined, nationalId: nationalId || undefined, whatsapp: wa || undefined, email: email || undefined, gender: gender || undefined, nationality: nationality || undefined, studyLevel: studyLevel || undefined, dob: dob || undefined, committeeId: commId, status, notes: notes || undefined };
 
       const submitBtn = document.getElementById("vol-submit");
       submitBtn.disabled = true;
@@ -203,7 +272,7 @@ window.AtharModals = (function () {
         close();
         window.AtharCore.renderCurrentView();
       } catch (err) {
-        if (err.code === "DUPLICATE_NATIONAL_ID" || err.code === "DUPLICATE_RECORD") { showToast(t("error_duplicate_id"), "error"); }
+        if (err.code === "DUPLICATE_NATIONAL_ID" || err.code === "DUPLICATE_RECORD") { setErr("vol-national-id", t("error_duplicate_id")); showToast(t("error_duplicate_id"), "error"); }
         else if (err.code === "MISSING_CONTACT" || (err.status === 422 && err.details)) {
           if (err.details?.whatsapp) setErr("vol-wa", Array.isArray(err.details.whatsapp) ? err.details.whatsapp[0] : err.details.whatsapp);
           if (err.details?.email) setErr("vol-email", Array.isArray(err.details.email) ? err.details.email[0] : err.details.email);
@@ -1974,6 +2043,7 @@ window.AtharModals = (function () {
   function openImportVolunteersModal() {
     let parsedRecords = [];
     let invalidCount = 0;
+    let rowIssues = [];
 
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
@@ -2021,9 +2091,58 @@ window.AtharModals = (function () {
     const submitBtn = document.getElementById("im-submit");
     const previewEl = document.getElementById("im-preview");
 
+    // ---- Round 7: pre-import duplicate validation ----
+    const issueLabel = (iss) => {
+      switch (iss.code) {
+        case "id_existing": return t("imp_dup_id_existing");
+        case "id_in_file": return t("imp_dup_id_file");
+        case "phone_in_file": return t("imp_dup_phone_file");
+        case "email_in_file": return t("imp_dup_email_file");
+        case "phone_existing": return t("imp_soft_phone");
+        case "email_existing": return t("imp_soft_email");
+      }
+      return "";
+    };
+    const issueName = (v) => v ? (App.currentLang === "ar" ? (v.full_name_ar || v.full_name) : (v.full_name || v.full_name_ar)) : "";
+    const validateRows = (records) => {
+      const all = window.AtharStore.getState().volunteers || [];
+      const byId = {}, byPhone = {}, byEmail = {};
+      all.forEach(v => {
+        if (v.national_id) { const k = String(v.national_id).trim(); (byId[k] = byId[k] || []).push(v); }
+        const pk = normPhoneKey(v.whatsapp) || normPhoneKey(v.phone);
+        if (pk) (byPhone[pk] = byPhone[pk] || []).push(v);
+        const ek = normEmailKey(v.email);
+        if (ek) (byEmail[ek] = byEmail[ek] || []).push(v);
+      });
+      const seenId = {}, seenPhone = {}, seenEmail = {};
+      return records.map(rec => {
+        const hard = [], soft = [];
+        const nid = rec.nationalId ? String(rec.nationalId).trim() : "";
+        if (nid) {
+          if (byId[nid]) hard.push({ code: "id_existing", who: byId[nid][0] });
+          else if (seenId[nid]) hard.push({ code: "id_in_file" });
+          seenId[nid] = true;
+        }
+        const pk = normPhoneKey(rec.whatsapp) || normPhoneKey(rec.phone);
+        if (pk) {
+          if (byPhone[pk]) soft.push({ code: "phone_existing", who: byPhone[pk][0] });
+          if (seenPhone[pk]) hard.push({ code: "phone_in_file" });
+          seenPhone[pk] = true;
+        }
+        const ek = normEmailKey(rec.email);
+        if (ek) {
+          if (byEmail[ek]) soft.push({ code: "email_existing", who: byEmail[ek][0] });
+          if (seenEmail[ek]) hard.push({ code: "email_in_file" });
+          seenEmail[ek] = true;
+        }
+        return { hard, soft };
+      });
+    };
+
     fileEl.onchange = () => {
       const file = fileEl.files && fileEl.files[0];
       document.getElementById("im-result").innerHTML = "";
+      submitBtn.style.display = "";
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
@@ -2032,32 +2151,56 @@ window.AtharModals = (function () {
           const mapped = mapCsvRows(rows);
           parsedRecords = mapped.records;
           invalidCount = mapped.invalid;
+          rowIssues = [];
           if (!parsedRecords.length) {
             previewEl.innerHTML = `<div style="color:var(--danger); font-size:13px;">${App.currentLang === "ar" ? "لم يتم العثور على صفوف صالحة — تأكد من وجود عمود الاسم." : "No valid rows found — make sure a Name column exists."}</div>`;
             submitBtn.disabled = true;
             return;
           }
+          rowIssues = validateRows(parsedRecords);
+          const hardCount = rowIssues.filter(it => it.hard.length).length;
+          const softCount = rowIssues.filter(it => it.soft.length).length;
+          const badgeHtml = (it) => {
+            const allI = [...it.hard, ...it.soft];
+            if (!allI.length) return `<span class="dup-badge ok">${t("imp_ready")}</span>`;
+            const badges = allI.slice(0, 2).map(x => {
+              const cls = it.hard.includes(x) ? "hard" : "soft";
+              const tip = issueLabel(x) + (x.who ? " — " + issueName(x.who) : "");
+              return `<span class="dup-badge ${cls}" title="${escapeHtml(tip)}">${issueLabel(x)}</span>`;
+            }).join(" ");
+            return badges + (allI.length > 2 ? ` <span class="dup-badge soft">+${allI.length - 2}</span>` : "");
+          };
+          const dupLines = rowIssues.map((it, i) => ({ it, i }))
+            .filter(x => x.it.hard.length)
+            .slice(0, 8)
+            .map(x => {
+              const iss = x.it.hard[0];
+              const line = `#${x.i + 1} ${parsedRecords[x.i].fullName} — ${issueLabel(iss)}${iss.who ? " — " + issueName(iss.who) : ""}`;
+              return `<div class="im-dup-line">${escapeHtml(line)}</div>`;
+            }).join("");
           const preview = parsedRecords.slice(0, 6);
           previewEl.innerHTML = `
             <div style="font-size:12px; font-weight:700; margin-bottom:6px; color:var(--neutral-700);">
-              ${t("import_preview")}: ${parsedRecords.length - invalidCount} ${App.currentLang === "ar" ? "جاهز للإرسال" : "ready to submit"}${invalidCount ? ` — ${invalidCount} ${App.currentLang === "ar" ? "غير مكتمل (سيُرفض)" : "incomplete (will be rejected)"}` : ""}
+              ${t("import_preview")}: ${parsedRecords.length - invalidCount} ${App.currentLang === "ar" ? "جاهز للإرسال" : "ready to submit"}${invalidCount ? ` — ${invalidCount} ${App.currentLang === "ar" ? "غير مكتمل (سيُرفض)" : "incomplete (will be rejected)"}` : ""}${hardCount ? ` — <span style="color:var(--danger);">${hardCount} ${App.currentLang === "ar" ? "صف مكرر" : "duplicate row(s)"}</span>` : ""}${softCount ? ` — <span style="color:var(--warning-strong);">${softCount} ${App.currentLang === "ar" ? "تشابه جهة اتصال" : "contact match(es)"}</span>` : ""}
             </div>
             <div class="table-container" style="max-height:200px; overflow:auto;">
               <table class="data-table">
-                <thead><tr><th>${t("volunteer_name")}</th><th>WhatsApp</th><th>${t("email")}</th><th>${t("committee")}</th><th>${t("gender")}</th></tr></thead>
+                <thead><tr><th>${t("volunteer_name")}</th><th>WhatsApp</th><th>${t("email")}</th><th>${t("committee")}</th><th>${t("imp_check")}</th></tr></thead>
                 <tbody>
-                  ${preview.map((r) => `
+                  ${preview.map((r, i) => `
                     <tr>
                       <td style="font-weight:600;">${escapeHtml(r.fullName)}</td>
                       <td class="num-ltr">${escapeHtml(r.whatsapp || "—")}</td>
                       <td style="font-size:12px;">${escapeHtml(r.email || "—")}</td>
                       <td style="font-size:12px;">${escapeHtml(r.committeeName || "—")}</td>
-                      <td style="font-size:12px;">${escapeHtml(r.gender || "—")}</td>
+                      <td>${badgeHtml(rowIssues[i] || { hard: [], soft: [] })}</td>
                     </tr>
                   `).join("")}
                 </tbody>
               </table>
             </div>
+            ${hardCount ? `<label class="im-skip"><input type="checkbox" id="im-skip-dup" checked> ${t("imp_skip_dupes")} (${hardCount})</label>` : ""}
+            ${dupLines ? `<div style="margin-top:8px; display:flex; flex-direction:column; gap:2px; max-height:120px; overflow:auto;">${dupLines}${hardCount > 8 ? `<div class="im-dup-line">${App.currentLang === "ar" ? `+ ${hardCount - 8} أخرى` : `+ ${hardCount - 8} more`}</div>` : ""}</div>` : ""}
           `;
           submitBtn.disabled = false;
         } catch {
@@ -2070,16 +2213,24 @@ window.AtharModals = (function () {
 
     submitBtn.onclick = async () => {
       if (!parsedRecords.length) return;
+      let toSend = parsedRecords;
+      let skipped = 0;
+      const skipEl = document.getElementById("im-skip-dup");
+      if (skipEl && skipEl.checked) {
+        toSend = parsedRecords.filter((_, i) => !(rowIssues[i] && rowIssues[i].hard.length));
+        skipped = parsedRecords.length - toSend.length;
+        if (!toSend.length) { showToast(t("imp_all_dupes"), "error"); return; }
+      }
       submitBtn.disabled = true;
       try {
-        const res = await window.AtharAPI.volunteers.importRows(parsedRecords);
+        const res = await window.AtharAPI.volunteers.importRows(toSend);
         await window.AtharStore.refreshVolunteers();
         const errorsHtml = (res.errors || []).slice(0, 10).map((er) => `
           <div style="font-size:12px; color:var(--danger);">#${er.row} ${escapeHtml(er.name || "")} — ${escapeHtml(er.error)}</div>
         `).join("");
         document.getElementById("im-result").innerHTML = `
           <div class="alert-soft ${res.failed ? "alert-warning-soft" : "alert-success-soft"}" style="padding:12px; font-weight:700;">
-            ${t("imported")}: ${res.imported} • ${t("failed")}: ${res.failed}
+            ${t("imported")}: ${res.imported} • ${t("failed")}: ${res.failed}${skipped ? ` • ${t("imp_skipped")}: ${skipped}` : ""}
           </div>
           ${errorsHtml}
         `;

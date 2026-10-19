@@ -101,6 +101,40 @@
     </div>`;
   }
 
+  // ---- Round 7: duplicate detection (client-side scan over the store) ----
+  function normPhoneKey(raw) {
+    const d = String(raw || "").replace(/\D/g, "").replace(/^0+/, "");
+    return d.length >= 9 ? d.slice(-9) : d;
+  }
+  function normEmailKey(raw) { return String(raw || "").trim().toLowerCase(); }
+
+  // Groups of 2+ volunteers sharing national ID / phone / email.
+  function buildDuplicateGroups(vols) {
+    const maps = { id: {}, phone: {}, email: {} };
+    const add = (field, key, v) => { if (!key) return; (maps[field][key] = maps[field][key] || []).push(v); };
+    (vols || []).forEach(v => {
+      if (v.national_id) add("id", String(v.national_id).trim(), v);
+      add("phone", normPhoneKey(v.whatsapp) || normPhoneKey(v.phone), v);
+      add("email", normEmailKey(v.email), v);
+    });
+    const groups = [];
+    ["id", "phone", "email"].forEach(field => {
+      Object.keys(maps[field]).forEach(k => {
+        if (maps[field][k].length > 1) groups.push({ field, key: k, members: maps[field][k] });
+      });
+    });
+    return groups;
+  }
+  function dupMarkMap(groups) {
+    const map = new Map();
+    groups.forEach(g => g.members.forEach(m => {
+      const arr = map.get(m.id) || [];
+      arr.push(g);
+      map.set(m.id, arr);
+    }));
+    return map;
+  }
+
   // =========================================================================
   // Volunteer Details Modal
   // =========================================================================
@@ -231,9 +265,136 @@
     };
   }
 
+  // =========================================================================
+  // Round 7: Duplicate finder modal
+  // =========================================================================
+  function openDuplicatesFinder() {
+    const modal = document.getElementById("modal-container");
+    if (!modal) return;
+    const canDelete = hasPermission("volunteers", "delete");
+    const FIELD_META = {
+      id: { label: () => t("national_id"), icon: "user" },
+      phone: { label: () => t("dup_field_phone"), icon: "whatsapp" },
+      email: { label: () => t("email"), icon: "message_circle" },
+    };
+    const statusBadgeCls = (s) => s === "active" ? "badge-success" : s === "pending" ? "badge-purple" : s === "suspended" ? "badge-warning" : s === "archived" ? "badge-danger" : "badge-neutral";
+
+    const render = () => {
+      const state = window.AtharStore.getState();
+      const groups = buildDuplicateGroups(state.volunteers);
+      const flaggedIds = new Set();
+      groups.forEach(g => g.members.forEach(m => { if (m.status !== "archived") flaggedIds.add(m.id); }));
+      const activeVols = state.volunteers.filter(v => v.status !== "archived");
+      const missingIds = activeVols.filter(v => !v.national_id).length;
+
+      const groupHtml = groups.map(g => {
+        const meta = FIELD_META[g.field];
+        const first = g.members[0];
+        const rawVal = g.field === "id" ? String(first.national_id || g.key)
+          : g.field === "phone" ? (first.whatsapp || first.phone || g.key)
+            : (first.email || g.key);
+        const membersHtml = g.members.map(m => {
+          const comm = state.committees.find(c => c.id === m.committee_id);
+          const commLabel = comm ? (App.currentLang === "ar" ? comm.name_ar : comm.name_en) : "";
+          const subParts = [commLabel, m.join_date ? `${t("join_date")}: ${formatDate(m.join_date)}` : ""].filter(Boolean);
+          return `
+            <div class="dup-member">
+              ${avatarHtml(m, 30)}
+              <div class="dup-member-info">
+                <div class="dup-member-name">${escAttr(volDisplayName(m))}
+                  <span class="badge ${statusBadgeCls(m.status)}">${t(m.status)}</span>
+                </div>
+                ${subParts.length ? `<div class="dup-member-sub">${escAttr(subParts.join(" • "))}</div>` : ""}
+              </div>
+              <div class="dup-member-actions">
+                <button type="button" class="btn btn-secondary btn-sm" data-dup-view="${m.id}">${t("view")}</button>
+                ${canDelete && m.status !== "archived" ? `<button type="button" class="btn btn-danger-outline btn-sm" data-dup-arch="${m.id}" data-dup-arch-name="${escAttr(volDisplayName(m))}">${t("archive")}</button>` : ''}
+              </div>
+            </div>`;
+        }).join("");
+
+        return `
+          <div class="dup-group">
+            <div class="dup-group-head">
+              <span class="dup-group-field">${ic(meta.icon, 13)} ${meta.label()}</span>
+              <span class="dup-group-val num-ltr">${escAttr(rawVal)}</span>
+              <span class="dup-group-count">${g.members.length}</span>
+            </div>
+            <div class="dup-group-members">${membersHtml}</div>
+          </div>`;
+      }).join("");
+
+      modal.innerHTML = `
+        <div class="overlay-backdrop" id="dup-backdrop">
+          <div class="modal-dialog" style="max-width:700px;">
+            <div class="modal-header">
+              <h3 class="modal-title">${ic("search", 18)} ${t("dup_check_title")}</h3>
+              <button class="btn-icon" id="dup-close">&times;</button>
+            </div>
+            <div class="modal-body dup-modal-body">
+              ${groups.length
+          ? `<div class="dup-summary">${ic("alert", 14)} ${groups.length} ${t("dup_groups_count")} • ${flaggedIds.size} ${App.currentLang === "ar" ? "متطوعاً" : "volunteers"}</div>`
+          : `<div class="dup-empty">${ic("check_circle", 30)}<div>${t("dup_none")}</div></div>`}
+              ${groupHtml}
+              <div class="dup-health">${activeVols.length} ${App.currentLang === "ar" ? "متطوعاً نشطاً" : "active volunteers"} • ${t("dup_missing_id")}: ${missingIds}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const close = () => { modal.innerHTML = ""; };
+      document.getElementById("dup-close").onclick = close;
+      document.getElementById("dup-backdrop").onclick = (e) => { if (e.target.id === "dup-backdrop") close(); };
+      modal.querySelectorAll("[data-dup-view]").forEach(b => {
+        b.onclick = () => { const id = b.getAttribute("data-dup-view"); close(); navigateTo("volunteer-profile", { id }); };
+      });
+      modal.querySelectorAll("[data-dup-arch]").forEach(b => {
+        b.onclick = () => {
+          const id = b.getAttribute("data-dup-arch");
+          const nm = b.getAttribute("data-dup-arch-name");
+          // Inline confirm inside the finder, so Cancel returns to the duplicate list.
+          modal.innerHTML = `
+            <div class="overlay-backdrop" id="dup-confirm-backdrop">
+              <div class="modal-dialog" style="max-width:440px;">
+                <div class="modal-header">
+                  <h3 class="modal-title" style="color:var(--danger);">${ic("alert", 18)} ${t("confirm_destructive")}</h3>
+                  <button class="btn-icon" id="dup-confirm-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <p style="font-size:14px; color:var(--neutral-700); line-height:1.6;">
+                    ${App.currentLang === "ar" ? `أرشفة ${escAttr(nm)}؟ يبقى السجل محفوظاً للتاريخ والشهادات.` : `Archive ${escAttr(nm)}? Record hidden but preserved for history and certificates.`}
+                  </p>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" id="dup-confirm-cancel">${t("cancel")}</button>
+                  <button class="btn btn-danger" id="dup-confirm-yes">${t("archive")}</button>
+                </div>
+              </div>
+            </div>
+          `;
+          const backToFinder = () => { render(); };
+          document.getElementById("dup-confirm-close").onclick = backToFinder;
+          document.getElementById("dup-confirm-cancel").onclick = backToFinder;
+          document.getElementById("dup-confirm-backdrop").onclick = (e) => { if (e.target.id === "dup-confirm-backdrop") backToFinder(); };
+          document.getElementById("dup-confirm-yes").onclick = async () => {
+            try {
+              await window.AtharAPI.volunteers.archive(id);
+              await window.AtharStore.refreshVolunteers();
+              showToast(t("deleted_successfully"), "warning");
+              render();
+              if (App.currentView === "volunteers") window.AtharCore.renderCurrentView();
+            } catch (err) { showToast(err.message || "Archive failed", "error"); }
+          };
+        };
+      });
+    };
+    render();
+  }
+
   // Expose for inline onclick
   window.AtharVolunteers = window.AtharVolunteers || {};
   window.AtharVolunteers.openDetails = openVolunteerDetailsModal;
+  window.AtharVolunteers.openDuplicatesFinder = openDuplicatesFinder;
 
   // =========================================================================
   // Volunteers List
@@ -257,6 +418,7 @@
     const filterNewMonth = !!App.volFilterNew;
     const filterFollowup = !!App.volFilterFollowup;
     const filterReady = !!App.volFilterReady;
+    const filterDup = !!App.volFilterDup;
 
     // ---- Last activity / follow-up / certificate readiness ----
     const FOLLOWUP_DAYS = 30;
@@ -317,6 +479,11 @@
 
     const allSkills = Array.from(new Set(state.volunteers.flatMap(v => v.skills || []))).filter(Boolean);
 
+    // Round 7: duplicate flags (marker + chip + filter)
+    const dupGroups = buildDuplicateGroups(state.volunteers);
+    const dupMark = dupMarkMap(dupGroups);
+    const dupFlaggedCount = state.volunteers.filter(v => v.status !== "archived" && dupMark.has(v.id)).length;
+
     const monthStart = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
     const joinedThisMonth = (v) => {
       if (!v.join_date) return false;
@@ -355,6 +522,7 @@
         if (filterNewMonth && !joinedThisMonth(v)) return false;
         if (filterFollowup && !isIdle(v)) return false;
         if (filterReady && !isCertReady(v)) return false;
+        if (filterDup && !dupMark.has(v.id)) return false;
         return true;
       });
     }
@@ -487,13 +655,14 @@
       </div>
 
       <div class="quick-chips">
-        ${chip("all", t("all"), null, filterStatus === "all" && !filterNewMonth && !filterFollowup && !filterReady)}
-        ${chip("pending", t("pending"), pendingCount, filterStatus === "pending" && !filterNewMonth && !filterFollowup && !filterReady)}
-        ${chip("active", t("active"), null, filterStatus === "active" && !filterNewMonth && !filterFollowup && !filterReady)}
-        ${chip("new", t("new_this_month"), newMonthCount, filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("all", t("all"), null, filterStatus === "all" && !filterNewMonth && !filterFollowup && !filterReady && !filterDup)}
+        ${chip("pending", t("pending"), pendingCount, filterStatus === "pending" && !filterNewMonth && !filterFollowup && !filterReady && !filterDup)}
+        ${chip("active", t("active"), null, filterStatus === "active" && !filterNewMonth && !filterFollowup && !filterReady && !filterDup)}
+        ${chip("new", t("new_this_month"), newMonthCount, filterNewMonth && !filterFollowup && !filterReady && !filterDup)}
         ${chip("followup", t("needs_followup"), followupCount, filterFollowup)}
         ${chip("ready", t("ready_for_certificate"), readyCount, filterReady)}
-        ${chip("archived", t("archived"), null, filterStatus === "archived" && !filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("dup", t("dup_chip"), dupFlaggedCount, filterDup)}
+        ${chip("archived", t("archived"), null, filterStatus === "archived" && !filterNewMonth && !filterFollowup && !filterReady && !filterDup)}
       </div>
 
       <div id="bulk-selection-container" style="display:${App.selectedVolunteerIds.size > 0 ? 'block' : 'none'};">
@@ -520,6 +689,7 @@
 
       <div class="vol-table-actions">
         <button type="button" class="btn-text-sm" id="btn-select-all-filtered">${ic("check", 13)} ${t("select_all")} (${totalCount})</button>
+        <button type="button" class="btn-text-sm" id="btn-find-dupes">${ic("search", 13)} ${t("dup_check_title")}${dupFlaggedCount ? ` <span class="qc-count">${dupFlaggedCount}</span>` : ''}</button>
         ${App.selectedVolunteerIds.size > 0 ? `<button type="button" class="btn-text-sm" id="btn-clear-selection">${ic("x", 13)} ${t("clear_selection")}</button>` : ''}
         ${App.selectedVolunteerIds.size > 0 ? `<span class="vta-count">${App.selectedVolunteerIds.size} / ${totalCount} ${t("rows")}</span>` : ''}
       </div>
@@ -569,6 +739,7 @@
       const lastTs = lastActivityTs(v);
       const idle = idleDaysOf(v);
       const stale = state.activityLoaded && idle !== null && idle >= FOLLOWUP_DAYS;
+      const dgr = dupMark.get(v.id);
       const commLabel = comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—';
       const commCell = canEdit
         ? `<button type="button" class="cell-edit-btn" data-quick-comm="${v.id}" title="${t("change_committee")}">${commLabel}</button>`
@@ -600,6 +771,7 @@
                             ${v.nationality ? `<span style="font-size:10px; color:var(--neutral-500);">${v.nationality}</span>` : ''}
                             ${(v.skills || []).slice(0, 2).map(s => `<span class="mini-chip">#${escAttr(s)}</span>`).join('')}
                             ${(v.skills || []).length > 2 ? `<span class="mini-chip" title="${escAttr((v.skills || []).join(', '))}">+${(v.skills || []).length - 2}</span>` : ''}
+                            ${dgr && dgr.length ? `<button type="button" class="dup-mark" title="${escAttr(t("dup_mark_title"))}" onclick="event.stopPropagation(); window.AtharVolunteers.openDuplicatesFinder()">${ic("alert", 11)}</button>` : ''}
                           </div>
                         </div>
                       </div>
@@ -700,6 +872,7 @@
       App.volFilterNew = false;
       App.volFilterFollowup = false;
       App.volFilterReady = false;
+      App.volFilterDup = false;
       App.searchQuery = "";
       App.pagination.volunteersPage = 1;
       App.pagination.volunteersPerPage = 20;
@@ -707,6 +880,7 @@
     };
 
     bind("btn-reset-vol-filters", "click", resetVolFilters);
+    bind("btn-find-dupes", "click", () => openDuplicatesFinder());
 
     // ---- Quick filter chips ----
     container.querySelectorAll(".quick-chip").forEach(el => {
@@ -715,8 +889,9 @@
         App.volFilterNew = key === "new";
         App.volFilterFollowup = key === "followup";
         App.volFilterReady = key === "ready";
+        App.volFilterDup = key === "dup";
         if (key === "followup") App.volFilterStatus = "active";
-        else if (key === "ready") App.volFilterStatus = "all";
+        else if (key === "ready" || key === "dup") App.volFilterStatus = "all";
         else App.volFilterStatus = key === "new" ? "all" : key;
         App.pagination.volunteersPage = 1;
         renderVolunteersList(container);
