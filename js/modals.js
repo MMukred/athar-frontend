@@ -457,46 +457,6 @@ window.AtharModals = (function () {
     const isEdit = !!existing;
     const modal = document.getElementById("modal-container");
 
-    // ---- Load selectable users (leader / co-leaders) ----
-    let users = [];
-    try {
-      const res = await window.AtharAPI.users.list();
-      users = (res && res.items ? res.items : []).map(u => ({
-        id: u.id,
-        full_name: u.fullName || u.full_name,
-        email: u.email,
-        role: u.role,
-      }));
-    } catch (err) {
-      console.warn("[committee] Failed to load users for the picker", err);
-    }
-    // Always include the current admin so the picker is never empty
-    if (App.currentUser && !users.some(u => u.id === App.currentUser.id)) {
-      users.unshift({
-        id: App.currentUser.id,
-        full_name: App.currentUser.full_name,
-        email: App.currentUser.email,
-        role: App.currentUser.role,
-      });
-    }
-
-    const currentLeaderId = existing ? existing.manager_id : null;
-    const currentCoIds = existing ? (existing.co_managers || []).map(u => u.id) : [];
-
-    const userOptionsHtml = users.map(u =>
-      `<option value="${escapeHtml(u.id)}" ${currentLeaderId === u.id ? 'selected' : ''}>${escapeHtml(u.full_name)} ${u.role === 'super_admin' ? '(Super Admin)' : ''}</option>`
-    ).join('');
-
-    const coListHtml = users.length === 0
-      ? `<span style="font-size:12px; color:var(--neutral-500);">${App.currentLang === 'ar' ? 'لا يوجد مستخدمون متاحون' : 'No users available'}</span>`
-      : users.map(u => `
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
-            <input type="checkbox" class="cm-co-cb" value="${escapeHtml(u.id)}" ${currentCoIds.includes(u.id) ? 'checked' : ''}>
-            <span style="font-weight:600;">${escapeHtml(u.full_name)}</span>
-            <span style="color:var(--neutral-500); font-size:11px;">${escapeHtml(u.email || '')}</span>
-          </label>
-        `).join('');
-
     modal.innerHTML = `
       <div class="overlay-backdrop" id="cm-backdrop">
         <div class="modal-dialog">
@@ -522,22 +482,10 @@ window.AtharModals = (function () {
                 <label class="field-label">${t("committee_desc_ar")}</label>
                 <textarea id="cm-desc-ar" class="form-control" rows="2">${existing ? escapeHtml(existing.description_ar || '') : ''}</textarea>
               </div>
-
-              <div class="form-field">
-                <label class="field-label">${ic("shield", 13)} ${t("leader")}</label>
-                <select id="cm-manager" class="form-control">
-                  <option value="">${t("none_option")}</option>
-                  ${userOptionsHtml}
-                </select>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">${ic("users", 13)} ${t("co_leaders")}</label>
-                <div style="max-height:170px; overflow-y:auto; border:1px solid var(--neutral-300); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:8px; background:var(--neutral-50);">
-                  ${coListHtml}
-                </div>
-                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">${t("co_leaders_hint")}</div>
-              </div>
+              ${isEdit ? `
+              <div style="font-size:12px; color:var(--neutral-500); display:flex; align-items:flex-start; gap:6px; background:var(--neutral-50); border:1px solid var(--neutral-200); border-radius:var(--radius-md); padding:10px;">
+                ${ic("shield", 14)}<span>${t("leadership_edit_hint")}</span>
+              </div>` : ''}
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" id="cm-cancel">${t("cancel")}</button>
@@ -559,11 +507,6 @@ window.AtharModals = (function () {
       const nameAr = document.getElementById("cm-name-ar").value.trim();
       const descEn = document.getElementById("cm-desc-en").value;
       const descAr = document.getElementById("cm-desc-ar").value;
-      const managerId = document.getElementById("cm-manager").value || null;
-      // A person holds exactly one role: the leader is never also a co-leader.
-      const coManagerIds = Array.from(document.querySelectorAll(".cm-co-cb:checked"))
-        .map(cb => cb.value)
-        .filter(id => id !== managerId);
       if (!nameEn || !nameAr) { showToast("Both names required", "error"); return; }
       try {
         if (isEdit) {
@@ -571,8 +514,6 @@ window.AtharModals = (function () {
             nameEn, nameAr,
             descriptionEn: descEn || undefined,
             descriptionAr: descAr || undefined,
-            managerId,
-            coManagerIds,
           });
           showToast(t("updated_successfully"), "success");
         } else {
@@ -580,8 +521,6 @@ window.AtharModals = (function () {
             nameEn, nameAr,
             descriptionEn: descEn || undefined,
             descriptionAr: descAr || undefined,
-            managerId,
-            coManagerIds,
           });
           showToast(t("saved_successfully"), "success");
         }

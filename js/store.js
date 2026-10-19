@@ -94,6 +94,18 @@ window.AtharStore = (function () {
         full_name: u.fullName || u.full_name,
         email: u.email,
       })),
+      // Member-based leadership (volunteers): 1 leader + N co-leaders,
+      // picked from the committee's own members on the details page.
+      leader: c.leader ? {
+        id: c.leader.id,
+        full_name: c.leader.fullName || c.leader.full_name,
+        full_name_ar: c.leader.fullNameAr || c.leader.full_name_ar || null,
+      } : null,
+      co_leaders: (c.coLeaders || []).map((v) => ({
+        id: v.id,
+        full_name: v.fullName || v.full_name,
+        full_name_ar: v.fullNameAr || v.full_name_ar || null,
+      })),
       status: c.status,
       member_count: c.memberCount ?? 0,
       created_at: c.createdAt,

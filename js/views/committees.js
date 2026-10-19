@@ -6,6 +6,9 @@
 
   const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
+  // Display name for a member/volunteer row (respects the current language).
+  const memberName = (m) => (App.currentLang === "ar" ? (m.full_name_ar || m.full_name) : (m.full_name || m.full_name_ar));
+
   // =========================================================================
   // Committees List
   // =========================================================================
@@ -95,14 +98,14 @@
                       <span class="committee-stat-lbl">${t("hours")}</span>
                     </div>
                     <div class="committee-stat-item">
-                      <span class="committee-stat-val" style="font-size:13px; font-weight:600;">${comm.manager_name || '—'}</span>
+                      <span class="committee-stat-val" style="font-size:13px; font-weight:600;">${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}</span>
                       <span class="committee-stat-lbl">${t("leader")}</span>
                     </div>
                   </div>
                   <div style="font-size:12px; color:var(--neutral-600); margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                     <span style="font-weight:700; color:var(--neutral-500);">${t("co_leaders")}:</span>
-                    ${comm.co_managers && comm.co_managers.length
-          ? comm.co_managers.map(u => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(u.full_name)}</span>`).join('')
+                    ${comm.co_leaders && comm.co_leaders.length
+          ? comm.co_leaders.map(v => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(memberName(v))}</span>`).join('')
           : `<span style="color:var(--neutral-400);">${t("none_option")}</span>`}
                   </div>
                   <div style="display:flex; gap:8px;">
@@ -144,9 +147,9 @@
                       <div style="font-size:11px; color:var(--neutral-500);">${comm.name_en}</div>
                     </td>
                     <td>
-                      <div style="font-weight:600;">${escapeHtml(comm.manager_name) || '—'}</div>
-                      ${comm.co_managers && comm.co_managers.length
-          ? `<div style="font-size:11px; color:var(--neutral-500);">+${comm.co_managers.length} ${t("co_leaders")}</div>`
+                      <div style="font-weight:600;">${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}</div>
+                      ${comm.co_leaders && comm.co_leaders.length
+          ? `<div style="font-size:11px; color:var(--neutral-500);">+${comm.co_leaders.length} ${t("co_leaders")}</div>`
           : ''}
                     </td>
                     <td><span class="num-ltr" style="font-weight:700;">${hours} h</span></td>
@@ -262,6 +265,21 @@
     const totalHours = commHours.reduce((a, b) => a + Number(b.hours), 0);
     let activeTab = App.currentParams.sub || "members";
 
+    // Member-based leadership: pin the leader + co-leaders to the top of the members list.
+    const hasLeadership = !!(comm.leader || (comm.co_leaders && comm.co_leaders.length));
+    const coLeaderIdSet = new Set((comm.co_leaders || []).map(v => v.id));
+    const pinnedMembers = [];
+    if (comm.leader && members.some(v => v.id === comm.leader.id)) {
+      pinnedMembers.push({ volunteer: members.find(v => v.id === comm.leader.id), role: "leader" });
+    }
+    (comm.co_leaders || []).forEach(cl => {
+      const m = members.find(v => v.id === cl.id);
+      if (m && !pinnedMembers.some(p => p.volunteer.id === m.id)) {
+        pinnedMembers.push({ volunteer: m, role: "co_leader" });
+      }
+    });
+    const regularMembers = members.filter(v => !(comm.leader && v.id === comm.leader.id) && !coLeaderIdSet.has(v.id));
+
     container.innerHTML = `
       <div class="view-header">
         <div class="view-header-left">
@@ -272,7 +290,7 @@
           </div>
           <h1 class="view-title">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</h1>
           <p class="view-subtitle">
-            ${comm.name_en} &bull; ${t("leader")}: ${escapeHtml(comm.manager_name) || '—'}
+            ${comm.name_en} &bull; ${t("leader")}: ${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}
             ${isArchived ? '&bull; <span class="badge badge-neutral">' + t("archived") + '</span>' : ''}
           </p>
         </div>
@@ -281,6 +299,58 @@
           ${!isArchived && canEdit ? `<button class="btn btn-secondary btn-sm" id="btn-edit-comm-name">${ic("pencil", 14)} ${t("edit")}</button>` : ''}
           ${!isArchived && hasPermission("meetings", "create") ? `<button class="btn btn-primary btn-sm" onclick="window.AtharModals.openCreateMeetingSlideover('${comm.id}')">${ic("plus", 14)} ${t("add_meeting")}</button>` : ''}
           ${!isArchived && canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-comm">${ic("trash", 14)} ${t("delete")}</button>` : ''}
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;" id="leadership-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">${ic("shield", 16)} ${t("leadership")}</div>
+          ${canEdit && !isArchived ? `<button class="btn btn-secondary btn-sm" id="btn-edit-leadership">${ic("pencil", 14)} ${hasLeadership ? t("edit_leadership") : t("assign_leadership")}</button>` : ''}
+        </div>
+
+        <div id="leadership-view" style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("leader")}:</span>
+            ${comm.leader
+          ? `<span class="tag-chip" style="font-size:13px; font-weight:700;">${ic("star", 12)} ${escapeHtml(memberName(comm.leader))}</span>`
+          : `<span style="color:var(--neutral-400); font-size:13px;">${t("no_leader")}</span>`}
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("co_leaders")}:</span>
+            ${comm.co_leaders && comm.co_leaders.length
+          ? comm.co_leaders.map(v => `<span class="tag-chip" style="font-size:13px;">${escapeHtml(memberName(v))}</span>`).join('')
+          : `<span style="color:var(--neutral-400); font-size:13px;">${t("none_option")}</span>`}
+          </div>
+        </div>
+
+        <div id="leadership-edit" style="display:none;">
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="field-label">${ic("star", 13)} ${t("leader")}</label>
+            <select id="leadership-leader-select" class="form-control">
+              <option value="">${t("none_option")}</option>
+              ${members.map(m => `<option value="${m.id}" ${comm.leader && comm.leader.id === m.id ? 'selected' : ''}>${escapeHtml(memberName(m))}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="field-label">${ic("users", 13)} ${t("co_leaders")}</label>
+            ${members.length === 0
+          ? `<div style="font-size:12px; color:var(--neutral-500);">${t("no_members_pick")}</div>`
+          : `
+            <div style="max-height:200px; overflow-y:auto; border:1px solid var(--neutral-300); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:8px; background:var(--neutral-50);">
+              ${members.map(m => `
+                <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+                  <input type="checkbox" class="leadership-co-cb" value="${m.id}" ${coLeaderIdSet.has(m.id) ? 'checked' : ''}>
+                  <span style="font-weight:600;">${escapeHtml(memberName(m))}</span>
+                </label>
+              `).join('')}
+            </div>
+            <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">${t("co_leaders_hint")}</div>
+          `}
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary btn-sm" id="btn-save-leadership">${t("save")}</button>
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-leadership">${t("cancel")}</button>
+          </div>
         </div>
       </div>
 
@@ -299,25 +369,7 @@
         </div>
         <div class="stat-box">
           <span class="stat-box-label">${t("leader")}</span>
-          <span style="font-size:16px; font-weight:700; color:var(--neutral-900);">${escapeHtml(comm.manager_name) || '—'}</span>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:12px;">${ic("shield", 16)} ${t("leadership")}</div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("leader")}:</span>
-            ${comm.manager_name
-          ? `<span class="tag-chip" style="font-size:13px; font-weight:700;">${escapeHtml(comm.manager_name)}</span>`
-          : `<span style="color:var(--neutral-400); font-size:13px;">${t("no_leader")}</span>`}
-          </div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span style="font-size:12px; font-weight:700; color:var(--neutral-500); min-width:90px;">${t("co_leaders")}:</span>
-            ${comm.co_managers && comm.co_managers.length
-          ? comm.co_managers.map(u => `<span class="tag-chip" style="font-size:13px;">${escapeHtml(u.full_name)}</span>`).join('')
-          : `<span style="color:var(--neutral-400); font-size:13px;">${t("none_option")}</span>`}
-          </div>
+          <span style="font-size:16px; font-weight:700; color:var(--neutral-900);">${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}</span>
         </div>
       </div>
 
@@ -335,7 +387,31 @@
                 <tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr>
               </thead>
               <tbody>
-                ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : members.map(m => {
+                ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : `
+                  ${pinnedMembers.map(({ volunteer: m, role }) => {
+      const s = window.AtharStore.getVolunteerStats(m.id);
+      const roleBadge = role === "leader"
+        ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>`
+        : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
+      return `
+                    <tr style="${role === "leader" ? "background:rgba(245,183,49,0.12);" : "background:rgba(74,144,226,0.08);"}">
+                      <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
+                        ${App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name}
+                        ${roleBadge}
+                      </td>
+                      <td><span class="badge badge-success">${m.status}</span></td>
+                      <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
+                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${sk}</span>`).join(' ')}</td>
+                      <td>
+                        <div class="row-actions-cell">
+                          <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
+                          ${hasPermission("volunteers", "transfer") ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openTransferModal('${m.id}')">${t("transfer_volunteer")}</button>` : ''}
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+    }).join('')}
+                  ${regularMembers.map(m => {
       const s = window.AtharStore.getVolunteerStats(m.id);
       return `
                     <tr>
@@ -354,6 +430,7 @@
                     </tr>
                   `;
     }).join('')}
+                `}
               </tbody>
             </table>
           </div>
@@ -396,6 +473,61 @@
 
     const editBtn = document.getElementById("btn-edit-comm-name");
     if (editBtn) editBtn.onclick = () => window.AtharModals.openAddCommitteeModal(comm.id);
+
+    // ---- Member leadership: inline picker on the details page ----
+    const editLeadershipBtn = document.getElementById("btn-edit-leadership");
+    if (editLeadershipBtn) {
+      const viewDiv = document.getElementById("leadership-view");
+      const editDiv = document.getElementById("leadership-edit");
+      const leaderSel = document.getElementById("leadership-leader-select");
+      const coCheckboxes = () => Array.from(container.querySelectorAll(".leadership-co-cb"));
+      const syncCoCheckboxes = () => {
+        const leaderId = leaderSel ? leaderSel.value : "";
+        coCheckboxes().forEach(cb => {
+          const isSelectedLeader = !!leaderId && cb.value === leaderId;
+          if (isSelectedLeader) cb.checked = false;
+          cb.disabled = isSelectedLeader;
+          const row = cb.closest("label");
+          if (row) row.style.opacity = isSelectedLeader ? "0.45" : "1";
+        });
+      };
+
+      editLeadershipBtn.onclick = () => {
+        const showEdit = editDiv.style.display === "none";
+        editDiv.style.display = showEdit ? "" : "none";
+        viewDiv.style.display = showEdit ? "none" : "";
+        if (showEdit) syncCoCheckboxes();
+      };
+      if (leaderSel) leaderSel.onchange = syncCoCheckboxes;
+
+      const cancelLeadershipBtn = document.getElementById("btn-cancel-leadership");
+      if (cancelLeadershipBtn) {
+        cancelLeadershipBtn.onclick = () => {
+          editDiv.style.display = "none";
+          viewDiv.style.display = "";
+        };
+      }
+
+      const saveLeadershipBtn = document.getElementById("btn-save-leadership");
+      if (saveLeadershipBtn) {
+        saveLeadershipBtn.onclick = async () => {
+          const leaderId = leaderSel ? (leaderSel.value || null) : null;
+          const coLeaderIds = coCheckboxes()
+            .filter(cb => cb.checked && !cb.disabled)
+            .map(cb => cb.value);
+          saveLeadershipBtn.disabled = true;
+          try {
+            await window.AtharAPI.committees.update(comm.id, { leaderId, coLeaderIds });
+            await window.AtharStore.refreshCommittees();
+            showToast(t("leadership_saved"), "success");
+            renderCommitteeDetail(container, committeeId);
+          } catch (err) {
+            showToast(err.message || "Save failed", "error");
+            saveLeadershipBtn.disabled = false;
+          }
+        };
+      }
+    }
 
     const restoreBtn = document.getElementById("btn-restore-comm");
     if (restoreBtn) {
