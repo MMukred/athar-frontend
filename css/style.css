@@ -2727,3 +2727,115 @@ input[type="radio"] {
     scroll-behavior: auto !important;
   }
 }
+/* ============================================================
+   Additions: password banner, dashboard charts, login apply link
+   ============================================================ */
+
+/* ---------- Default-password warning banner ---------- */
+.pw-warning-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(92vw, 720px);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #FFFBEB;
+  border: 1.5px solid #F59E0B;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  color: #92400E;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.pw-warning-text { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- Dashboard charts ---------- */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.charts-grid .card { margin-bottom: 0; }
+
+.hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hbar-label {
+  width: 150px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hbar-track {
+  flex: 1;
+  height: 14px;
+  background: var(--neutral-100);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.hbar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.hbar-value {
+  width: 36px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--neutral-700);
+  flex-shrink: 0;
+}
+
+/* ---------- Login screen: application link ---------- */
+.login-apply-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.login-apply-link:hover { opacity: 0.75; text-decoration: underline; }
+
+/* ---------- WhatsApp reminder: sent state ---------- */
+.btn-whatsapp.is-sent {
+  background: var(--success, #059669) !important;
+  border-color: var(--success, #059669) !important;
+}
+
+/* ---------- Charts responsive ---------- */
+@media (max-width: 1100px) {
+  .charts-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 720px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .hbar-label { width: 110px; }
+}
+
+@media print {
+  .pw-warning-banner { display: none !important; }
+  .charts-grid { display: none !important; }
+}

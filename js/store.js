@@ -220,6 +220,7 @@ window.AtharStore = (function () {
       email: u.email,
       role: u.role,
       is_active: u.isActive !== false,
+      must_change_password: u.mustChangePassword || u.must_change_password || false,
       preferred_language: u.preferredLanguage || u.preferred_language || "ar",
       last_login_at: u.lastLoginAt || u.last_login_at,
       created_at: u.createdAt,
@@ -319,9 +320,15 @@ window.AtharStore = (function () {
       }
     }
 
-    // Currently logged-in user as the only "user" for trusted admins
+    // Users directory: admins get the full list, others just themselves
     const me = window.AtharAuth?.getCurrentUser?.();
     if (me) state.users = [adaptUser(me)];
+    try {
+      const usersRes = await api.users.list();
+      if (usersRes?.items?.length) state.users = usersRes.items.map(adaptUser);
+    } catch {
+      // No permission to list users — keep the current user only.
+    }
 
     console.log(`[Store] Loaded ${state.volunteers.length}v ${state.committees.length}c ${state.meetings.length}m ${state.volunteer_hours.length}h ${state.certificates.length}cert ${state.audit_logs.length}audit`);
     return state;

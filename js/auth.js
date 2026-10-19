@@ -71,9 +71,15 @@ window.AtharAuth = (function () {
       preferred_language: apiUser.preferredLanguage || apiUser.preferred_language || "ar",
       role: apiUser.role,
       is_active: apiUser.isActive !== false,
+      must_change_password: apiUser.mustChangePassword || apiUser.must_change_password || false,
       permissions: apiUser.permissions || {},
       last_login_at: apiUser.lastLoginAt || apiUser.last_login_at || null,
     };
+  }
+
+  /** Called after a successful self-service password change. */
+  function markPasswordChanged() {
+    if (currentUser) currentUser.must_change_password = false;
   }
 
   // =========================================================================
@@ -209,6 +215,7 @@ window.AtharAuth = (function () {
     setText("login-remember-label", isAr ? "تذكرني" : "Remember me");
     setText("login-submit-btn", isAr ? "تسجيل الدخول" : "Sign In");
     setText("login-lang-text", isAr ? "English" : "العربية");
+    setText("login-apply-link", isAr ? "تقدّم للتطوع ←" : "Apply to volunteer →");
   }
 
   function showLoginScreen() {
@@ -303,6 +310,7 @@ window.AtharAuth = (function () {
   return {
     checkSession: checkSession,
     getCurrentUser: function () { return currentUser; },
+    markPasswordChanged: markPasswordChanged,
     login: login,
     logout: logout,
     showLoginScreen: showLoginScreen,

@@ -12,6 +12,12 @@
   // =========================================================================
   // Small helpers
   // =========================================================================
+  function escAttr(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
   function avatarHtml(vol, size) {
     const s = genderStyle(vol.gender);
     const initials = (vol.full_name || "?").charAt(0).toUpperCase();
@@ -249,6 +255,11 @@
             ${ic("download", 14)} ${t("export_csv")}
           </button>
           ${canCreate ? `
+            <button class="btn btn-secondary btn-sm" id="btn-import-vols-csv">
+              ${ic("upload", 14)} ${t("import_csv")}
+            </button>
+          ` : ''}
+          ${canCreate ? `
             <button class="btn btn-primary" id="btn-add-volunteer">
               ${ic("plus", 16)} ${t("add_volunteer")}
             </button>
@@ -265,6 +276,7 @@
           </select>
           <select id="vol-filter-status" class="form-control">
             <option value="all">${t("all_statuses")}</option>
+            <option value="pending" ${filterStatus === 'pending' ? 'selected' : ''}>${t("pending")}</option>
             <option value="active" ${filterStatus === 'active' ? 'selected' : ''}>${t("active")}</option>
             <option value="suspended" ${filterStatus === 'suspended' ? 'selected' : ''}>${t("suspended")}</option>
             <option value="withdrawn" ${filterStatus === 'withdrawn' ? 'selected' : ''}>${t("withdrawn")}</option>
@@ -311,6 +323,8 @@
                 ${ic("star", 14)} ${App.currentLang === 'ar' ? 'تقييم جماعي' : 'Rate'}
               </button>
             ` : ''}
+            ${canEdit ? `<button class="btn btn-secondary btn-sm" id="btn-bulk-transfer">${ic("arrow_right", 14)} ${t("bulk_transfer")}</button>` : ''}
+            <button class="btn btn-whatsapp btn-sm" id="btn-bulk-whatsapp">${ic("whatsapp", 14)} ${t("reminder_title")}</button>
             <button class="btn btn-secondary btn-sm" id="btn-bulk-export">${t("export_csv")}</button>
             ${canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-bulk-archive">${t("archive")}</button>` : ''}
           </div>
@@ -374,7 +388,7 @@
                     </td>
                     <td><span style="font-weight:500;">${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '<span style="color:var(--neutral-400);">—</span>'}</span></td>
                     <td>
-                      <span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'suspended' ? 'badge-warning' : v.status === 'archived' ? 'badge-danger' : 'badge-neutral'}">
+                      <span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'pending' ? 'badge-purple' : v.status === 'suspended' ? 'badge-warning' : v.status === 'archived' ? 'badge-danger' : 'badge-neutral'}">
                         ${t(v.status)}
                       </span>
                     </td>
@@ -392,6 +406,7 @@
                     <td><span class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(v.join_date)}</span></td>
                     <td>
                       <div class="row-actions-cell">
+                        ${v.status === 'pending' && canEdit ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.approveVolunteer('${v.id}')">${ic("check", 12)} ${t("approve_volunteer")}</button>` : ''}
                         <button class="btn btn-secondary btn-sm" onclick="window.AtharVolunteers.openDetails('${v.id}')" title="${App.currentLang === 'ar' ? 'تفاصيل سريعة' : 'Quick details'}">${ic("eye", 12)}</button>
                         <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${v.id}'})">${t("view")}</button>
                         ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openAddVolunteerSlideover('${v.id}')">${t("edit")}</button>` : ''}
@@ -527,6 +542,26 @@
       };
     }
 
+    // ---- Bulk: Transfer ----
+    const bulkTransferBtn = document.getElementById("btn-bulk-transfer");
+    if (bulkTransferBtn) {
+      bulkTransferBtn.onclick = () => {
+        const ids = Array.from(App.selectedVolunteerIds);
+        if (!ids.length) { showToast("No volunteers selected", "error"); return; }
+        window.AtharModals.openBulkTransferModal(ids);
+      };
+    }
+
+    // ---- Bulk: WhatsApp reminder ----
+    const bulkWhatsappBtn = document.getElementById("btn-bulk-whatsapp");
+    if (bulkWhatsappBtn) {
+      bulkWhatsappBtn.onclick = () => {
+        const ids = Array.from(App.selectedVolunteerIds);
+        if (!ids.length) { showToast("No volunteers selected", "error"); return; }
+        window.AtharModals.openWhatsAppReminderModal(ids);
+      };
+    }
+
     const bulkArchive = document.getElementById("btn-bulk-archive");
     if (bulkArchive) {
       bulkArchive.onclick = () => {
@@ -588,6 +623,9 @@
       };
     }
 
+    const importCsv = document.getElementById("btn-import-vols-csv");
+    if (importCsv) importCsv.onclick = () => window.AtharModals.openImportVolunteersModal();
+
     const addBtn = document.getElementById("btn-add-volunteer");
     if (addBtn) addBtn.onclick = () => window.AtharModals.openAddVolunteerSlideover();
   }
@@ -639,6 +677,14 @@
     }
 
     const comm = state.committees.find(c => c.id === vol.committee_id);
+    // Committee leadership badge (member-based leadership)
+    const leadsComm = state.committees.find(c =>
+      (c.leader && c.leader.id === vol.id) ||
+      (c.co_leaders || []).some(x => x.id === vol.id));
+    const isLeaderRole = !!(leadsComm && leadsComm.leader && leadsComm.leader.id === vol.id);
+    const leadershipBadge = leadsComm
+      ? `<span class="badge ${isLeaderRole ? 'badge-warning' : 'badge-purple'}" title="${escAttr(App.currentLang === 'ar' ? leadsComm.name_ar : leadsComm.name_en)}">${isLeaderRole ? t("leader_badge") : t("coleader_badge")}</span>`
+      : '';
     // Store fallback (gets the fresh attendance too, so the rate is never a fake 100%)
     const stats = window.AtharStore.getVolunteerStats(vol.id, attendanceRecords);
     // Prefer complete server-side aggregates when available
@@ -728,7 +774,8 @@
           <div class="profile-hero-info">
             <div class="profile-name-row">
               <span class="profile-name">${App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name}</span>
-              <span class="badge ${vol.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t(vol.status)}</span>
+              <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
+              ${leadershipBadge}
               ${genderChip(vol.gender)}
             </div>
             <div class="profile-meta-row">

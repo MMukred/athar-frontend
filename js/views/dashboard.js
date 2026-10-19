@@ -64,6 +64,74 @@
       return `<div class="kpi-trend" style="color:var(--neutral-500);">0 this month</div>`;
     };
 
+    // -------- Charts (pure SVG/CSS, no dependencies) --------
+    const monthLabels = [];
+    const monthKeys = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      monthLabels.push(d.toLocaleDateString(App.currentLang === "ar" ? "ar" : "en", { month: "short" }));
+    }
+    const hoursByMonth = monthKeys.map(k =>
+      state.volunteer_hours
+        .filter(h => h.status === "approved" && String(h.date || "").startsWith(k))
+        .reduce((acc, h) => acc + Number(h.hours), 0));
+    const maxMonthHours = Math.max(...hoursByMonth, 1);
+
+    const monthIdx = monthKeys.map((_, i) => i);
+    if (App.currentLang === "ar") monthIdx.reverse();
+    const barW = 34, gap = 22, chartH = 140, chartW = monthIdx.length * (barW + gap);
+    const barsSvg = `
+      <svg viewBox="0 0 ${chartW} ${chartH + 30}" width="100%" height="200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${t("hours_trend")}">
+        ${monthIdx.map((i, pos) => {
+      const h = hoursByMonth[i];
+      const barH = Math.round((h / maxMonthHours) * chartH);
+      const x = pos * (barW + gap);
+      const y = chartH - barH;
+      return `
+            <rect x="${x}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="6" fill="var(--primary)" opacity="${h > 0 ? 0.9 : 0.15}"></rect>
+            <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">${h > 0 ? Math.round(h) : ""}</text>
+            <text x="${x + barW / 2}" y="${chartH + 20}" text-anchor="middle" font-size="11" fill="#94A3B8">${monthLabels[i]}</text>
+          `;
+    }).join("")}
+      </svg>
+    `;
+
+    const commCounts = state.committees
+      .filter(c => c.status === "active")
+      .map(c => ({
+        name: App.currentLang === "ar" ? c.name_ar : c.name_en,
+        count: state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+    const maxCommCount = Math.max(...commCounts.map(c => c.count), 1);
+
+    const topVolunteers = state.volunteers
+      .filter(v => v.status !== "archived")
+      .map(v => ({
+        id: v.id,
+        name: App.currentLang === "ar" ? (v.full_name_ar || v.full_name) : v.full_name,
+        hours: state.volunteer_hours
+          .filter(h => h.volunteer_id === v.id && h.status === "approved")
+          .reduce((acc, h) => acc + Number(h.hours), 0),
+      }))
+      .filter(v => v.hours > 0)
+      .sort((a, b) => b.hours - a.hours)
+      .slice(0, 5);
+    const maxTopHours = Math.max(...topVolunteers.map(v => v.hours), 1);
+
+    const hBarRow = (name, value, max, color, onClick) => {
+      const pct = Math.max(4, Math.round((value / max) * 100));
+      const safeName = String(name || "").replace(/[<>&"]/g, "");
+      return `
+        <div class="hbar-row" ${onClick ? `style="cursor:pointer;" onclick="${onClick}"` : ""}>
+          <div class="hbar-label" title="${safeName}">${safeName}</div>
+          <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%; background:${color};"></div></div>
+          <div class="hbar-value num-ltr">${Math.round(value)}</div>
+        </div>`;
+    };
+
     container.innerHTML = `
       <div class="view-header">
         <div class="view-header-left">
@@ -120,6 +188,31 @@
           </div>
           <div class="kpi-value num-ltr">${totalCerts}</div>
           ${trend(certsThisMonth, "")}
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${ic("clock", 18)} ${t("hours_trend")}</div>
+          </div>
+          ${totalHours > 0 ? barsSvg : `<div class="empty-state" style="padding:24px 16px;"><div class="empty-state-desc">—</div></div>`}
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${ic("building", 18)} ${t("committee_distribution")}</div>
+          </div>
+          ${commCounts.length
+        ? commCounts.map(c => hBarRow(c.name, c.count, maxCommCount, "var(--primary)")).join("")
+        : `<div class="empty-state" style="padding:24px 16px;"><div class="empty-state-desc">—</div></div>`}
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${ic("star", 18)} ${t("top_volunteers")}</div>
+          </div>
+          ${topVolunteers.length
+        ? topVolunteers.map(v => hBarRow(v.name, v.hours, maxTopHours, "#F59E0B", `window.AtharApp.navigateTo('volunteer-profile', {id:'${v.id}'})`)).join("")
+        : `<div class="empty-state" style="padding:24px 16px;"><div class="empty-state-desc">—</div></div>`}
         </div>
       </div>
 

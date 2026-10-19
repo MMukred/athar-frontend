@@ -223,6 +223,11 @@ window.AtharModals = (function () {
     const vol = state.volunteers.find(v => v.id === volunteerId);
     if (!vol) return;
 
+    // Warn when the volunteer holds a leadership role in their current committee.
+    const currentComm = state.committees.find(c => c.id === vol.committee_id);
+    const isLeaderHere = currentComm && currentComm.leader && currentComm.leader.id === vol.id;
+    const isCoLeaderHere = currentComm && (currentComm.co_leaders || []).some(x => x.id === vol.id);
+
     const modal = document.getElementById("modal-container");
     modal.innerHTML = `
       <div class="overlay-backdrop" id="tr-backdrop">
@@ -234,6 +239,11 @@ window.AtharModals = (function () {
           <form id="tr-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
               <div><strong>Volunteer:</strong> ${vol.full_name}</div>
+              ${(isLeaderHere || isCoLeaderHere) ? `
+                <div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">
+                  ⚠️ ${isLeaderHere ? t("leader_badge") : t("coleader_badge")} — ${t("leadership_transfer_warning")}
+                </div>
+              ` : ''}
               <div class="form-field">
                 <label class="field-label">${t("to_committee")} <span class="required-asterisk">*</span></label>
                 <select id="tr-comm" class="form-control" required>
@@ -692,9 +702,14 @@ window.AtharModals = (function () {
                 <div style="font-size:11px; color:var(--neutral-500); margin-top:2px;">${isSuper ? t("super_admin") : t("trusted_admin")}</div>
               </div>
             </div>
-            <button class="btn btn-danger-outline" id="um-logout" style="width:100%; justify-content:flex-start;">
-              ${ic("logout", 15)} ${t("logout")}
-            </button>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn btn-secondary" id="um-change-password" style="width:100%; justify-content:flex-start; ${App.currentUser?.must_change_password ? 'border-color:#F59E0B; color:#92400E;' : ''}">
+                ${ic("lock", 15)} ${t("change_password")}${App.currentUser?.must_change_password ? ` • ${t("default_password_flag")}` : ''}
+              </button>
+              <button class="btn btn-danger-outline" id="um-logout" style="width:100%; justify-content:flex-start;">
+                ${ic("logout", 15)} ${t("logout")}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -702,6 +717,7 @@ window.AtharModals = (function () {
     const close = () => { modal.innerHTML = ""; };
     document.getElementById("um-close").onclick = close;
     document.getElementById("um-backdrop").onclick = (e) => { if (e.target.id === "um-backdrop") close(); };
+    document.getElementById("um-change-password").onclick = () => { close(); openChangePasswordModal(false); };
     document.getElementById("um-logout").onclick = () => { close(); if (window.AtharAuth) window.AtharAuth.logout(); };
   }
 
@@ -1350,6 +1366,623 @@ window.AtharModals = (function () {
     openBulkRatingModal(needing);
   }
 
+  // =========================================================
+  // 15. Change Password (self-service)
+  // =========================================================
+  function openChangePasswordModal(forced) {
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="cp-backdrop">
+        <div class="modal-dialog" style="max-width:440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("lock", 18)} ${t("change_password")}</h3>
+            ${forced ? "" : `<button class="btn-icon" id="cp-close">&times;</button>`}
+          </div>
+          <form id="cp-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+              ${forced ? `<div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">${t("password_change_banner")}</div>` : ""}
+              <div class="form-field">
+                <label class="field-label">${t("current_password")} <span class="required-asterisk">*</span></label>
+                <input type="password" id="cp-current" class="form-control" required autocomplete="current-password" dir="ltr">
+              </div>
+              <div class="form-field">
+                <label class="field-label">${t("new_password")} <span class="required-asterisk">*</span></label>
+                <input type="password" id="cp-new" class="form-control" required minlength="8" autocomplete="new-password" dir="ltr">
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">${t("password_min_length")}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">${t("confirm_password")} <span class="required-asterisk">*</span></label>
+                <input type="password" id="cp-confirm" class="form-control" required autocomplete="new-password" dir="ltr">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="cp-cancel">${forced ? t("later") : t("cancel")}</button>
+              <button type="submit" class="btn btn-primary" id="cp-submit">${t("save")}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    const closeBtn = document.getElementById("cp-close");
+    if (closeBtn) closeBtn.onclick = close;
+    const cancelBtn = document.getElementById("cp-cancel");
+    if (cancelBtn) cancelBtn.onclick = close;
+    document.getElementById("cp-backdrop").onclick = (e) => {
+      if (!forced && e.target.id === "cp-backdrop") close();
+    };
+
+    document.getElementById("cp-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const current = document.getElementById("cp-current").value;
+      const next = document.getElementById("cp-new").value;
+      const confirm = document.getElementById("cp-confirm").value;
+
+      if (next.length < 8) { showToast(t("password_min_length"), "error"); return; }
+      if (next !== confirm) { showToast(t("passwords_mismatch"), "error"); return; }
+
+      const submitBtn = document.getElementById("cp-submit");
+      submitBtn.disabled = true;
+      try {
+        await window.AtharAPI.auth.changePassword(current, next);
+        if (window.AtharAuth && window.AtharAuth.markPasswordChanged) window.AtharAuth.markPasswordChanged();
+        if (App.currentUser) App.currentUser.must_change_password = false;
+        const banner = document.getElementById("pw-warning-banner");
+        if (banner) banner.remove();
+        showToast(t("password_changed"), "success");
+        close();
+        // All sessions were revoked server-side — sign in again with the new password.
+        setTimeout(() => { if (window.AtharAuth) window.AtharAuth.logout(); }, 1400);
+      } catch (err) {
+        if (err.code === "INVALID_PASSWORD") showToast(t("current_password_wrong"), "error");
+        else showToast(err.message || (App.currentLang === "ar" ? "تعذّر تغيير كلمة المرور" : "Failed to change password"), "error");
+        submitBtn.disabled = false;
+      }
+    };
+  }
+
+  // =========================================================
+  // 16. Reset Password (super admin, from the Users screen)
+  // =========================================================
+  function openResetPasswordModal(userId) {
+    const state = window.AtharStore.getState();
+    const target = state.users.find((u) => u.id === userId);
+    if (!target) return;
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="rp-backdrop">
+        <div class="modal-dialog" style="max-width:440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("lock", 18)} ${t("reset_password")}</h3>
+            <button class="btn-icon" id="rp-close">&times;</button>
+          </div>
+          <form id="rp-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+              <div style="padding:10px 12px; background:var(--neutral-50); border-radius:8px;">
+                <div style="font-weight:700;">${escapeHtml(target.full_name)}</div>
+                <div style="font-size:12px; color:var(--neutral-500);" dir="ltr">${escapeHtml(target.email)}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">${t("new_password")} <span class="required-asterisk">*</span></label>
+                <input type="password" id="rp-new" class="form-control" required minlength="8" autocomplete="new-password" dir="ltr">
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">${t("password_min_length")} — ${t("password_reset_must_change")}</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="rp-cancel">${t("cancel")}</button>
+              <button type="submit" class="btn btn-primary" id="rp-submit">${t("reset_password")}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("rp-close").onclick = close;
+    document.getElementById("rp-cancel").onclick = close;
+    document.getElementById("rp-backdrop").onclick = (e) => { if (e.target.id === "rp-backdrop") close(); };
+
+    document.getElementById("rp-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const newPass = document.getElementById("rp-new").value;
+      if (newPass.length < 8) { showToast(t("password_min_length"), "error"); return; }
+
+      const submitBtn = document.getElementById("rp-submit");
+      submitBtn.disabled = true;
+      try {
+        await window.AtharAPI.users.resetPassword(target.id, newPass);
+        const entry = state.users.find((u) => u.id === target.id);
+        if (entry) entry.must_change_password = true;
+        showToast(t("password_reset_done"), "success");
+        close();
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        showToast(err.message || (App.currentLang === "ar" ? "تعذّر إعادة تعيين كلمة المرور" : "Reset failed"), "error");
+        submitBtn.disabled = false;
+      }
+    };
+  }
+
+  // =========================================================
+  // 17. Bulk Transfer
+  // =========================================================
+  function openBulkTransferModal(volunteerIds) {
+    volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
+    if (!volunteerIds.length) {
+      showToast(App.currentLang === "ar" ? "اختر متطوعين أولاً" : "Select volunteers first", "warning");
+      return;
+    }
+    const state = window.AtharStore.getState();
+    const vols = state.volunteers.filter((v) => volunteerIds.includes(v.id));
+    const activeCommittees = state.committees.filter((c) => c.status === "active");
+
+    // Anyone among the selection who currently leads a committee will lose that role.
+    const leaderNames = [];
+    state.committees.forEach((c) => {
+      if (c.leader && volunteerIds.includes(c.leader.id)) {
+        leaderNames.push(App.currentLang === "ar" ? (c.leader.full_name_ar || c.leader.full_name) : c.leader.full_name);
+      }
+      (c.co_leaders || []).forEach((x) => {
+        if (volunteerIds.includes(x.id)) {
+          leaderNames.push(App.currentLang === "ar" ? (x.full_name_ar || x.full_name) : x.full_name);
+        }
+      });
+    });
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="bt-backdrop">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("arrow_right", 18)} ${t("bulk_transfer_title")}</h3>
+            <button class="btn-icon" id="bt-close">&times;</button>
+          </div>
+          <form id="bt-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+              <div style="padding:10px 12px; background:var(--neutral-50); border-radius:8px; font-size:13px;">
+                <strong>${vols.length}</strong> ${App.currentLang === "ar" ? "متطوع محدد" : "volunteers selected"}
+              </div>
+              ${leaderNames.length ? `
+                <div style="padding:10px 12px; border-radius:8px; background:#FEF3C7; color:#92400E; font-size:13px; font-weight:600; line-height:1.7;">
+                  ⚠️ ${t("leadership_transfer_warning")}<br>${escapeHtml(leaderNames.join("، "))}
+                </div>
+              ` : ""}
+              <div class="form-field">
+                <label class="field-label">${t("to_committee")} <span class="required-asterisk">*</span></label>
+                <select id="bt-comm" class="form-control" required>
+                  ${activeCommittees.map((c) => `<option value="${c.id}">${escapeHtml(App.currentLang === "ar" ? c.name_ar : c.name_en)}</option>`).join("")}
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">${t("transfer_reason")} <span class="required-asterisk">*</span></label>
+                <textarea id="bt-reason" class="form-control" rows="3" required minlength="5"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="bt-cancel">${t("cancel")}</button>
+              <button type="submit" class="btn btn-primary" id="bt-submit">${t("confirm")}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("bt-close").onclick = close;
+    document.getElementById("bt-cancel").onclick = close;
+    document.getElementById("bt-backdrop").onclick = (e) => { if (e.target.id === "bt-backdrop") close(); };
+
+    document.getElementById("bt-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const toCommitteeId = document.getElementById("bt-comm").value;
+      const reason = document.getElementById("bt-reason").value.trim();
+      if (reason.length < 5) { showToast(t("transfer_reason"), "error"); return; }
+
+      const submitBtn = document.getElementById("bt-submit");
+      submitBtn.disabled = true;
+      try {
+        const res = await window.AtharAPI.volunteers.bulkTransfer(volunteerIds, toCommitteeId, reason);
+        await window.AtharStore.refreshVolunteers();
+        await window.AtharStore.refreshCommittees();
+        App.selectedVolunteerIds.clear();
+        const msg = App.currentLang === "ar"
+          ? `تم نقل ${res.transferred} متطوع${res.failed ? ` — تعذّر نقل ${res.failed}` : ""}`
+          : `Transferred ${res.transferred} volunteer(s)${res.failed ? ` — ${res.failed} skipped` : ""}`;
+        showToast(msg, res.failed ? "warning" : "success");
+        close();
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        showToast(err.message || "Transfer failed", "error");
+        submitBtn.disabled = false;
+      }
+    };
+  }
+
+  // =========================================================
+  // 18. WhatsApp Reminders (bulk, one-click per recipient)
+  // =========================================================
+  function waReminderTemplates() {
+    return [
+      {
+        id: "general",
+        name_en: "General message",
+        name_ar: "رسالة عامة",
+        body_en: "Hello {name} 👋\nThank you for your efforts in the {committee} committee.\n— {org}",
+        body_ar: "مرحباً {name} 👋\nنشكر لك جهودك في {committee}.\n— {org}",
+      },
+      {
+        id: "meeting",
+        name_en: "Meeting reminder",
+        name_ar: "تذكير باجتماع",
+        body_en: "Hello {name} 👋\nReminder: an upcoming {committee} committee meeting is scheduled. Please confirm your attendance.\n— {org}",
+        body_ar: "مرحباً {name} 👋\nتذكير باجتماع {committee} القادم. نرجو تأكيد الحضور في الوقت المحدد.\n— {org}",
+      },
+      {
+        id: "hours",
+        name_en: "Hours reminder",
+        name_ar: "تذكير بالساعات",
+        body_en: "Hello {name} 👋\nYou have pending hours in the {committee} committee. Please review your hours log.\n— {org}",
+        body_ar: "مرحباً {name} 👋\nلديك ساعات غير معتمدة في {committee}. يرجى مراجعة سجل الساعات.\n— {org}",
+      },
+      {
+        id: "missing",
+        name_en: "Attendance follow-up",
+        name_ar: "متابعة غياب",
+        body_en: "Hello {name} 👋\nWe missed you at the last {committee} committee activity. Let us know if you need any support.\n— {org}",
+        body_ar: "مرحباً {name} 👋\nافتقدناك في آخر أنشطة {committee}. تواصل معنا إن احتجت أي دعم.\n— {org}",
+      },
+    ];
+  }
+
+  function openWhatsAppReminderModal(volunteerIds) {
+    volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
+    const state = window.AtharStore.getState();
+    const vols = state.volunteers.filter((v) => volunteerIds.includes(v.id) && v.whatsapp && String(v.whatsapp).trim());
+    if (!vols.length) {
+      showToast(App.currentLang === "ar" ? "لا يوجد أرقام واتساب ضمن التحديد" : "No WhatsApp numbers in the selection", "warning");
+      return;
+    }
+
+    const lang = App.currentLang === "ar" ? "ar" : "en";
+    const templates = waReminderTemplates();
+    const orgName = App.currentLang === "ar"
+      ? (state.settings.org_name_ar || state.settings.org_name_en || "أثر")
+      : (state.settings.org_name_en || "Athar");
+
+    const committeeName = (v) => {
+      const c = state.committees.find((x) => x.id === v.committee_id);
+      if (!c) return App.currentLang === "ar" ? "اللجنة" : "the committee";
+      return App.currentLang === "ar" ? c.name_ar : c.name_en;
+    };
+    const volName = (v) => App.currentLang === "ar" ? (v.full_name_ar || v.full_name) : v.full_name;
+
+    const buildMessage = (v, body) => String(body || "")
+      .replace(/\{name\}/g, volName(v))
+      .replace(/\{committee\}/g, committeeName(v))
+      .replace(/\{org\}/g, orgName);
+
+    const templateBody = (tpl) => (lang === "ar" ? tpl.body_ar : tpl.body_en) || tpl.body_en;
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="wr-backdrop">
+        <div class="modal-dialog" style="max-width:640px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("whatsapp", 18)} ${t("reminder_title")} (${vols.length})</h3>
+            <button class="btn-icon" id="wr-close">&times;</button>
+          </div>
+          <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+            ${volunteerIds.length > vols.length ? `
+              <div style="font-size:12px; color:var(--neutral-500);">
+                ${App.currentLang === "ar"
+        ? `${volunteerIds.length - vols.length} من المحددين بدون رقم واتساب وسيتم تجاهلهم`
+        : `${volunteerIds.length - vols.length} selected volunteer(s) have no WhatsApp number and were skipped`}
+              </div>` : ""}
+            <div class="form-field">
+              <label class="field-label">${t("reminder_template")}</label>
+              <select id="wr-template" class="form-control">
+                ${templates.map((tpl) => `<option value="${tpl.id}">${App.currentLang === "ar" ? tpl.name_ar : tpl.name_en}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="field-label">${t("reminder_message")}</label>
+              <textarea id="wr-body" class="form-control" rows="5" style="line-height:1.8;">${templateBody(templates[0])}</textarea>
+              <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">{name} • {committee} • {org}</div>
+            </div>
+            <div style="max-height:260px; overflow-y:auto; border:1px solid var(--neutral-200); border-radius:8px;">
+              ${vols.map((v) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid var(--neutral-100);">
+                  <div style="min-width:0;">
+                    <div style="font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(volName(v))}</div>
+                    <div class="num-ltr" style="font-size:11px; color:var(--neutral-500);">${escapeHtml(String(v.whatsapp))}</div>
+                  </div>
+                  <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button type="button" class="btn btn-whatsapp btn-sm" data-wr-send="${v.id}">${ic("whatsapp", 12)} ${t("send")}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-wr-copy="${v.id}">${t("copy")}</button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="wr-close2">${t("close") || "Close"}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("wr-close").onclick = close;
+    document.getElementById("wr-close2").onclick = close;
+    document.getElementById("wr-backdrop").onclick = (e) => { if (e.target.id === "wr-backdrop") close(); };
+
+    const bodyEl = document.getElementById("wr-body");
+    const tplEl = document.getElementById("wr-template");
+    tplEl.onchange = () => {
+      const tpl = templates.find((x) => x.id === tplEl.value);
+      if (tpl) bodyEl.value = templateBody(tpl);
+    };
+
+    modal.querySelectorAll("[data-wr-send]").forEach((btn) => {
+      btn.onclick = () => {
+        const v = vols.find((x) => x.id === btn.getAttribute("data-wr-send"));
+        if (!v) return;
+        const message = buildMessage(v, bodyEl.value);
+        const digits = String(v.whatsapp).replace(/[^0-9]/g, "");
+        if (!digits) { showToast("Invalid number", "error"); return; }
+        window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+        btn.innerHTML = `${ic("check", 12)} ${t("send")}`;
+        btn.classList.add("is-sent");
+      };
+    });
+
+    modal.querySelectorAll("[data-wr-copy]").forEach((btn) => {
+      btn.onclick = async () => {
+        const v = vols.find((x) => x.id === btn.getAttribute("data-wr-copy"));
+        if (!v) return;
+        const message = buildMessage(v, bodyEl.value);
+        const copiedMsg = App.currentLang === "ar" ? "تم نسخ الرسالة" : "Message copied";
+        const failMsg = App.currentLang === "ar" ? "تعذّر النسخ" : "Copy failed";
+
+        const legacyCopy = () => {
+          const ta = document.createElement("textarea");
+          ta.value = message;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        };
+
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(message);
+          } else {
+            legacyCopy();
+          }
+          showToast(copiedMsg, "success");
+        } catch {
+          try {
+            legacyCopy();
+            showToast(copiedMsg, "success");
+          } catch {
+            showToast(failMsg, "error");
+          }
+        }
+      };
+    });
+  }
+
+  // =========================================================
+  // 19. Import Volunteers from CSV
+  // =========================================================
+  const CSV_FIELD_ALIASES = {
+    name: "fullName", full_name: "fullName", fullname: "fullName", "الاسم": "fullName", "الاسم الكامل": "fullName",
+    name_ar: "fullNameAr", full_name_ar: "fullNameAr", "الاسم بالعربية": "fullNameAr",
+    national_id: "nationalId", nationalid: "nationalId", "رقم الهوية": "nationalId", "الهوية": "nationalId",
+    phone: "phone", "الهاتف": "phone", "الجوال": "phone",
+    whatsapp: "whatsapp", "واتساب": "whatsapp",
+    email: "email", "البريد": "email", "البريد الإلكتروني": "email",
+    gender: "gender", "الجنس": "gender",
+    nationality: "nationality", "الجنسية": "nationality",
+    study_level: "studyLevel", studylevel: "studyLevel", "المستوى الدراسي": "studyLevel",
+    skills: "skills", "المهارات": "skills",
+    committee: "committeeName", committee_name: "committeeName", "اللجنة": "committeeName",
+    join_date: "joinDate", joindate: "joinDate", "تاريخ الانضمام": "joinDate",
+    notes: "notes", "ملاحظات": "notes",
+  };
+
+  function parseCsvText(text) {
+    const clean = String(text || "").replace(/^\uFEFF/, "");
+    const firstLine = clean.split(/\r?\n/)[0] || "";
+    const commas = (firstLine.match(/,/g) || []).length;
+    const semis = (firstLine.match(/;/g) || []).length;
+    const delim = semis > commas ? ";" : ",";
+
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+    for (let i = 0; i < clean.length; i++) {
+      const ch = clean[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (clean[i + 1] === '"') { cell += '"'; i++; }
+          else inQuotes = false;
+        } else cell += ch;
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === delim) {
+        row.push(cell); cell = "";
+      } else if (ch === "\n") {
+        row.push(cell); rows.push(row); row = []; cell = "";
+      } else if (ch !== "\r") {
+        cell += ch;
+      }
+    }
+    if (cell.length || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
+  }
+
+  function mapCsvRows(rows) {
+    if (!rows.length) return { records: [], invalid: 0 };
+    const headers = rows[0].map((h) => String(h).trim().toLowerCase());
+    const fields = headers.map((h) => CSV_FIELD_ALIASES[h] || null);
+
+    const records = [];
+    let invalid = 0;
+    for (let r = 1; r < rows.length; r++) {
+      const cells = rows[r];
+      const rec = {};
+      fields.forEach((field, i) => {
+        if (!field) return;
+        const raw = String(cells[i] ?? "").trim();
+        if (raw === "") return;
+        if (field === "gender") {
+          const g = raw.toLowerCase();
+          if (g === "male" || g === "m" || raw === "ذكر") rec.gender = "male";
+          else if (g === "female" || g === "f" || raw === "أنثى") rec.gender = "female";
+        } else if (field === "skills") {
+          rec.skills = raw.split(/[|;،]/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
+        } else if (field === "joinDate") {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) rec.joinDate = raw;
+        } else {
+          rec[field] = raw;
+        }
+      });
+      if (!rec.fullName || rec.fullName.length < 2) { invalid++; continue; }
+      if (!rec.whatsapp && !rec.email) invalid++;
+      records.push(rec);
+    }
+    return { records, invalid };
+  }
+
+  function openImportVolunteersModal() {
+    let parsedRecords = [];
+    let invalidCount = 0;
+
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="im-backdrop">
+        <div class="modal-dialog" style="max-width:720px;">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("upload", 18)} ${t("import_title")}</h3>
+            <button class="btn-icon" id="im-close">&times;</button>
+          </div>
+          <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <input type="file" id="im-file" accept=".csv,text/csv" class="form-control" style="flex:1; min-width:220px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="im-template">${ic("download", 14)} ${t("download_template")}</button>
+            </div>
+            <div style="font-size:12px; color:var(--neutral-500); line-height:1.8;">
+              ${App.currentLang === "ar"
+        ? "الأعمدة المدعومة: الاسم (إلزامي)، الاسم بالعربية، رقم الهوية، الهاتف، واتساب، البريد الإلكتروني، الجنس، الجنسية، المستوى الدراسي، المهارات (مفصولة بـ |)، اللجنة، تاريخ الانضمام (YYYY-MM-DD)، ملاحظات. يجب توفير واتساب أو بريد إلكتروني لكل صف."
+        : "Supported columns: Name (required), Name_AR, National_ID, Phone, WhatsApp, Email, Gender, Nationality, Study_Level, Skills (| separated), Committee, Join_Date (YYYY-MM-DD), Notes. Each row needs a WhatsApp number or email."}
+            </div>
+            <div id="im-preview"></div>
+            <div id="im-result"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="im-cancel">${t("cancel")}</button>
+            <button type="button" class="btn btn-primary" id="im-submit" disabled>${ic("upload", 14)} ${t("import_csv")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("im-close").onclick = close;
+    document.getElementById("im-cancel").onclick = close;
+    document.getElementById("im-backdrop").onclick = (e) => { if (e.target.id === "im-backdrop") close(); };
+
+    document.getElementById("im-template").onclick = () => {
+      window.ExportUtil.downloadCSV(
+        "athar_volunteers_template.csv",
+        ["Name", "Name_AR", "National_ID", "Phone", "WhatsApp", "Email", "Gender", "Nationality", "Study_Level", "Skills", "Committee", "Join_Date", "Notes"],
+        [["Ahmed Ali", "أحمد علي", "1234567890", "+966500000000", "+966500000000", "ahmed@example.com", "male", "Saudi", "bachelor", "first_aid|media", "Media Committee", "2026-01-15", ""]],
+      );
+    };
+
+    const fileEl = document.getElementById("im-file");
+    const submitBtn = document.getElementById("im-submit");
+    const previewEl = document.getElementById("im-preview");
+
+    fileEl.onchange = () => {
+      const file = fileEl.files && fileEl.files[0];
+      document.getElementById("im-result").innerHTML = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const rows = parseCsvText(reader.result);
+          const mapped = mapCsvRows(rows);
+          parsedRecords = mapped.records;
+          invalidCount = mapped.invalid;
+          if (!parsedRecords.length) {
+            previewEl.innerHTML = `<div style="color:var(--danger); font-size:13px;">${App.currentLang === "ar" ? "لم يتم العثور على صفوف صالحة — تأكد من وجود عمود الاسم." : "No valid rows found — make sure a Name column exists."}</div>`;
+            submitBtn.disabled = true;
+            return;
+          }
+          const preview = parsedRecords.slice(0, 6);
+          previewEl.innerHTML = `
+            <div style="font-size:12px; font-weight:700; margin-bottom:6px; color:var(--neutral-700);">
+              ${t("import_preview")}: ${parsedRecords.length - invalidCount} ${App.currentLang === "ar" ? "جاهز للإرسال" : "ready to submit"}${invalidCount ? ` — ${invalidCount} ${App.currentLang === "ar" ? "غير مكتمل (سيُرفض)" : "incomplete (will be rejected)"}` : ""}
+            </div>
+            <div class="table-container" style="max-height:200px; overflow:auto;">
+              <table class="data-table">
+                <thead><tr><th>${t("volunteer_name")}</th><th>WhatsApp</th><th>${t("email")}</th><th>${t("committee")}</th><th>${t("gender")}</th></tr></thead>
+                <tbody>
+                  ${preview.map((r) => `
+                    <tr>
+                      <td style="font-weight:600;">${escapeHtml(r.fullName)}</td>
+                      <td class="num-ltr">${escapeHtml(r.whatsapp || "—")}</td>
+                      <td style="font-size:12px;">${escapeHtml(r.email || "—")}</td>
+                      <td style="font-size:12px;">${escapeHtml(r.committeeName || "—")}</td>
+                      <td style="font-size:12px;">${escapeHtml(r.gender || "—")}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          `;
+          submitBtn.disabled = false;
+        } catch {
+          previewEl.innerHTML = `<div style="color:var(--danger); font-size:13px;">${App.currentLang === "ar" ? "تعذّر قراءة الملف" : "Could not read the file"}</div>`;
+          submitBtn.disabled = true;
+        }
+      };
+      reader.readAsText(file, "utf-8");
+    };
+
+    submitBtn.onclick = async () => {
+      if (!parsedRecords.length) return;
+      submitBtn.disabled = true;
+      try {
+        const res = await window.AtharAPI.volunteers.importRows(parsedRecords);
+        await window.AtharStore.refreshVolunteers();
+        const errorsHtml = (res.errors || []).slice(0, 10).map((er) => `
+          <div style="font-size:12px; color:var(--danger);">#${er.row} ${escapeHtml(er.name || "")} — ${escapeHtml(er.error)}</div>
+        `).join("");
+        document.getElementById("im-result").innerHTML = `
+          <div style="padding:12px; border-radius:8px; background:${res.failed ? "#FEF3C7" : "#ECFDF5"}; color:${res.failed ? "#92400E" : "#065F46"}; font-size:13px; font-weight:700;">
+            ${t("imported")}: ${res.imported} • ${t("failed")}: ${res.failed}
+          </div>
+          ${errorsHtml}
+        `;
+        previewEl.innerHTML = "";
+        showToast(`${t("imported")}: ${res.imported}`, res.failed ? "warning" : "success");
+        submitBtn.style.display = "none";
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        showToast(err.message || "Import failed", "error");
+        submitBtn.disabled = false;
+      }
+    };
+  }
+
   return {
     openAddVolunteerSlideover,
     openTransferModal,
@@ -1372,6 +2005,11 @@ window.AtharModals = (function () {
     openBulkEditHoursModal,
     openAttendanceModal,
     openEvaluateAttendeesModal,
+    openChangePasswordModal,
+    openResetPasswordModal,
+    openBulkTransferModal,
+    openWhatsAppReminderModal,
+    openImportVolunteersModal,
     buildSamplePreview,
     WA_PLACEHOLDERS,
     WA_SAMPLE_VALUES,

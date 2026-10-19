@@ -172,6 +172,9 @@ window.AtharAPI = (function () {
         const data = await get("/auth/me");
         return data.user;
       },
+      async changePassword(currentPassword, newPassword) {
+        return post("/auth/change-password", { currentPassword, newPassword });
+      },
     },
 
     volunteers: {
@@ -183,6 +186,9 @@ window.AtharAPI = (function () {
       restore: async (id) => (await post(`/volunteers/${id}/restore`)).volunteer,
       transfer: async (id, toCommitteeId, reason) =>
         (await post(`/volunteers/${id}/transfer`, { toCommitteeId, reason })).volunteer,
+      importRows: (rows) => post("/volunteers/import", { rows }),
+      bulkTransfer: (volunteerIds, toCommitteeId, reason) =>
+        post("/volunteers/bulk-transfer", { volunteerIds, toCommitteeId, reason }),
     },
 
     committees: {
@@ -196,6 +202,7 @@ window.AtharAPI = (function () {
 
     users: {
       list: () => get("/users"),
+      resetPassword: (id, newPassword) => post(`/users/${id}/reset-password`, { newPassword }),
     },
 
     meetings: {
@@ -255,6 +262,14 @@ window.AtharAPI = (function () {
     verify: {
       check: (certificateNo) =>
         rawFetch(`/certificates/verify/${encodeURIComponent(certificateNo)}`, { method: "GET" }, { skipAuth: true }),
+    },
+
+    // =========================================================
+    // Public endpoints — no authentication (application form)
+    // =========================================================
+    public: {
+      committees: () => get("/public/committees", { skipAuth: true }),
+      apply: (data) => post("/public/applications", data, { skipAuth: true }),
     },
 
     // =========================================================

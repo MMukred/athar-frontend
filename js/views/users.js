@@ -46,18 +46,24 @@
           <tbody>
             ${state.users.map(u => `
               <tr>
-                <td style="font-weight:700;">${u.full_name}</td>
+                <td style="font-weight:700;">
+                  ${u.full_name}
+                  ${u.must_change_password ? `<span class="badge badge-warning" style="font-size:9px; margin-inline-start:6px;">${t("default_password_flag")}</span>` : ''}
+                </td>
                 <td style="font-family:var(--font-mono);">${u.email}</td>
                 <td><span class="badge ${u.role === 'super_admin' ? 'badge-primary' : 'badge-neutral'}">${u.role === 'super_admin' ? t("super_admin") : t("trusted_admin")}</span></td>
                 <td><span style="font-weight:600;">${u.preset ? u.preset.toUpperCase() : 'FULL / SUPER'}</span></td>
                 <td><span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">${u.is_active ? 'Active' : 'Deactivated'}</span></td>
-                <td class="num-ltr">${u.last_login_at || '—'}</td>
+                <td class="num-ltr">${u.last_login_at ? String(u.last_login_at).replace("T", " ").slice(0, 16) : '—'}</td>
                 <td>
                   <div class="row-actions-cell">
+                    ${App.currentUser?.role === 'super_admin' ? `
+                      <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openResetPasswordModal('${u.id}')">${ic("lock", 14)} ${t("reset_password")}</button>
+                    ` : ''}
                     ${u.role !== 'super_admin' ? `
                       <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openPermissionsEditor('${u.id}')">${ic("sliders", 14)} Permissions</button>
                       <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.toggleUserActive && window.AtharApp.toggleUserActive('${u.id}')">${u.is_active ? 'Deactivate' : 'Activate'}</button>
-                    ` : `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>`}
+                    ` : (App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>` : '')}
                   </div>
                 </td>
               </tr>

@@ -65,6 +65,7 @@
       <div id="hours-bulk-bar" class="bulk-action-bar" style="display:none;">
         <span class="bulk-count" id="hours-bulk-count">0 selected</span>
         <div class="bulk-buttons">
+          ${canApprove ? `<button class="btn btn-success btn-sm" id="btn-bulk-approve-hours">${ic("check_circle", 14)} ${t("bulk_approve_selected")}</button>` : ''}
           ${canEdit ? `<button class="btn btn-primary btn-sm" id="btn-bulk-edit-hours">${ic("pencil", 14)} ${App.currentLang === 'ar' ? 'تعديل جماعي' : 'Bulk Edit'}</button>` : ''}
           ${canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-bulk-delete-hours">${ic("trash", 14)} ${t("delete")}</button>` : ''}
         </div>
@@ -224,6 +225,30 @@
         const ids = Array.from(selected);
         if (!ids.length) return;
         window.AtharApp.bulkEditHours(ids);
+      };
+    }
+
+    const bulkApprove = document.getElementById("btn-bulk-approve-hours");
+    if (bulkApprove) {
+      bulkApprove.onclick = async () => {
+        const ids = Array.from(selected);
+        const pendingIds = ids.filter(id => {
+          const h = state.volunteer_hours.find(x => x.id === id);
+          return h && h.status === "pending";
+        });
+        if (!pendingIds.length) {
+          showToast(App.currentLang === 'ar' ? 'لا توجد سجلات بانتظار الاعتماد ضمن التحديد' : 'No pending entries in the selection', "warning");
+          return;
+        }
+        bulkApprove.disabled = true;
+        const results = await Promise.allSettled(pendingIds.map(id => window.AtharAPI.hours.approve(id)));
+        const ok = results.filter(r => r.status === "fulfilled").length;
+        const fail = results.length - ok;
+        await window.AtharStore.refreshHours();
+        if (fail === 0) showToast(`${t("approved_successfully")} (${ok})`, "success");
+        else showToast(`${ok} ✓ • ${fail} ✗`, "warning");
+        selected.clear();
+        renderVolunteerHours(container);
       };
     }
 

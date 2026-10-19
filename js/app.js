@@ -112,6 +112,49 @@
 
     // ---- First render ----
     handleHashChange();
+
+    // ---- Default-password hygiene ----
+    if (App.currentUser && App.currentUser.must_change_password) {
+      showPasswordWarningBanner();
+      // Prompt once per browser session; the banner stays until resolved.
+      if (sessionStorage.getItem("athar_pw_prompted") !== "1") {
+        sessionStorage.setItem("athar_pw_prompted", "1");
+        setTimeout(function () {
+          if (window.AtharModals && window.AtharModals.openChangePasswordModal) {
+            window.AtharModals.openChangePasswordModal(true);
+          }
+        }, 800);
+      }
+    }
+  }
+
+  // =========================================================================
+  // Persistent banner while the account still uses the default password
+  // =========================================================================
+  function showPasswordWarningBanner() {
+    if (document.getElementById("pw-warning-banner")) return;
+    if (sessionStorage.getItem("athar_pw_banner_dismissed") === "1") return;
+
+    const banner = document.createElement("div");
+    banner.id = "pw-warning-banner";
+    banner.className = "pw-warning-banner";
+    banner.innerHTML = `
+      <span class="pw-warning-text">${ic("lock", 15)} ${t("password_change_banner")}</span>
+      <span style="display:flex; gap:8px; flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" id="pw-banner-change">${t("change_now")}</button>
+        <button class="btn btn-secondary btn-sm" id="pw-banner-later">${t("later")}</button>
+      </span>
+    `;
+    document.body.appendChild(banner);
+    document.getElementById("pw-banner-change").onclick = function () {
+      if (window.AtharModals && window.AtharModals.openChangePasswordModal) {
+        window.AtharModals.openChangePasswordModal(true);
+      }
+    };
+    document.getElementById("pw-banner-later").onclick = function () {
+      sessionStorage.setItem("athar_pw_banner_dismissed", "1");
+      banner.remove();
+    };
   }
 
   // =========================================================================
@@ -181,6 +224,11 @@
     deleteWhatsAppTemplate: (...a) => window.AtharModals.deleteWhatsAppTemplate(...a),
     openBulkLogHoursSlideover: (...a) => window.AtharModals.openBulkLogHoursSlideover(...a),
     openBulkRatingModal: (...a) => window.AtharModals.openBulkRatingModal(...a),
+    openChangePasswordModal: (...a) => window.AtharModals.openChangePasswordModal(...a),
+    openResetPasswordModal: (...a) => window.AtharModals.openResetPasswordModal(...a),
+    openBulkTransferModal: (...a) => window.AtharModals.openBulkTransferModal(...a),
+    openWhatsAppReminderModal: (...a) => window.AtharModals.openWhatsAppReminderModal(...a),
+    openImportVolunteersModal: (...a) => window.AtharModals.openImportVolunteersModal(...a),
 
     logout: () => window.AtharAuth && window.AtharAuth.logout(),
 
@@ -216,6 +264,17 @@
         renderCurrentView();
       } catch (err) {
         showToast(err.message || "Restore failed", "error");
+      }
+    },
+
+    approveVolunteer: async function (volId) {
+      try {
+        await window.AtharAPI.volunteers.update(volId, { status: "active" });
+        await window.AtharStore.refreshVolunteers();
+        showToast(App.currentLang === "ar" ? "تم قبول المتطوع" : "Volunteer approved", "success");
+        renderCurrentView();
+      } catch (err) {
+        showToast(err.message || "Approve failed", "error");
       }
     },
 

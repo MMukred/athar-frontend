@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>التطوع مع أثر | Volunteer with Athar</title>
+  <meta name="description" content="قدّم طلبك للتطوع مع مؤسسة أثر — Athar Foundation volunteer application">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0F766E;
+      --primary-dark: #115E59;
+      --primary-light: #CCFBF1;
+      --neutral-50: #F8FAFC;
+      --neutral-100: #F1F5F9;
+      --neutral-200: #E2E8F0;
+      --neutral-300: #CBD5E1;
+      --neutral-500: #64748B;
+      --neutral-700: #334155;
+      --neutral-900: #0F172A;
+      --danger: #DC2626;
+      --success: #059669;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cairo", "Inter", system-ui, sans-serif;
+      background: linear-gradient(160deg, #0F766E 0%, #0B4F4A 55%, #08312E 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px;
+      color: var(--neutral-900);
+    }
+
+    .apply-shell { width: 100%; max-width: 720px; }
+
+    .apply-hero {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 22px;
+    }
+    .apply-hero img { width: 64px; height: 64px; margin-bottom: 10px; }
+    .apply-hero h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .apply-hero p { font-size: 14px; opacity: 0.85; margin-top: 6px; line-height: 1.8; }
+
+    .apply-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 26px 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .lang-toggle {
+      position: fixed;
+      top: 16px;
+      inset-inline-end: 16px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background 0.2s;
+    }
+    .lang-toggle:hover { background: rgba(255, 255, 255, 0.28); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--neutral-700);
+      margin-bottom: 6px;
+    }
+    .field label .req { color: var(--danger); margin-inline-start: 2px; }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1.5px solid var(--neutral-200);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--neutral-900);
+      background: var(--neutral-50);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+    .field input[dir="ltr"] { direction: ltr; text-align: left; }
+
+    .hint { font-size: 11.5px; color: var(--neutral-500); margin-top: 5px; line-height: 1.6; }
+
+    .hp-field {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 20px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover:not(:disabled) { background: var(--primary-dark); }
+    .submit-btn:active:not(:disabled) { transform: translateY(1px); }
+    .submit-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    .form-error {
+      display: none;
+      margin-top: 14px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      background: #FEF2F2;
+      color: var(--danger);
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .success-view { text-align: center; padding: 26px 8px; }
+    .success-view .check {
+      width: 74px; height: 74px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: #ECFDF5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .success-view h2 { font-size: 22px; font-weight: 800; color: var(--success); }
+    .success-view p { margin-top: 10px; color: var(--neutral-700); font-size: 14.5px; line-height: 1.9; }
+    .success-view .ref {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--neutral-100);
+      font-size: 12px;
+      color: var(--neutral-500);
+      font-family: monospace;
+      direction: ltr;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -3px;
+      margin-inline-end: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .page-footer {
+      text-align: center;
+      margin-top: 18px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 12px;
+    }
+    .page-footer a { color: rgba(255, 255, 255, 0.9); }
+
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .apply-card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+
+<body>
+  <button type="button" class="lang-toggle" id="lang-toggle">English</button>
+
+  <div class="apply-shell">
+    <div class="apply-hero">
+      <img src="assets/logo.svg" alt="Athar">
+      <h1 id="page-title">التطوع مع مؤسسة أثر</h1>
+      <p id="page-subtitle">املأ النموذج التالي وسيتواصل معك فريقنا قريباً بإذن الله.</p>
+    </div>
+
+    <div class="apply-card" id="apply-card">
+      <form id="apply-form" class="form-grid" novalidate>
+        <!-- Honeypot -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="f-website">Website</label>
+          <input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="f-fullName"><span data-i18n="full_name_en">Full Name (English)</span><span class="req">*</span></label>
+          <input type="text" id="f-fullName" dir="ltr" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="f-fullNameAr"><span data-i18n="full_name_ar">الاسم الكامل (بالعربية)</span></label>
+          <input type="text" id="f-fullNameAr" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="f-nationalId"><span data-i18n="national_id">رقم الهوية / الإقامة</span></label>
+          <input type="text" id="f-nationalId" dir="ltr" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-dob"><span data-i18n="dob">تاريخ الميلاد</span></label>
+          <input type="date" id="f-dob">
+        </div>
+
+        <div class="field">
+          <label for="f-phone"><span data-i18n="phone">رقم الجوال</span></label>
+          <input type="tel" id="f-phone" dir="ltr" placeholder="+9665xxxxxxxx" autocomplete="tel">
+        </div>
+        <div class="field">
+          <label for="f-whatsapp"><span data-i18n="whatsapp">رقم الواتساب</span><span class="req">*</span></label>
+          <input type="tel" id="f-whatsapp" dir="ltr" placeholder="+9665xxxxxxxx" autocomplete="tel">
+        </div>
+
+        <div class="field full">
+          <label for="f-email"><span data-i18n="email">البريد الإلكتروني</span></label>
+          <input type="email" id="f-email" dir="ltr" placeholder="name@example.com" autocomplete="email">
+          <div class="hint" id="contact-hint">يجب توفير رقم واتساب أو بريد إلكتروني على الأقل.</div>
+        </div>
+
+        <div class="field">
+          <label for="f-gender"><span data-i18n="gender">الجنس</span></label>
+          <select id="f-gender">
+            <option value="">—</option>
+            <option value="male" data-i18n="male">ذكر</option>
+            <option value="female" data-i18n="female">أنثى</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-nationality"><span data-i18n="nationality">الجنسية</span></label>
+          <input type="text" id="f-nationality">
+        </div>
+
+        <div class="field">
+          <label for="f-studyLevel"><span data-i18n="study_level">المستوى الدراسي</span></label>
+          <select id="f-studyLevel">
+            <option value="">—</option>
+            <option value="secondary" data-i18n="lvl_secondary">ثانوي</option>
+            <option value="diploma" data-i18n="lvl_diploma">دبلوم</option>
+            <option value="bachelor" data-i18n="lvl_bachelor">بكالوريوس</option>
+            <option value="master" data-i18n="lvl_master">ماجستير</option>
+            <option value="phd" data-i18n="lvl_phd">دكتوراه</option>
+            <option value="other" data-i18n="lvl_other">أخرى</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-committee"><span data-i18n="committee">اللجنة المفضلة</span></label>
+          <select id="f-committee">
+            <option value="" data-i18n="no_pref">بدون تفضيل</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label for="f-skills"><span data-i18n="skills">المهارات</span></label>
+          <input type="text" id="f-skills" placeholder="تصوير، تصميم، إلقاء...">
+          <div class="hint" data-i18n="skills_hint">افصل بين المهارات بفاصلة أو |</div>
+        </div>
+
+        <div class="field full">
+          <label for="f-notes"><span data-i18n="notes">ملاحظات إضافية</span></label>
+          <textarea id="f-notes" rows="3" placeholder=""></textarea>
+        </div>
+
+        <div class="form-error full" id="form-error"></div>
+
+        <div class="full">
+          <button type="submit" class="submit-btn" id="submit-btn" data-i18n="submit">إرسال الطلب</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="page-footer">
+      <span id="footer-text">نظام إدارة المتطوعين — مؤسسة أثر</span>
+    </div>
+  </div>
+
+  <script src="js/apply.js"></script>
+</body>
+
+</html>

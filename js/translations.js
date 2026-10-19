@@ -69,6 +69,7 @@ window.Translations = {
     approve: "Approve",
     reject: "Reject",
     approve_all: "Approve All",
+    bulk_approve_selected: "Approve Selected",
     mark_all_present: "Mark All Present",
     mark_all_absent: "Mark All Absent",
     test_link: "Test Link",
@@ -356,7 +357,49 @@ window.Translations = {
     unsaved_title: "Unsaved Changes",
     unsaved_message: "You have unsaved changes. Are you sure you want to discard them?",
     unsaved_discard: "Discard",
-    unsaved_keep_editing: "Keep Editing"
+    unsaved_keep_editing: "Keep Editing",
+
+    // Security & passwords
+    current_password: "Current Password",
+    new_password: "New Password",
+    confirm_password: "Confirm New Password",
+    password_min_length: "Password must be at least 8 characters",
+    passwords_mismatch: "Passwords do not match",
+    current_password_wrong: "Current password is incorrect",
+    password_changed: "Password changed. Please sign in again with the new password.",
+    password_change_banner: "You are using the default password. Change it now to secure your account.",
+    password_reset_must_change: "the user must change it on next sign-in",
+    password_reset_done: "Password reset. The user must change it on next sign-in.",
+    reset_password: "Reset Password",
+    change_now: "Change Now",
+    later: "Later",
+    default_password_flag: "Default password",
+
+    // CSV import
+    import_csv: "Import CSV",
+    import_title: "Import Volunteers from CSV",
+    download_template: "Download Template",
+    import_preview: "Preview",
+    imported: "Imported",
+    failed: "Failed",
+
+    // Bulk actions & WhatsApp reminders
+    bulk_transfer: "Transfer",
+    bulk_transfer_title: "Transfer Selected Volunteers",
+    reminder_title: "WhatsApp Reminder",
+    reminder_template: "Message Template",
+    reminder_message: "Message (placeholders: {name} {committee} {org})",
+    send: "Send",
+    copy: "Copy",
+    approve_volunteer: "Approve",
+
+    // Leadership & dashboard charts
+    leader_badge: "Committee Leader",
+    coleader_badge: "Co-Leader",
+    leadership_transfer_warning: "This volunteer holds a committee leadership role — transferring will remove it.",
+    hours_trend: "Hours per Month (approved)",
+    committee_distribution: "Members per Committee",
+    top_volunteers: "Top Volunteers (hours)"
   },
 
   ar: {
@@ -424,6 +467,7 @@ window.Translations = {
     approve: "اعتماد",
     reject: "رفض",
     approve_all: "اعتماد الكل",
+    bulk_approve_selected: "اعتماد المحدد",
     mark_all_present: "تحديد الكل حاضر",
     mark_all_absent: "تحديد الكل غائب",
     test_link: "اختبار الرابط",
@@ -711,6 +755,48 @@ window.Translations = {
     unsaved_title: "تغييرات غير محفوظة",
     unsaved_message: "لديك تغييرات غير محفوظة. هل أنت متأكد من رغبتك في تجاهلها؟",
     unsaved_discard: "تجاهل",
-    unsaved_keep_editing: "متابعة التحرير"
+    unsaved_keep_editing: "متابعة التحرير",
+
+    // الأمان وكلمات المرور
+    current_password: "كلمة المرور الحالية",
+    new_password: "كلمة المرور الجديدة",
+    confirm_password: "تأكيد كلمة المرور الجديدة",
+    password_min_length: "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+    passwords_mismatch: "كلمتا المرور غير متطابقتين",
+    current_password_wrong: "كلمة المرور الحالية غير صحيحة",
+    password_changed: "تم تغيير كلمة المرور. يرجى تسجيل الدخول من جديد بكلمة المرور الجديدة.",
+    password_change_banner: "أنت تستخدم كلمة المرور الافتراضية. غيّرها الآن لتأمين حسابك.",
+    password_reset_must_change: "يجب على المستخدم تغييرها عند تسجيل الدخول",
+    password_reset_done: "تمت إعادة تعيين كلمة المرور. يجب على المستخدم تغييرها عند تسجيل الدخول.",
+    reset_password: "إعادة تعيين كلمة المرور",
+    change_now: "تغيير الآن",
+    later: "لاحقاً",
+    default_password_flag: "كلمة مرور افتراضية",
+
+    // استيراد CSV
+    import_csv: "استيراد CSV",
+    import_title: "استيراد متطوعين من ملف CSV",
+    download_template: "تحميل القالب",
+    import_preview: "معاينة",
+    imported: "تم الاستيراد",
+    failed: "فشل",
+
+    // إجراءات جماعية وتذكيرات واتساب
+    bulk_transfer: "نقل",
+    bulk_transfer_title: "نقل المتطوعين المحددين",
+    reminder_title: "تذكير واتساب",
+    reminder_template: "قالب الرسالة",
+    reminder_message: "الرسالة (المتغيرات: {name} {committee} {org})",
+    send: "إرسال",
+    copy: "نسخ",
+    approve_volunteer: "قبول",
+
+    // القيادة ومخططات لوحة المعلومات
+    leader_badge: "رئيس اللجنة",
+    coleader_badge: "نائب الرئيس",
+    leadership_transfer_warning: "هذا المتطوع لديه دور قيادي في اللجنة — سيؤدي النقل إلى إزالته.",
+    hours_trend: "الساعات المعتمدة شهرياً",
+    committee_distribution: "الأعضاء حسب اللجنة",
+    top_volunteers: "الأكثر نشاطاً (ساعات)"
   }
 };
