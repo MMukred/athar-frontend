@@ -189,6 +189,7 @@ window.AtharAPI = (function () {
       importRows: (rows) => post("/volunteers/import", { rows }),
       bulkTransfer: (volunteerIds, toCommitteeId, reason) =>
         post("/volunteers/bulk-transfer", { volunteerIds, toCommitteeId, reason }),
+      activity: () => get("/volunteers/activity"),
     },
 
     committees: {

@@ -18,6 +18,8 @@ window.AtharStore = (function () {
     evaluations: [],
     evaluation_scores: [],
     volunteer_hours: [],
+    volunteer_activity: {},
+    activityLoaded: false,
     certificates: [],
     whatsapp_templates: [],
     audit_logs: [],
@@ -280,9 +282,10 @@ window.AtharStore = (function () {
       api.certificates.list({ limit: 100 }),
       api.settings.list(),
       api.audit.list({ limit: 100 }),
+      api.volunteers.activity(),
     ]);
 
-    const [volsR, commR, mtgR, hrsR, critR, evalR, certR, setR, auditR] = results;
+    const [volsR, commR, mtgR, hrsR, critR, evalR, certR, setR, auditR, actR] = results;
 
     if (volsR.status === "fulfilled" && volsR.value?.items) {
       state.volunteers = volsR.value.items.map(adaptVolunteer);
@@ -319,6 +322,17 @@ window.AtharStore = (function () {
         console.warn("[Store] Failed to load audit logs:", auditR.reason?.message);
       }
     }
+    if (actR && actR.status === "fulfilled" && actR.value?.activity) {
+      const actMap = {};
+      for (const a of actR.value.activity) {
+        actMap[a.volunteerId] = {
+          lastHours: a.lastHours || null,
+          lastAttendance: a.lastAttendance || null,
+        };
+      }
+      state.volunteer_activity = actMap;
+      state.activityLoaded = true;
+    }
 
     // Users directory: admins get the full list, others just themselves
     const me = window.AtharAuth?.getCurrentUser?.();
@@ -341,6 +355,26 @@ window.AtharStore = (function () {
     if (!window.AtharAPI?.hasSession()) return;
     const r = await window.AtharAPI.volunteers.list({ limit: 100, includeArchived: true });
     state.volunteers = (r.items || []).map(adaptVolunteer);
+  }
+
+  // Latest hours + attendance date per volunteer (server-aggregated).
+  async function refreshActivity() {
+    if (!window.AtharAPI?.hasSession()) return state.volunteer_activity;
+    try {
+      const r = await window.AtharAPI.volunteers.activity();
+      const actMap = {};
+      for (const a of (r.activity || [])) {
+        actMap[a.volunteerId] = {
+          lastHours: a.lastHours || null,
+          lastAttendance: a.lastAttendance || null,
+        };
+      }
+      state.volunteer_activity = actMap;
+      state.activityLoaded = true;
+    } catch (e) {
+      console.warn("[Store] Failed to load activity:", e);
+    }
+    return state.volunteer_activity;
   }
   async function refreshCommittees() {
     if (!window.AtharAPI?.hasSession()) return;
@@ -466,6 +500,7 @@ window.AtharStore = (function () {
     getState: () => state,
     loadAll,
     refreshVolunteers,
+    refreshActivity,
     refreshCommittees,
     refreshMeetings,
     refreshHours,

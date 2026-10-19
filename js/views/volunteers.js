@@ -255,6 +255,65 @@
     const sortField = App.volSortField || null;
     const sortDir = App.volSortDir || "asc";
     const filterNewMonth = !!App.volFilterNew;
+    const filterFollowup = !!App.volFilterFollowup;
+    const filterReady = !!App.volFilterReady;
+
+    // ---- Last activity / follow-up / certificate readiness ----
+    const FOLLOWUP_DAYS = 30;
+    const DAY_MS = 86400000;
+    const activityMap = state.volunteer_activity || {};
+    const certTarget = Number(state.settings.certificate_ready_hours) || 50;
+
+    const lastActivityDate = (v) => {
+      const a = activityMap[v.id];
+      if (!a) return null;
+      const ds = [a.lastHours, a.lastAttendance].filter(Boolean);
+      if (!ds.length) return null;
+      return ds.slice().sort().pop();   // "YYYY-MM-DD" max = most recent
+    };
+    const lastActivityTs = (v) => {
+      const d = lastActivityDate(v);
+      if (!d) return null;
+      const ts = new Date(d).getTime();
+      return isNaN(ts) ? null : ts;
+    };
+    // Days since max(last activity, join date) — new joiners get a grace period.
+    const idleDaysOf = (v) => {
+      const last = Math.max(
+        lastActivityTs(v) || 0,
+        v.join_date ? new Date(v.join_date).getTime() : 0
+      );
+      if (!last) return null;
+      return Math.floor((Date.now() - last) / DAY_MS);
+    };
+    const isIdle = (v) => {
+      if (!state.activityLoaded) return false;
+      const d = idleDaysOf(v);
+      return d !== null && d >= FOLLOWUP_DAYS;
+    };
+    const relDays = (days) => {
+      if (days === null || days === undefined || isNaN(days)) return "";
+      try {
+        return new Intl.RelativeTimeFormat(App.currentLang === "ar" ? "ar" : "en", { numeric: "auto" }).format(-days, "day");
+      } catch { return ""; }
+    };
+    const hasActiveCert = (v) => state.certificates.some(c =>
+      c.volunteer_id === v.id && (c.status === "issued" || c.status === "approved"));
+    const approvedHoursOf = (v) => {
+      const s = window.AtharStore.getVolunteerStats(v.id);
+      return s ? (s.totalHours || 0) : 0;
+    };
+    const isCertReady = (v) => approvedHoursOf(v) >= certTarget && !hasActiveCert(v);
+    const followupCount = state.volunteers.filter(v => v.status === "active" && isIdle(v)).length;
+    const readyCount = state.volunteers.filter(v => v.status !== "archived" && isCertReady(v)).length;
+
+    // Lazy-load activity once if the store hasn't got it (e.g. older sessions).
+    if (!state.activityLoaded && !App.__activityTried) {
+      App.__activityTried = true;
+      window.AtharStore.refreshActivity().then(() => {
+        if (App.currentView === "volunteers") renderVolunteersList(container);
+      }).catch(() => { });
+    }
 
     const allSkills = Array.from(new Set(state.volunteers.flatMap(v => v.skills || []))).filter(Boolean);
 
@@ -294,6 +353,8 @@
           if (!matchName && !matchId && !matchPhone && !matchNat) return false;
         }
         if (filterNewMonth && !joinedThisMonth(v)) return false;
+        if (filterFollowup && !isIdle(v)) return false;
+        if (filterReady && !isCertReady(v)) return false;
         return true;
       });
     }
@@ -318,7 +379,8 @@
         },
         status: (v) => v.status || "",
         hours: (v) => getHours(v),
-        join_date: (v) => v.join_date || null
+        join_date: (v) => v.join_date || null,
+        activity: (v) => lastActivityTs(v)
       }[sortField];
       if (!valueOf) return list;
       const dir = sortDir === "desc" ? -1 : 1;
@@ -425,11 +487,13 @@
       </div>
 
       <div class="quick-chips">
-        ${chip("all", t("all"), null, filterStatus === "all" && !filterNewMonth)}
-        ${chip("pending", t("pending"), pendingCount, filterStatus === "pending" && !filterNewMonth)}
-        ${chip("active", t("active"), null, filterStatus === "active" && !filterNewMonth)}
-        ${chip("new", t("new_this_month"), newMonthCount, filterNewMonth)}
-        ${chip("archived", t("archived"), null, filterStatus === "archived" && !filterNewMonth)}
+        ${chip("all", t("all"), null, filterStatus === "all" && !filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("pending", t("pending"), pendingCount, filterStatus === "pending" && !filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("active", t("active"), null, filterStatus === "active" && !filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("new", t("new_this_month"), newMonthCount, filterNewMonth && !filterFollowup && !filterReady)}
+        ${chip("followup", t("needs_followup"), followupCount, filterFollowup)}
+        ${chip("ready", t("ready_for_certificate"), readyCount, filterReady)}
+        ${chip("archived", t("archived"), null, filterStatus === "archived" && !filterNewMonth && !filterFollowup && !filterReady)}
       </div>
 
       <div id="bulk-selection-container" style="display:${App.selectedVolunteerIds.size > 0 ? 'block' : 'none'};">
@@ -473,12 +537,13 @@
                 ${sortTh("hours", t("hours"))}
                 <th>${t("contact")}</th>
                 ${sortTh("join_date", t("join_date"))}
+                ${sortTh("activity", t("last_activity"))}
                 <th style="text-align:right;">${t("actions")}</th>
               </tr>
             </thead>
             <tbody>
               ${pagedVols.length === 0 ? `
-                <tr><td colspan="9"><div class="empty-state">
+                <tr><td colspan="10"><div class="empty-state">
                   <div class="empty-state-icon" style="color:var(--neutral-400);">${ic("users", 48, { strokeWidth: 1.5 })}</div>
                   ${state.volunteers.length === 0 ? `
                     <div class="empty-state-title">${t("no_volunteers_found")}</div>
@@ -496,6 +561,26 @@
       const isSelected = App.selectedVolunteerIds.has(v.id);
       const a = age(v.dob);
       const gs = genderStyle(v.gender);
+
+      // Certificate readiness + last activity (round 6)
+      const hrsVal = stats ? stats.totalHours : 0;
+      const hrsPct = Math.min(100, Math.round((hrsVal / certTarget) * 100));
+      const certReady = hrsVal >= certTarget && !hasActiveCert(v);
+      const lastTs = lastActivityTs(v);
+      const idle = idleDaysOf(v);
+      const stale = state.activityLoaded && idle !== null && idle >= FOLLOWUP_DAYS;
+      const commLabel = comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—';
+      const commCell = canEdit
+        ? `<button type="button" class="cell-edit-btn" data-quick-comm="${v.id}" title="${t("change_committee")}">${commLabel}</button>`
+        : `<span style="font-weight:500;">${commLabel}</span>`;
+      const statusBadge = `<span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'pending' ? 'badge-purple' : v.status === 'suspended' ? 'badge-warning' : v.status === 'archived' ? 'badge-danger' : 'badge-neutral'}">${t(v.status)}</span>`;
+      const statusCell = canEdit
+        ? `<button type="button" class="cell-edit-btn badge-edit-btn" data-quick-status="${v.id}" title="${t("change_status")}">${statusBadge}</button>`
+        : statusBadge;
+      const activityCellInner = lastTs
+        ? `<div class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(lastActivityDate(v))}</div>
+                       <div class="activity-ago ${stale ? 'idle' : ''}">${relDays(idle)}</div>`
+        : `<span style="color:var(--neutral-400);" title="${stale ? escAttr(t("no_activity_30d")) : ''}">${stale ? '<span class="idle-dot"></span>' : ''}—</span>`;
 
       return `
                   <tr class="${isSelected ? 'row-selected' : ''}" style="border-inline-start:3px solid ${v.gender ? gs.border : 'transparent'};">
@@ -524,17 +609,20 @@
           ? `<span class="num-ltr" style="font-weight:700; font-size:14px;">${a}</span> <span style="font-size:11px; color:var(--neutral-500);">${App.currentLang === 'ar' ? 'سنة' : 'y'}</span>`
           : '<span style="color:var(--neutral-400);">—</span>'}
                     </td>
-                    <td data-label="${t("committee")}"><span style="font-weight:500;">${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '<span style="color:var(--neutral-400);">—</span>'}</span></td>
-                    <td data-label="${t("status")}">
-                      <span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'pending' ? 'badge-purple' : v.status === 'suspended' ? 'badge-warning' : v.status === 'archived' ? 'badge-danger' : 'badge-neutral'}">
-                        ${t(v.status)}
-                      </span>
+                    <td data-label="${t("committee")}">${commCell}</td>
+                    <td data-label="${t("status")}">${statusCell}</td>
+                    <td data-label="${t("hours")}">
+                      <div class="hours-cell">
+                        <span class="num-ltr" style="font-weight:700;">${hrsVal} h</span>
+                        ${certReady ? `<span class="cert-ready-ic" title="${t("ready_for_certificate")}">${ic("award", 13)}</span>` : ''}
+                      </div>
+                      <div class="hours-progress" title="${hrsVal} / ${certTarget} h — ${t("cert_ready_hours")}"><span style="width:${hrsPct}%"></span></div>
                     </td>
-                    <td data-label="${t("hours")}"><span class="num-ltr" style="font-weight:700;">${stats ? stats.totalHours : 0} h</span></td>
                     <td data-label="${t("contact")}">
                       ${contactCellHtml(v)}
                     </td>
                     <td data-label="${t("join_date")}"><span class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(v.join_date)}</span></td>
+                    <td data-label="${t("last_activity")}"><div class="activity-cell">${activityCellInner}</div></td>
                     <td class="vol-card-actions">
                       <div class="row-actions-cell">
                         ${v.status === 'pending' && canEdit ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.approveVolunteer('${v.id}')">${ic("check", 12)} ${t("approve_volunteer")}</button>` : ''}
@@ -610,6 +698,8 @@
       App.volFilterAgeMin = "";
       App.volFilterAgeMax = "";
       App.volFilterNew = false;
+      App.volFilterFollowup = false;
+      App.volFilterReady = false;
       App.searchQuery = "";
       App.pagination.volunteersPage = 1;
       App.pagination.volunteersPerPage = 20;
@@ -623,9 +713,110 @@
       el.onclick = () => {
         const key = el.getAttribute("data-chip");
         App.volFilterNew = key === "new";
-        App.volFilterStatus = key === "new" ? "all" : key;
+        App.volFilterFollowup = key === "followup";
+        App.volFilterReady = key === "ready";
+        if (key === "followup") App.volFilterStatus = "active";
+        else if (key === "ready") App.volFilterStatus = "all";
+        else App.volFilterStatus = key === "new" ? "all" : key;
         App.pagination.volunteersPage = 1;
         renderVolunteersList(container);
+      };
+    });
+
+    // ---- Inline quick edit: status / committee popovers ----
+    let activePop = null;
+    const docClosePop = (e) => {
+      if (activePop && !activePop.contains(e.target) &&
+        !(e.target.closest && e.target.closest("[data-quick-status],[data-quick-comm]"))) {
+        closePopover();
+      }
+    };
+    const closePopover = () => {
+      if (activePop) { activePop.remove(); activePop = null; }
+      document.removeEventListener("mousedown", docClosePop, true);
+    };
+    const openPopover = (anchor, html, onPick) => {
+      closePopover();
+      const pop = document.createElement("div");
+      pop.className = "inline-popover";
+      pop.innerHTML = html;
+      document.body.appendChild(pop);
+      activePop = pop;
+      const r = anchor.getBoundingClientRect();
+      const w = pop.offsetWidth, h = pop.offsetHeight;
+      let left = App.currentLang === "ar" ? (r.right - w) : r.left;
+      left = Math.max(8, Math.min(window.innerWidth - w - 8, left));
+      let top = r.bottom + 6;
+      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+      pop.style.left = left + "px";
+      pop.style.top = top + "px";
+      pop.querySelectorAll("[data-pop-val]").forEach(item => {
+        item.onclick = (e) => {
+          e.stopPropagation();
+          const val = item.getAttribute("data-pop-val");
+          closePopover();
+          onPick(val);
+        };
+      });
+      setTimeout(() => document.addEventListener("mousedown", docClosePop, true), 0);
+    };
+
+    const quickStatuses = ["active", "suspended", "withdrawn", "completed", "pending"];
+    container.querySelectorAll("[data-quick-status]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-quick-status");
+        const v = state.volunteers.find(x => x.id === id);
+        if (!v) return;
+        const html = `<div class="ip-title">${t("change_status")}</div>` + quickStatuses.map(s => `
+          <button type="button" class="ip-item ${s === v.status ? 'active' : ''}" data-pop-val="${s}">
+            <span class="ip-dot ip-${s}"></span>
+            <span class="ip-label">${t(s)}</span>
+            ${s === v.status ? `<span class="ip-check">${ic("check", 12)}</span>` : ''}
+          </button>`).join('');
+        openPopover(btn, html, async (val) => {
+          if (val === v.status) return;
+          try {
+            await window.AtharAPI.volunteers.update(id, { status: val });
+            await window.AtharStore.refreshVolunteers();
+            showToast(t("status_updated"), "success");
+            renderVolunteersList(container);
+          } catch (err) { showToast(err.message || "Update failed", "error"); }
+        });
+      };
+    });
+
+    container.querySelectorAll("[data-quick-comm]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-quick-comm");
+        const v = state.volunteers.find(x => x.id === id);
+        if (!v) return;
+        const noneItem = `
+          <button type="button" class="ip-item ${!v.committee_id ? 'active' : ''}" data-pop-val="none">
+            <span class="ip-dot ip-none"></span>
+            <span class="ip-label">${t("no_committee")}</span>
+            ${!v.committee_id ? `<span class="ip-check">${ic("check", 12)}</span>` : ''}
+          </button>`;
+        const commItems = state.committees.map(c => {
+          const name = App.currentLang === 'ar' ? c.name_ar : c.name_en;
+          return `
+          <button type="button" class="ip-item ${v.committee_id === c.id ? 'active' : ''}" data-pop-val="${c.id}">
+            <span class="ip-dot ip-comm"></span>
+            <span class="ip-label">${escAttr(name)}</span>
+            ${v.committee_id === c.id ? `<span class="ip-check">${ic("check", 12)}</span>` : ''}
+          </button>`;
+        }).join('');
+        openPopover(btn, `<div class="ip-title">${t("change_committee")}</div>${noneItem}<div class="ip-scroll">${commItems}</div>`, async (val) => {
+          const newComm = val === "none" ? null : val;
+          if ((newComm || null) === (v.committee_id || null)) return;
+          try {
+            await window.AtharAPI.volunteers.update(id, { committeeId: newComm });
+            await window.AtharStore.refreshVolunteers();
+            showToast(t("committee_updated"), "success");
+            renderVolunteersList(container);
+          } catch (err) { showToast(err.message || "Update failed", "error"); }
+        });
       };
     });
 
@@ -637,7 +828,7 @@
           App.volSortDir = App.volSortDir === "asc" ? "desc" : "asc";
         } else {
           App.volSortField = f;
-          App.volSortDir = (f === "join_date" || f === "hours") ? "desc" : "asc";
+          App.volSortDir = (f === "join_date" || f === "hours" || f === "activity") ? "desc" : "asc";
         }
         App.pagination.volunteersPage = 1;
         renderVolunteersList(container);
@@ -910,6 +1101,58 @@
     const hoursLog = state.volunteer_hours.filter(h => h.volunteer_id === vol.id);
     const certs = state.certificates.filter(c => c.volunteer_id === vol.id);
 
+    // ---- Unified timeline (hours + attendance + evaluations + transfers + certificates) ----
+    const dateOnly = (s) => (s == null ? s : String(s).slice(0, 10));
+    const commName = (c) => c ? (App.currentLang === 'ar' ? (c.nameAr || c.name_ar) : (c.nameEn || c.name_en)) : '—';
+    const timelineEvents = [];
+    transfers.forEach(tr => {
+      const fromComm = tr.from_committee || state.committees.find(c => c.id === tr.from_committee_id);
+      const toComm = tr.to_committee || state.committees.find(c => c.id === tr.to_committee_id);
+      timelineEvents.push({
+        type: "transfer",
+        icon: ic("arrow_right", 13),
+        date: tr.transferred_at,
+        title: `${commName(fromComm)} → ${commName(toComm)}`,
+        meta: tr.reason || '',
+      });
+    });
+    hoursLog.forEach(h => timelineEvents.push({
+      type: "hours",
+      icon: ic("clock", 13),
+      date: h.date,
+      title: h.activity || '—',
+      meta: `${h.hours} h · ${t(h.status)}`,
+    }));
+    attendanceRecords.forEach(att => {
+      const mtg = att.meeting || state.meetings.find(m => m.id === att.meeting_id);
+      const title = mtg
+        ? (App.currentLang === 'ar' ? (mtg.titleAr || mtg.title_ar || mtg.titleEn || mtg.title_en) : (mtg.titleEn || mtg.title_en))
+        : t("meeting_word");
+      const date = mtg ? (mtg.meetingDate || mtg.meeting_date) : att.recorded_at;
+      timelineEvents.push({
+        type: "attendance",
+        icon: ic("check", 13),
+        date,
+        title: title || t("meeting_word"),
+        meta: `${t(att.status)}${att.note ? ' · ' + att.note : ''}`,
+      });
+    });
+    evaluations.forEach(ev => timelineEvents.push({
+      type: "evaluation",
+      icon: ic("star", 13),
+      date: ev.evaluated_at,
+      title: ev.period_label || t("tab_evaluations"),
+      meta: `${ev.overall_score} / 5`,
+    }));
+    certs.forEach(c => timelineEvents.push({
+      type: "certificate",
+      icon: ic("award", 13),
+      date: c.issue_date,
+      title: c.certificate_no || t("draft"),
+      meta: `${c.total_hours} h · ${t(c.status)}`,
+    }));
+    timelineEvents.sort((x, y) => new Date(y.date || 0) - new Date(x.date || 0));
+
     // Summary counters for the attendance / hours tabs
     const attCounts = { present: 0, late: 0, absent: 0, excused: 0 };
     attendanceRecords.forEach(r => { if (attCounts[r.status] != null) attCounts[r.status]++; });
@@ -1013,7 +1256,7 @@
         <div class="tab-btn ${activeTab === 'evaluations' ? 'active' : ''}" data-tab="evaluations">${t("tab_evaluations")} <span class="tab-badge">${evaluations.length}</span></div>
         <div class="tab-btn ${activeTab === 'hours' ? 'active' : ''}" data-tab="hours">${t("tab_hours")} <span class="tab-badge">${hoursLog.length}</span></div>
         <div class="tab-btn ${activeTab === 'certificates' ? 'active' : ''}" data-tab="certificates">${t("tab_certificates")} <span class="tab-badge">${certs.length}</span></div>
-        <div class="tab-btn ${activeTab === 'history' ? 'active' : ''}" data-tab="history">${t("tab_history")} <span class="tab-badge">${transfers.length}</span></div>
+        <div class="tab-btn ${activeTab === 'history' ? 'active' : ''}" data-tab="history">${t("tab_history")} <span class="tab-badge">${timelineEvents.length}</span></div>
       </div>
 
       <div id="profile-tab-content">
@@ -1075,7 +1318,7 @@
               ? (App.currentLang === 'ar' ? (mtg.titleAr || mtg.title_ar || mtg.titleEn || mtg.title_en) : (mtg.titleEn || mtg.title_en))
               : '—';
             const date = mtg
-              ? formatDate(mtg.meetingDate || mtg.meeting_date)
+              ? formatDate(dateOnly(mtg.meetingDate || mtg.meeting_date))
               : '—';
             return `<tr>
                   <td style="font-weight:600;">${title}</td>
@@ -1140,18 +1383,20 @@
           </table></div>
         ` : `
           <div class="card">
-            <div class="card-title" style="margin-bottom:16px;">${ic("history", 16)} ${t("transfer_history")}</div>
-            ${transfers.length === 0 ? '<p style="color:var(--neutral-500);">—</p>' : `
-              <div style="display:flex; flex-direction:column; gap:16px; border-inline-start:2px solid var(--primary-border); padding-inline-start:16px;">
-                ${transfers.map(tr => {
-            const fromComm = tr.from_committee || state.committees.find(c => c.id === tr.from_committee_id);
-            const toComm = tr.to_committee || state.committees.find(c => c.id === tr.to_committee_id);
-            return `<div>
-                    <div style="font-size:12px; color:var(--neutral-500);">${formatDate(tr.transferred_at)}</div>
-                    <div style="font-weight:700;">${fromComm ? (App.currentLang === 'ar' ? (fromComm.nameAr || fromComm.name_ar) : (fromComm.nameEn || fromComm.name_en)) : '—'} → ${toComm ? (App.currentLang === 'ar' ? (toComm.nameAr || toComm.name_ar) : (toComm.nameEn || toComm.name_en)) : '—'}</div>
-                    <div style="font-size:13px; color:var(--neutral-700);">${tr.reason || '—'}</div>
-                  </div>`;
-          }).join('')}
+            <div class="card-title" style="margin-bottom:16px;">${ic("history", 16)} ${t("tab_history")}</div>
+            ${timelineEvents.length === 0 ? '<p style="color:var(--neutral-500);">—</p>' : `
+              <div class="timeline">
+                ${timelineEvents.map(ev => `
+                  <div class="tl-item tl-${ev.type}">
+                    <div class="tl-dot">${ev.icon}</div>
+                    <div class="tl-body">
+                      <div class="tl-head">
+                        <span class="tl-title">${ev.title}</span>
+                        <span class="tl-date num-ltr">${formatDate(dateOnly(ev.date))}</span>
+                      </div>
+                      ${ev.meta ? `<div class="tl-meta">${ev.meta}</div>` : ''}
+                    </div>
+                  </div>`).join('')}
               </div>
             `}
           </div>

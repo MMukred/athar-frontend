@@ -43,6 +43,10 @@
               <label class="field-label">${t("session_timeout")}</label>
               <input type="number" id="set-timeout" class="form-control" value="${state.settings.session_timeout_minutes || 15}" ${!isSuper ? 'disabled' : ''}>
             </div>
+            <div class="form-field" style="margin-bottom:16px;">
+              <label class="field-label">${t("cert_ready_hours")}</label>
+              <input type="number" id="set-cert-hours" class="form-control" value="${state.settings.certificate_ready_hours ?? 50}" min="1" max="1000" ${!isSuper ? 'disabled' : ''}>
+            </div>
             ${isSuper
         ? `<button type="submit" class="btn btn-primary">${t("save")}</button>`
         : '<p style="color:var(--neutral-500); font-size:12px;">Settings are view-only for Trusted Admins.</p>'
@@ -62,6 +66,7 @@
           org_name_ar: document.getElementById("set-org-name-ar").value,
           cert_prefix: document.getElementById("set-cert-prefix").value,
           session_timeout_minutes: Number(document.getElementById("set-timeout").value),
+          certificate_ready_hours: Number(document.getElementById("set-cert-hours").value) || 50,
         };
         try {
           await window.AtharAPI.settings.bulkUpdate(payload);
