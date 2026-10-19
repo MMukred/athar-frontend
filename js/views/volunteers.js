@@ -44,6 +44,63 @@
     </span>`;
   }
 
+  function volDisplayName(v) {
+    if (!v) return "";
+    return App.currentLang === "ar"
+      ? (v.full_name_ar || v.full_name || "")
+      : (v.full_name || v.full_name_ar || "");
+  }
+
+  function legacyCopy(text) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = String(text);
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  function copyText(text) {
+    const done = () => showToast(t("copied") || "Copied", "success");
+    const fail = () => showToast(App.currentLang === "ar" ? "تعذر النسخ" : "Copy failed", "error");
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(String(text))
+          .then(done)
+          .catch(() => (legacyCopy(text) ? done() : fail()));
+      } else {
+        legacyCopy(text) ? done() : fail();
+      }
+    } catch (e) { fail(); }
+  }
+
+  // Binds every [data-copy] button inside root to copy its value.
+  function bindCopyButtons(root) {
+    root.querySelectorAll("[data-copy]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        copyText(btn.getAttribute("data-copy"));
+      };
+    });
+  }
+
+  function contactCellHtml(v) {
+    const primary = v.whatsapp || v.phone || "";
+    if (!primary) return '<span style="color:var(--neutral-400);">—</span>';
+    const digits = String(v.whatsapp || v.phone).replace(/[^0-9]/g, "");
+    return `<div class="contact-cell">
+      ${v.whatsapp ? `<a href="https://wa.me/${digits}" target="_blank" class="wa-quick" title="WhatsApp" onclick="event.stopPropagation();">${ic("whatsapp", 13)}</a>` : ''}
+      <span class="num-ltr contact-num">${primary}</span>
+      <button type="button" class="copy-quick" data-copy="${escAttr(primary)}" title="${t("copy") || "Copy"}">${ic("copy", 11)}</button>
+    </div>`;
+  }
+
   // =========================================================================
   // Volunteer Details Modal
   // =========================================================================
@@ -195,8 +252,18 @@
     let filterAgeMax = App.volFilterAgeMax ?? "";
     let search = App.searchQuery || "";
     const perPage = App.pagination.volunteersPerPage || 20;
+    const sortField = App.volSortField || null;
+    const sortDir = App.volSortDir || "asc";
+    const filterNewMonth = !!App.volFilterNew;
 
     const allSkills = Array.from(new Set(state.volunteers.flatMap(v => v.skills || []))).filter(Boolean);
+
+    const monthStart = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+    const joinedThisMonth = (v) => {
+      if (!v.join_date) return false;
+      const d = new Date(v.join_date);
+      return !isNaN(d.getTime()) && d >= monthStart;
+    };
 
     function getFilteredVolunteers() {
       return state.volunteers.filter(v => {
@@ -226,15 +293,63 @@
           const matchNat = v.nationality && v.nationality.toLowerCase().includes(q);
           if (!matchName && !matchId && !matchPhone && !matchNat) return false;
         }
+        if (filterNewMonth && !joinedThisMonth(v)) return false;
         return true;
       });
     }
 
-    const filtered = getFilteredVolunteers();
+    function sortVolunteers(list) {
+      if (!sortField) return list;
+      const collator = new Intl.Collator(App.currentLang === "ar" ? "ar" : "en", { numeric: true, sensitivity: "base" });
+      const hoursCache = {};
+      const getHours = (v) => {
+        if (!(v.id in hoursCache)) {
+          const s = window.AtharStore.getVolunteerStats(v.id);
+          hoursCache[v.id] = s ? (s.totalHours || 0) : 0;
+        }
+        return hoursCache[v.id];
+      };
+      const valueOf = {
+        name: (v) => volDisplayName(v),
+        age: (v) => age(v.dob),
+        committee: (v) => {
+          const c = state.committees.find(x => x.id === v.committee_id);
+          return c ? (App.currentLang === "ar" ? c.name_ar : c.name_en) : "";
+        },
+        status: (v) => v.status || "",
+        hours: (v) => getHours(v),
+        join_date: (v) => v.join_date || null
+      }[sortField];
+      if (!valueOf) return list;
+      const dir = sortDir === "desc" ? -1 : 1;
+      return list.slice().sort((a, b) => {
+        const va = valueOf(a);
+        const vb = valueOf(b);
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;   // empty values always go last
+        if (vb == null) return -1;
+        let cmp;
+        if (typeof va === "number" || typeof vb === "number") cmp = Number(va) - Number(vb);
+        else cmp = collator.compare(String(va), String(vb));
+        return cmp * dir;
+      });
+    }
+
+    const filtered = sortVolunteers(getFilteredVolunteers());
     const totalCount = filtered.length;
     const page = App.pagination.volunteersPage;
     const totalPages = Math.max(1, Math.ceil(totalCount / perPage));
     const pagedVols = filtered.slice((page - 1) * perPage, page * perPage);
+
+    const pendingCount = state.volunteers.filter(v => v.status === "pending").length;
+    const newMonthCount = state.volunteers.filter(v => v.status !== "archived" && joinedThisMonth(v)).length;
+    const chip = (key, label, count, active) =>
+      `<button type="button" class="quick-chip ${active ? 'active' : ''}" data-chip="${key}">${label}${count != null ? ` <span class="qc-count">${count}</span>` : ''}</button>`;
+    const sortBtnTitle = (f) => sortField === f
+      ? (sortDir === "asc" ? t("sort_desc") : t("sort_asc"))
+      : t("sort_asc");
+    const sortTh = (f, label, extraStyle) =>
+      `<th class="th-sortable ${sortField === f ? 'sorted' : ''}" data-sort="${f}" title="${sortBtnTitle(f)}" ${extraStyle ? `style="${extraStyle}"` : ''}>${label} <span class="sort-ind ${sortField === f ? 'on' : ''}">${sortField === f ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}</span></th>`;
 
     container.innerHTML = `
       <div class="view-header">
@@ -269,7 +384,7 @@
 
       <div class="filter-bar">
         <div class="filter-group">
-          <input type="text" id="vol-search-box" class="form-control" style="width:200px;" placeholder="${t("search_placeholder")}" value="${search}">
+          <input type="text" id="vol-search-box" class="form-control" style="width:200px;" placeholder="${t("search_volunteers_ph")}" value="${search}">
           <select id="vol-filter-comm" class="form-control">
             <option value="all">${t("all_committees")}</option>
             ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
@@ -309,9 +424,17 @@
         </div>
       </div>
 
+      <div class="quick-chips">
+        ${chip("all", t("all"), null, filterStatus === "all" && !filterNewMonth)}
+        ${chip("pending", t("pending"), pendingCount, filterStatus === "pending" && !filterNewMonth)}
+        ${chip("active", t("active"), null, filterStatus === "active" && !filterNewMonth)}
+        ${chip("new", t("new_this_month"), newMonthCount, filterNewMonth)}
+        ${chip("archived", t("archived"), null, filterStatus === "archived" && !filterNewMonth)}
+      </div>
+
       <div id="bulk-selection-container" style="display:${App.selectedVolunteerIds.size > 0 ? 'block' : 'none'};">
         <div class="bulk-action-bar">
-          <span class="bulk-count">${App.selectedVolunteerIds.size} ${t("rows")} selected</span>
+          <span class="bulk-count">${t("selected")}: ${App.selectedVolunteerIds.size}</span>
           <div class="bulk-buttons">
             ${hasPermission("volunteer_hours", "create") ? `
               <button class="btn btn-primary btn-sm" id="btn-bulk-log-hours">
@@ -331,19 +454,25 @@
         </div>
       </div>
 
+      <div class="vol-table-actions">
+        <button type="button" class="btn-text-sm" id="btn-select-all-filtered">${ic("check", 13)} ${t("select_all")} (${totalCount})</button>
+        ${App.selectedVolunteerIds.size > 0 ? `<button type="button" class="btn-text-sm" id="btn-clear-selection">${ic("x", 13)} ${t("clear_selection")}</button>` : ''}
+        ${App.selectedVolunteerIds.size > 0 ? `<span class="vta-count">${App.selectedVolunteerIds.size} / ${totalCount} ${t("rows")}</span>` : ''}
+      </div>
+
       <div class="table-container">
         <div class="table-responsive">
-          <table class="data-table">
+          <table class="data-table vol-table">
             <thead>
               <tr>
                 <th class="col-cb"><input type="checkbox" id="th-check-all" ${App.selectedVolunteerIds.size === pagedVols.length && pagedVols.length > 0 ? 'checked' : ''}></th>
-                <th>${t("volunteer_name")}</th>
-                <th>${App.currentLang === 'ar' ? 'العمر' : 'Age'}</th>
-                <th>${t("committee")}</th>
-                <th>${t("status")}</th>
-                <th>${t("hours")}</th>
-                <th>${t("whatsapp")}</th>
-                <th>${t("join_date")}</th>
+                ${sortTh("name", t("volunteer_name"))}
+                ${sortTh("age", t("age"))}
+                ${sortTh("committee", t("committee"))}
+                ${sortTh("status", t("status"))}
+                ${sortTh("hours", t("hours"))}
+                <th>${t("contact")}</th>
+                ${sortTh("join_date", t("join_date"))}
                 <th style="text-align:right;">${t("actions")}</th>
               </tr>
             </thead>
@@ -351,8 +480,15 @@
               ${pagedVols.length === 0 ? `
                 <tr><td colspan="9"><div class="empty-state">
                   <div class="empty-state-icon" style="color:var(--neutral-400);">${ic("users", 48, { strokeWidth: 1.5 })}</div>
-                  <div class="empty-state-title">${t("no_volunteers_found")}</div>
-                  <div class="empty-state-desc">${t("create_first_volunteer")}</div>
+                  ${state.volunteers.length === 0 ? `
+                    <div class="empty-state-title">${t("no_volunteers_found")}</div>
+                    <div class="empty-state-desc">${t("create_first_volunteer")}</div>
+                    ${canCreate ? `<button class="btn btn-primary" id="btn-empty-add-vol" style="margin-top:14px;">${ic("plus", 16)} ${t("add_volunteer")}</button>` : ''}
+                  ` : `
+                    <div class="empty-state-title">${t("no_filter_results")}</div>
+                    <div class="empty-state-desc">${search ? `&ldquo;${escAttr(search)}&rdquo;` : ''}</div>
+                    <button class="btn btn-secondary" id="btn-empty-clear-filters" style="margin-top:14px;">${ic("x", 15)} ${t("clear_filters")}</button>
+                  `}
                 </div></td></tr>
               ` : pagedVols.map(v => {
       const comm = state.committees.find(c => c.id === v.committee_id);
@@ -366,45 +502,40 @@
                     <td class="col-cb">
                       <input type="checkbox" class="vol-row-cb" data-id="${v.id}" ${isSelected ? 'checked' : ''}>
                     </td>
-                    <td>
+                    <td class="vol-card-title">
                       <div style="display:flex; align-items:center; gap:10px; cursor:pointer;"
                            onclick="window.AtharVolunteers.openDetails('${v.id}')">
                         ${avatarHtml(v, 36)}
                         <div>
                           <div style="font-weight:700; color:var(--neutral-900);">
-                            ${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}
+                            ${volDisplayName(v)}
                           </div>
-                          <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
+                          <div style="display:flex; gap:6px; align-items:center; margin-top:2px; flex-wrap:wrap;">
                             ${genderChip(v.gender)}
                             ${v.nationality ? `<span style="font-size:10px; color:var(--neutral-500);">${v.nationality}</span>` : ''}
+                            ${(v.skills || []).slice(0, 2).map(s => `<span class="mini-chip">#${escAttr(s)}</span>`).join('')}
+                            ${(v.skills || []).length > 2 ? `<span class="mini-chip" title="${escAttr((v.skills || []).join(', '))}">+${(v.skills || []).length - 2}</span>` : ''}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="${t("age")}">
                       ${a !== null
           ? `<span class="num-ltr" style="font-weight:700; font-size:14px;">${a}</span> <span style="font-size:11px; color:var(--neutral-500);">${App.currentLang === 'ar' ? 'سنة' : 'y'}</span>`
           : '<span style="color:var(--neutral-400);">—</span>'}
                     </td>
-                    <td><span style="font-weight:500;">${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '<span style="color:var(--neutral-400);">—</span>'}</span></td>
-                    <td>
+                    <td data-label="${t("committee")}"><span style="font-weight:500;">${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '<span style="color:var(--neutral-400);">—</span>'}</span></td>
+                    <td data-label="${t("status")}">
                       <span class="badge ${v.status === 'active' ? 'badge-success' : v.status === 'pending' ? 'badge-purple' : v.status === 'suspended' ? 'badge-warning' : v.status === 'archived' ? 'badge-danger' : 'badge-neutral'}">
                         ${t(v.status)}
                       </span>
                     </td>
-                    <td><span class="num-ltr" style="font-weight:700;">${stats ? stats.totalHours : 0} h</span></td>
-                    <td>
-                      ${v.whatsapp ? `
-                        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
-                          <a href="https://wa.me/${v.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:2px 8px; font-size:11px;" onclick="event.stopPropagation();">
-                            ${ic("whatsapp", 12)} WhatsApp
-                          </a>
-                          <span class="num-ltr" style="font-size:11px; color:var(--neutral-600); font-family:var(--font-mono);">${v.whatsapp}</span>
-                        </div>
-                      ` : '—'}
+                    <td data-label="${t("hours")}"><span class="num-ltr" style="font-weight:700;">${stats ? stats.totalHours : 0} h</span></td>
+                    <td data-label="${t("contact")}">
+                      ${contactCellHtml(v)}
                     </td>
-                    <td><span class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(v.join_date)}</span></td>
-                    <td>
+                    <td data-label="${t("join_date")}"><span class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${formatDate(v.join_date)}</span></td>
+                    <td class="vol-card-actions">
                       <div class="row-actions-cell">
                         ${v.status === 'pending' && canEdit ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.approveVolunteer('${v.id}')">${ic("check", 12)} ${t("approve_volunteer")}</button>` : ''}
                         <button class="btn btn-secondary btn-sm" onclick="window.AtharVolunteers.openDetails('${v.id}')" title="${App.currentLang === 'ar' ? 'تفاصيل سريعة' : 'Quick details'}">${ic("eye", 12)}</button>
@@ -471,18 +602,72 @@
       renderVolunteersList(container);
     });
 
-    bind("btn-reset-vol-filters", "click", () => {
+    const resetVolFilters = () => {
       App.volFilterComm = "all";
       App.volFilterStatus = "active";
       App.volFilterSkill = "all";
       App.volFilterGender = "all";
       App.volFilterAgeMin = "";
       App.volFilterAgeMax = "";
+      App.volFilterNew = false;
       App.searchQuery = "";
       App.pagination.volunteersPage = 1;
       App.pagination.volunteersPerPage = 20;
       renderVolunteersList(container);
+    };
+
+    bind("btn-reset-vol-filters", "click", resetVolFilters);
+
+    // ---- Quick filter chips ----
+    container.querySelectorAll(".quick-chip").forEach(el => {
+      el.onclick = () => {
+        const key = el.getAttribute("data-chip");
+        App.volFilterNew = key === "new";
+        App.volFilterStatus = key === "new" ? "all" : key;
+        App.pagination.volunteersPage = 1;
+        renderVolunteersList(container);
+      };
     });
+
+    // ---- Sortable column headers ----
+    container.querySelectorAll(".th-sortable").forEach(th => {
+      th.onclick = () => {
+        const f = th.getAttribute("data-sort");
+        if (App.volSortField === f) {
+          App.volSortDir = App.volSortDir === "asc" ? "desc" : "asc";
+        } else {
+          App.volSortField = f;
+          App.volSortDir = (f === "join_date" || f === "hours") ? "desc" : "asc";
+        }
+        App.pagination.volunteersPage = 1;
+        renderVolunteersList(container);
+      };
+    });
+
+    // ---- Select all filtered / clear selection ----
+    const selAllBtn = document.getElementById("btn-select-all-filtered");
+    if (selAllBtn) {
+      selAllBtn.onclick = () => {
+        filtered.forEach(v => App.selectedVolunteerIds.add(v.id));
+        renderVolunteersList(container);
+      };
+    }
+    const clearSelBtn = document.getElementById("btn-clear-selection");
+    if (clearSelBtn) {
+      clearSelBtn.onclick = () => {
+        App.selectedVolunteerIds.clear();
+        renderVolunteersList(container);
+      };
+    }
+
+    // ---- Empty state buttons ----
+    const emptyAddBtn = document.getElementById("btn-empty-add-vol");
+    if (emptyAddBtn) emptyAddBtn.onclick = () => window.AtharModals.openAddVolunteerSlideover();
+    const emptyClearBtn = document.getElementById("btn-empty-clear-filters");
+    if (emptyClearBtn) emptyClearBtn.onclick = resetVolFilters;
+
+    // ---- Copy buttons (phone numbers) ----
+    bindCopyButtons(container);
 
     const prevBtn = document.getElementById("vol-prev-btn");
     const nextBtn = document.getElementById("vol-next-btn");
@@ -498,6 +683,11 @@
 
     const checkAll = document.getElementById("th-check-all");
     if (checkAll) {
+      const pageSelected = pagedVols.filter(v => App.selectedVolunteerIds.has(v.id)).length;
+      if (pagedVols.length > 0) {
+        checkAll.checked = pageSelected === pagedVols.length;
+        checkAll.indeterminate = pageSelected > 0 && pageSelected < pagedVols.length;
+      }
       checkAll.onchange = (e) => {
         if (e.target.checked) pagedVols.forEach(v => App.selectedVolunteerIds.add(v.id));
         else pagedVols.forEach(v => App.selectedVolunteerIds.delete(v.id));
@@ -720,6 +910,12 @@
     const hoursLog = state.volunteer_hours.filter(h => h.volunteer_id === vol.id);
     const certs = state.certificates.filter(c => c.volunteer_id === vol.id);
 
+    // Summary counters for the attendance / hours tabs
+    const attCounts = { present: 0, late: 0, absent: 0, excused: 0 };
+    attendanceRecords.forEach(r => { if (attCounts[r.status] != null) attCounts[r.status]++; });
+    const hoursSum = { approved: 0, pending: 0, rejected: 0 };
+    hoursLog.forEach(h => { if (hoursSum[h.status] != null) hoursSum[h.status] += (Number(h.hours) || 0); });
+
     // Evaluations tab with completion summary
     const evalsHtml = evaluations.length === 0
       ? `<div class="empty-state"><p>${t("add_evaluation")}</p></div>`
@@ -736,8 +932,8 @@
                 <span style="margin:0 8px; color:var(--neutral-400);">&bull;</span>
                 <span style="font-size:12px; color:var(--neutral-500);">${e.evaluated_at}</span>
                 ${isComplete
-            ? '<span class="badge badge-success" style="margin-inline-start:8px;">✓ Complete</span>'
-            : `<span class="badge badge-warning" style="margin-inline-start:8px;">⚠ ${missing.length} missing</span>`}
+            ? `<span class="badge badge-success" style="margin-inline-start:8px;">✓ ${t("eval_complete")}</span>`
+            : `<span class="badge badge-warning" style="margin-inline-start:8px;">⚠ ${missing.length} ${t("eval_missing_items")}</span>`}
               </div>
               <div style="font-size:18px; font-weight:800; color:#F59E0B;">${e.overall_score} / 5.0</div>
             </div>
@@ -763,17 +959,17 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('volunteers')">${t("back_to_volunteers")}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>${vol.full_name}</span>
+            <span>${volDisplayName(vol)}</span>
           </div>
         </div>
       </div>
 
-      <div class="profile-hero" style="border-inline-start:6px solid ${gs.border}; background:linear-gradient(to bottom, ${gs.bg}22, var(--white));">
+      <div class="profile-hero" style="border-inline-start:6px solid ${gs.border}; background:linear-gradient(to bottom, ${gs.bg}22, var(--surface));">
         <div class="profile-hero-left">
           ${avatarHtml(vol, 84)}
           <div class="profile-hero-info">
             <div class="profile-name-row">
-              <span class="profile-name">${App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name}</span>
+              <span class="profile-name">${volDisplayName(vol)}</span>
               <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
               ${leadershipBadge}
               ${genderChip(vol.gender)}
@@ -790,14 +986,15 @@
                 <span>${ic("calendar", 14)}</span>
                 <span>${formatDate(vol.join_date)}</span>
               </div>
-              ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${vol.phone}</span></div>` : ''}
+              ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${vol.phone}</span><button type="button" class="copy-quick" data-copy="${escAttr(vol.phone)}" title="${t("copy")}">${ic("copy", 11)}</button></div>` : ''}
               ${vol.whatsapp ? `
                 <a href="https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:3px 10px;">
                   ${ic("whatsapp", 12)} WhatsApp
                 </a>
                 <span class="num-ltr profile-meta-item" style="font-family:var(--font-mono); font-size:12px; color:var(--neutral-700);">${vol.whatsapp}</span>
+                <button type="button" class="copy-quick" data-copy="${escAttr(vol.whatsapp)}" title="${t("copy")}">${ic("copy", 11)}</button>
               ` : ''}
-              ${vol.email ? `<div class="profile-meta-item">${ic("send", 14)} ${vol.email}</div>` : ''}
+              ${vol.email ? `<a class="profile-meta-item" href="mailto:${escAttr(vol.email)}" style="text-decoration:none; color:inherit;">${ic("send", 14)} ${vol.email}</a>` : ''}
             </div>
           </div>
         </div>
@@ -861,8 +1058,16 @@
                  </div>`}
           </div>
         ` : activeTab === "attendance" ? `
+          ${attendanceRecords.length > 0 ? `
+            <div class="mini-stats-row">
+              <span class="mini-stat ok">${t("present")} <b>${attCounts.present}</b></span>
+              <span class="mini-stat warn">${t("late")} <b>${attCounts.late}</b></span>
+              <span class="mini-stat danger">${t("absent")} <b>${attCounts.absent}</b></span>
+              <span class="mini-stat info">${t("excused")} <b>${attCounts.excused}</b></span>
+            </div>
+          ` : ''}
           <div class="table-container"><table class="data-table">
-            <thead><tr><th>Meeting</th><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
+            <thead><tr><th>${t("meeting_word")}</th><th>${t("date")}</th><th>${t("status")}</th><th>${t("remarks")}</th></tr></thead>
             <tbody>
               ${attendanceRecords.length === 0 ? `<tr><td colspan="4" style="text-align:center; padding:24px;">${App.currentLang === 'ar' ? 'لا توجد سجلات حضور' : 'No attendance records'}</td></tr>` : attendanceRecords.map(a => {
             const mtg = a.meeting || state.meetings.find(m => m.id === a.meeting_id);
@@ -884,6 +1089,13 @@
         ` : activeTab === "evaluations" ? `
           <div style="display:flex; flex-direction:column; gap:16px;">${evalsHtml}</div>
         ` : activeTab === "hours" ? `
+          ${hoursLog.length > 0 ? `
+            <div class="mini-stats-row">
+              <span class="mini-stat ok">${t("approved")} <b>${hoursSum.approved} h</b></span>
+              <span class="mini-stat warn">${t("pending")} <b>${hoursSum.pending} h</b></span>
+              ${hoursSum.rejected > 0 ? `<span class="mini-stat danger">${t("rejected")} <b>${hoursSum.rejected} h</b></span>` : ''}
+            </div>
+          ` : ''}
           <div class="table-container"><table class="data-table">
             <thead><tr>
               <th>${t("date")}</th>
@@ -913,7 +1125,7 @@
           </table></div>
         ` : activeTab === "certificates" ? `
           <div class="table-container"><table class="data-table">
-            <thead><tr><th>Certificate No.</th><th>Hours</th><th>Issue Date</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>${t("certificate_no")}</th><th>${t("hours")}</th><th>${t("issue_date")}</th><th>${t("status")}</th><th></th></tr></thead>
             <tbody>
               ${certs.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">—</td></tr>` : certs.map(c => `
                 <tr>
@@ -935,7 +1147,7 @@
             const fromComm = tr.from_committee || state.committees.find(c => c.id === tr.from_committee_id);
             const toComm = tr.to_committee || state.committees.find(c => c.id === tr.to_committee_id);
             return `<div>
-                    <div style="font-size:12px; color:var(--neutral-500);">${tr.transferred_at}</div>
+                    <div style="font-size:12px; color:var(--neutral-500);">${formatDate(tr.transferred_at)}</div>
                     <div style="font-weight:700;">${fromComm ? (App.currentLang === 'ar' ? (fromComm.nameAr || fromComm.name_ar) : (fromComm.nameEn || fromComm.name_en)) : '—'} → ${toComm ? (App.currentLang === 'ar' ? (toComm.nameAr || toComm.name_ar) : (toComm.nameEn || toComm.name_en)) : '—'}</div>
                     <div style="font-size:13px; color:var(--neutral-700);">${tr.reason || '—'}</div>
                   </div>`;
@@ -960,6 +1172,9 @@
     bind2("btn-prof-eval", () => navigateTo("new-evaluation", { id: vol.id }));
     bind2("btn-prof-log-hours", () => window.AtharModals.openLogHoursSlideover(vol.id));
     bind2("btn-prof-gen-cert", () => navigateTo("generate-certificate", { id: vol.id }));
+
+    // Copy buttons (phone / whatsapp in the hero)
+    bindCopyButtons(container);
 
     // Wire hours tab: edit / delete buttons (direct call, no AtharApp dependency)
     container.querySelectorAll("[data-volhr-edit]").forEach(btn => {
