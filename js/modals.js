@@ -785,9 +785,9 @@ window.AtharModals = (function () {
           </div>
           <div class="modal-body">
             <div style="display:flex; align-items:center; gap:14px; padding:12px; background:var(--neutral-50); border-radius:8px; margin-bottom:16px;">
-              <div class="user-avatar" style="width:44px; height:44px; font-size:16px;">${App.currentUser.full_name.charAt(0)}</div>
+              <div class="user-avatar" style="width:44px; height:44px; font-size:16px;">${((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0)}</div>
               <div style="flex:1;">
-                <div style="font-weight:700;">${App.currentUser.full_name}</div>
+                <div style="font-weight:700;">${(App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || ""}</div>
                 <div style="font-size:12px; color:var(--neutral-500);">${App.currentUser.email}</div>
                 <div style="font-size:11px; color:var(--neutral-500); margin-top:2px;">${isSuper ? t("super_admin") : t("trusted_admin")}</div>
               </div>

@@ -12,7 +12,7 @@
 
         const { App, t, ic, showToast } = window.AtharCore;
 
-        if (App.currentUser.role !== "super_admin") {
+        if ((App.currentUser && App.currentUser.role !== "super_admin")) {
             showToast(t("permission_denied"), "error");
             return;
         }
@@ -114,7 +114,7 @@
     async function toggleCriterionActive(criterionId) {
         const { App, t, showToast } = window.AtharCore;
 
-        if (App.currentUser.role !== "super_admin") {
+        if ((App.currentUser && App.currentUser.role !== "super_admin")) {
             showToast(t("permission_denied"), "error");
             return;
         }
@@ -136,7 +136,7 @@
     function deleteCriterion(criterionId) {
         const { App, t, showToast, showConfirmModal } = window.AtharCore;
 
-        if (App.currentUser.role !== "super_admin") {
+        if ((App.currentUser && App.currentUser.role !== "super_admin")) {
             showToast(t("permission_denied"), "error");
             return;
         }

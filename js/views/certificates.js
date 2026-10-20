@@ -12,7 +12,7 @@
   function renderCertificatesList(container) {
     const state = window.AtharStore.getState();
     const canCreate = hasPermission("certificates", "create");
-    const isSuper = App.currentUser.role === "super_admin";
+    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
 
     container.innerHTML = `
       <div class="view-header">
@@ -173,7 +173,7 @@
   // =========================================================================
   function renderGenerateCertificate(container, volunteerId, certId) {
     const state = window.AtharStore.getState();
-    const isSuper = App.currentUser.role === "super_admin";
+    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
     const canCreate = hasPermission("certificates", "create");
 
     const existingCert = certId ? state.certificates.find(c => c.id === certId) : null;

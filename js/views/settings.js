@@ -8,7 +8,7 @@
 
   async function renderSettings(container) {
     const state = window.AtharStore.getState();
-    const isSuper = App.currentUser.role === "super_admin";
+    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
 
     container.innerHTML = `
       <div class="view-header">

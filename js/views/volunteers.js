@@ -1290,8 +1290,8 @@
     const canEvaluate = hasPermission("evaluations", "create");
     const canLogHours = hasPermission("volunteer_hours", "create");
     const canCert = hasPermission("certificates", "create");
-    const canEditHours = hasPermission("volunteer_hours", "edit") || App.currentUser.role === "super_admin";
-    const canDeleteHours = hasPermission("volunteer_hours", "delete") || App.currentUser.role === "super_admin";
+    const canEditHours = hasPermission("volunteer_hours", "edit") || (App.currentUser && App.currentUser.role === "super_admin");
+    const canDeleteHours = hasPermission("volunteer_hours", "delete") || (App.currentUser && App.currentUser.role === "super_admin");
 
     const evaluations = state.evaluations.filter(e => e.volunteer_id === vol.id);
     const hoursLog = state.volunteer_hours.filter(h => h.volunteer_id === vol.id);

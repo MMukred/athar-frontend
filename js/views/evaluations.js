@@ -125,7 +125,7 @@
           <div style="color:var(--warning); margin-bottom:12px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluation criteria defined</div>
           <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">You need to add at least one criterion before creating evaluations.</p>
-          ${App.currentUser.role === "super_admin"
+          ${(App.currentUser && App.currentUser.role === "super_admin")
           ? `<button class="btn btn-primary" id="btn-goto-criteria">${ic("plus", 14)} ${t("add_criterion")}</button>`
           : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`}
         </div>`;
@@ -420,7 +420,7 @@
     }
 
     const state = window.AtharStore.getState();
-    const isSuper = App.currentUser.role === "super_admin";
+    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
 
     container.innerHTML = `
       <div class="view-header">

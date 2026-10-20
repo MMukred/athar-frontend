@@ -10,8 +10,8 @@
     const state = window.AtharStore.getState();
     const canCreate = hasPermission("volunteer_hours", "create");
     const canApprove = hasPermission("volunteer_hours", "approve");
-    const canEdit = hasPermission("volunteer_hours", "edit") || App.currentUser.role === "super_admin";
-    const canDelete = hasPermission("volunteer_hours", "delete") || App.currentUser.role === "super_admin";
+    const canEdit = hasPermission("volunteer_hours", "edit") || (App.currentUser && App.currentUser.role === "super_admin");
+    const canDelete = hasPermission("volunteer_hours", "delete") || (App.currentUser && App.currentUser.role === "super_admin");
 
     // DEFAULT = ALL (so you see every entry)
     let filterStatus = App.hoursFilterStatus || "all";

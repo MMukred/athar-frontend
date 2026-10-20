@@ -266,7 +266,7 @@ window.AtharCore = (function () {
   // ===========================================================
   function hasPermission(module, action) {
     if (!App.currentUser) return false;
-    if (App.currentUser.role === "super_admin") return true;
+    if ((App.currentUser && App.currentUser.role === "super_admin")) return true;
 
     const superAdminOnlyActions = [
       { module: "evaluation_criteria", action: "create" },
@@ -339,7 +339,7 @@ window.AtharCore = (function () {
   // ===========================================================
   function updateUserMenuBadge() {
     if (!App.currentUser) return;
-    const isSuper = App.currentUser.role === "super_admin";
+    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
     const roleText = isSuper ? t("super_admin") : t("trusted_admin");
 
     const roleEl = document.getElementById("current-user-role-label");
@@ -347,8 +347,8 @@ window.AtharCore = (function () {
     const avEl = document.getElementById("user-avatar-badge");
 
     if (roleEl) roleEl.textContent = roleText;
-    if (nameEl) nameEl.textContent = App.currentUser.full_name;
-    if (avEl) avEl.textContent = App.currentUser.full_name.charAt(0);
+    if (nameEl) nameEl.textContent = (App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "";
+    if (avEl) avEl.textContent = ((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0);
   }
 
   // ===========================================================
