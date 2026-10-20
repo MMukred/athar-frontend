@@ -41,11 +41,11 @@
             </div>
             <div class="form-field" style="margin-bottom:16px;">
               <label class="field-label">${t("session_timeout")}</label>
-              <input type="number" id="set-timeout" class="form-control" value="${state.settings.session_timeout_minutes || 15}" ${!isSuper ? 'disabled' : ''}>
+              <input type="number" inputmode="numeric" id="set-timeout" class="form-control" value="${state.settings.session_timeout_minutes || 15}" ${!isSuper ? 'disabled' : ''}>
             </div>
             <div class="form-field" style="margin-bottom:16px;">
               <label class="field-label">${t("cert_ready_hours")}</label>
-              <input type="number" id="set-cert-hours" class="form-control" value="${state.settings.certificate_ready_hours ?? 50}" min="1" max="1000" ${!isSuper ? 'disabled' : ''}>
+              <input type="number" inputmode="numeric" id="set-cert-hours" class="form-control" value="${state.settings.certificate_ready_hours ?? 50}" min="1" max="1000" ${!isSuper ? 'disabled' : ''}>
             </div>
             ${isSuper
         ? `<button type="submit" class="btn btn-primary">${t("save")}</button>`

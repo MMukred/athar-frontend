@@ -3900,6 +3900,8 @@ button.dup-mark:hover { background: var(--warning-light); }
 }
 
 /* ===== Round 8: action center + quick add + undo toast ===== */
+
+/* ===== Round 8: action center + quick add + undo toast ===== */
 .action-tiles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -3969,3 +3971,41 @@ button.dup-mark:hover { background: var(--warning-light); }
 @media (max-width: 600px) {
   .action-tiles-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ===== Round 9: UX fundamentals polish ===== */
+/* Typography: calmer, more readable */
+.view-subtitle { line-height: 1.6; }
+.empty-state-desc { line-height: 1.6; }
+.card-body, .modal-body { line-height: 1.65; }
+
+/* Softer dividers (premium feel) */
+.data-table tbody tr { border-bottom-color: var(--neutral-200); }
+.data-table thead th { border-bottom-color: var(--neutral-300); }
+.card { border-color: var(--neutral-200); }
+
+/* Badges: concise, scannable */
+.badge { letter-spacing: 0.01em; }
+
+/* Sticky meeting action bar */
+.meeting-actions-bar {
+  position: sticky; top: 0; z-index: 6;
+  background: var(--surface); padding: 8px 0;
+  border-bottom: 1px solid var(--neutral-200);
+  margin-bottom: 12px;
+}
+
+/* Progress bar for profile completeness */
+.profile-progress { height: 6px; background: var(--neutral-200); border-radius: 9999px; overflow: hidden; }
+.profile-progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), #8A3FFC); border-radius: 9999px; transition: width 0.3s ease; }
+
+/* Empty state guidance */
+.empty-state-hint { font-size: 12px; color: var(--neutral-500); margin-top: 4px; }
+
+/* Recent search chips */
+.search-recent-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid var(--neutral-300);
+  border-radius: 9999px; background: var(--surface);
+  font-size: 12px; cursor: pointer; color: var(--neutral-700);
+}
+.search-recent-chip:hover { background: var(--neutral-100); border-color: var(--primary); }

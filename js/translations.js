@@ -487,7 +487,15 @@ window.Translations = {
     quick_add_volunteer: "New volunteer",
     quick_add_hours: "Log hours",
     quick_add_meeting: "New meeting",
-    att_search: "Search roster..."
+    att_search: "Search roster...",
+    // Round 9 — UX fundamentals
+    search_volunteers_ph: "Search by name, phone, email, or national ID…",
+    search_hours_ph: "Search by volunteer or activity…",
+    profile_completeness: "Profile completeness",
+    profile_missing: "Missing",
+    empty_try_again: "Try a different spelling, or clear the filters.",
+    smart_suggest_recent: "Recent searches",
+    smart_suggest_popular: "Quick links"
   },
 
   ar: {
@@ -973,6 +981,14 @@ window.Translations = {
     quick_add_volunteer: "متطوع جديد",
     quick_add_hours: "تسجيل ساعات",
     quick_add_meeting: "اجتماع جديد",
-    att_search: "بحث في الحضور..."
+    att_search: "بحث في الحضور...",
+    // الجولة 9 — أساسيات تجربة المستخدم
+    search_volunteers_ph: "بحث عن متطوع (اسم، هاتف، بريد، رقم وطني)…",
+    search_hours_ph: "بحث عن متطوع أو نشاط…",
+    profile_completeness: "اكتمال الملف",
+    profile_missing: "ناقص",
+    empty_try_again: "جرّب تهجئة مختلفة، أو أزل الفلاتر.",
+    smart_suggest_recent: "عمليات بحث أخيرة",
+    smart_suggest_popular: "روابط سريعة"
   }
 };

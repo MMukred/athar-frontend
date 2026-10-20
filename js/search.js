@@ -19,6 +19,19 @@ window.AtharSearch = (function () {
   let activeInput = null;  // input element currently driving the list
   let activeResults = null; // results container currently rendered
 
+  const RECENT_KEY = "athar_recent_searches";
+  function getRecent() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (e) { return []; }
+  }
+  function saveRecent(q) {
+    if (!q) return;
+    try {
+      const list = getRecent().filter(function (x) { return x !== q; });
+      list.unshift(q);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 5)));
+    } catch (e) { /* ignore */ }
+  }
+
   function norm(v) {
     return String(v == null ? "" : v).toLowerCase();
   }
@@ -186,7 +199,56 @@ window.AtharSearch = (function () {
   function update(inputEl, resultsEl, query) {
     activeInput = inputEl;
     activeResults = resultsEl;
-    if (!query || !query.trim()) { hideResults(); return; }
+    const q = (query || "").trim();
+    if (!q) {
+      // Smart suggestions: recent searches + quick links (instead of a dead end).
+      const recent = getRecent();
+      const quick = [
+        { label: t("nav_volunteers"), view: "volunteers" },
+        { label: t("nav_committees"), view: "committees" },
+        { label: t("nav_meetings"), view: "meetings" },
+        { label: t("nav_volunteer_hours"), view: "volunteer-hours" },
+      ];
+      let html = "";
+      if (recent.length) {
+        html += '<div class="search-group-label">' + escapeHtml(t("smart_suggest_recent")) + "</div>";
+        html += '<div style="display:flex; flex-wrap:wrap; gap:6px; padding:4px 2px 8px;">';
+        recent.forEach(function (r) {
+          html += '<button type="button" class="search-recent-chip" data-recent="' + escapeHtml(r) + '">' + escapeHtml(r) + "</button>";
+        });
+        html += "</div>";
+      }
+      html += '<div class="search-group-label">' + escapeHtml(t("smart_suggest_popular")) + "</div>";
+      html += '<div style="display:flex; flex-wrap:wrap; gap:6px; padding:4px 2px 8px;">';
+      quick.forEach(function (qk) {
+        html += '<button type="button" class="search-recent-chip" data-quick="' + escapeHtml(qk.view) + '">' + escapeHtml(qk.label) + "</button>";
+      });
+      html += "</div>";
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+      items = [];
+      highlight = -1;
+      // bind clicks
+      resultsEl.querySelectorAll("[data-recent]").forEach(function (btn) {
+        btn.addEventListener("mousedown", function (e) { e.preventDefault(); });
+        btn.addEventListener("click", function () {
+          const val = btn.getAttribute("data-recent");
+          inputEl.value = val;
+          update(inputEl, resultsEl, val);
+        });
+      });
+      resultsEl.querySelectorAll("[data-quick]").forEach(function (btn) {
+        btn.addEventListener("mousedown", function (e) { e.preventDefault(); });
+        btn.addEventListener("click", function () {
+          const view = btn.getAttribute("data-quick");
+          closeAll();
+          clearInputs();
+          navigateTo(view);
+        });
+      });
+      return;
+    }
+    saveRecent(q);
     const groups = buildGroups(query);
     resultsEl.innerHTML = renderGroups(groups);
     resultsEl.hidden = false;
@@ -229,6 +291,7 @@ window.AtharSearch = (function () {
       // No highlighted result — keep the classic behavior: filter the
       // volunteers list with the typed query.
       if (inputEl.value.trim()) {
+        saveRecent(inputEl.value.trim());
         e.preventDefault();
         App.searchQuery = inputEl.value;
         closeAll();

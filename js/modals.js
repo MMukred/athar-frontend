@@ -386,7 +386,7 @@ window.AtharModals = (function () {
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("hours_amount")} <span class="required-asterisk">*</span></label>
-                  <input type="number" step="0.5" min="0.5" id="hr-amount" class="form-control" required>
+                  <input type="number" inputmode="decimal" step="0.5" min="0.5" id="hr-amount" class="form-control" required>
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("date")} <span class="required-asterisk">*</span></label>
@@ -866,7 +866,7 @@ window.AtharModals = (function () {
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("hours_amount")} <span class="required-asterisk">*</span></label>
-                  <input type="number" step="0.5" min="0.5" id="bhr-hours" class="form-control" required value="2">
+                  <input type="number" inputmode="decimal" step="0.5" min="0.5" id="bhr-hours" class="form-control" required value="2">
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("date")} <span class="required-asterisk">*</span></label>
@@ -1248,7 +1248,7 @@ window.AtharModals = (function () {
               </div>
               <div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة (ساعات)' : 'New hours value'}</label>
-                <input type="number" step="0.25" min="0" id="eh-hours" class="form-control num-ltr" value="${entry.hours}" required>
+                <input type="number" inputmode="decimal" step="0.25" min="0" id="eh-hours" class="form-control num-ltr" value="${entry.hours}" required>
                 <span class="field-hint">${App.currentLang === 'ar' ? 'اضبط القيمة، أو اكتب 0 لإلغاء الساعات.' : 'Set to a new value, or 0 to zero them out.'}</span>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1359,7 +1359,7 @@ window.AtharModals = (function () {
               </div>
               <div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'القيمة الجديدة لكل سجل' : 'New value per entry'}</label>
-                <input type="number" step="0.25" min="0.25" id="beh-hours" class="form-control num-ltr" value="2" required>
+                <input type="number" inputmode="decimal" step="0.25" min="0.25" id="beh-hours" class="form-control num-ltr" value="2" required>
                 <span class="field-hint">${App.currentLang === 'ar' ? 'سيتم تطبيق هذا الرقم على كل سجل محدد.' : 'This number will be applied to every selected entry.'}</span>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">

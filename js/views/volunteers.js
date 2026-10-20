@@ -1276,6 +1276,13 @@
     const a = age(vol.dob);
     const gs = genderStyle(vol.gender);
     const notesArr = splitNotes(vol.notes);
+    // Profile completeness (goal-gradient: never start at 0% — count the name as done)
+    const profileFields = [
+      !!vol.full_name, !!(vol.phone || vol.whatsapp), !!vol.email,
+      !!vol.dob, !!vol.gender, !!vol.nationality, !!vol.committee_id, !!vol.national_id,
+    ];
+    const filledCount = profileFields.filter(Boolean).length;
+    const completeness = Math.round((filledCount / profileFields.length) * 100);
     let activeTab = App.currentParams.sub || "overview";
 
     const canEdit = hasPermission("volunteers", "edit");
@@ -1405,6 +1412,13 @@
               <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
               ${leadershipBadge}
               ${genderChip(vol.gender)}
+            </div>
+            <div class="profile-progress-wrap" style="margin-top:8px; max-width:280px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--neutral-500); margin-bottom:3px;">
+                <span>${t("profile_completeness")}</span>
+                <span class="num-ltr">${completeness}%</span>
+              </div>
+              <div class="profile-progress"><span style="width:${completeness}%;"></span></div>
             </div>
             <div class="profile-meta-row">
               ${a !== null ? `<div class="profile-meta-item"><strong>${a}</strong> ${App.currentLang === 'ar' ? 'سنة' : 'years old'}</div>` : ''}

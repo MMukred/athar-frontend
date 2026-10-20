@@ -325,7 +325,7 @@
             ${isCompleted ? '&bull; <span class="badge badge-success">COMPLETED</span>' : ''}
           </p>
         </div>
-        <div class="view-header-actions">
+        <div class="view-header-actions meeting-actions-bar" style="flex-wrap:wrap; gap:8px;">
           ${pendingEvalCount > 0 ? `
             <button class="btn" id="btn-evaluate-attendees" style="background:${kindColor}; color:#fff; border:none; display:inline-flex; align-items:center; gap:6px;">
               ${ic("star", 14)} ${App.currentLang === 'ar' ? `تقييم ${pendingEvalCount} حاضر` : `Evaluate ${pendingEvalCount} Attendee${pendingEvalCount > 1 ? 's' : ''}`}
