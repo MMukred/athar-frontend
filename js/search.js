@@ -313,7 +313,7 @@ window.AtharSearch = (function () {
       debounceTimer = setTimeout(function () { update(inputEl, resultsEl, inputEl.value); }, DEBOUNCE_MS);
     });
     inputEl.addEventListener("focus", function () {
-      if (inputEl.value.trim()) update(inputEl, resultsEl, inputEl.value);
+      update(inputEl, resultsEl, inputEl.value);
     });
     inputEl.addEventListener("keydown", function (e) {
       onKeydown(e, inputEl, resultsEl);
