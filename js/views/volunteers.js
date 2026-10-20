@@ -762,9 +762,9 @@
                     <td class="vol-card-title">
                       <div style="display:flex; align-items:center; gap:10px; cursor:pointer;"
                            onclick="window.AtharVolunteers.openDetails('${v.id}')">
-                        ${avatarHtml(v, 36)}
+                        ${avatarHtml(v, 40)}
                         <div>
-                          <div style="font-weight:700; color:var(--neutral-900);">
+                          <div class="vol-name-cell">
                             ${volDisplayName(v)}
                           </div>
                           <div style="display:flex; gap:6px; align-items:center; margin-top:2px; flex-wrap:wrap;">

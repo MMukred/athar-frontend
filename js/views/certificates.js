@@ -58,9 +58,9 @@
       const isIssued = cert.status === 'issued';
       const isRevoked = cert.status === 'revoked';
       return `
-                  <tr>
+                  <tr class="cert-status-${cert.status}">
                     <td>
-                      <span style="font-family:var(--font-mono); font-weight:700; color:${isDraft ? 'var(--neutral-500)' : 'var(--primary)'};">
+                      <span class="cert-no" style="color:${isDraft ? 'var(--neutral-500)' : 'var(--primary)'};">
                         ${cert.certificate_no || 'DRAFT (Unassigned)'}
                       </span>
                     </td>
@@ -69,7 +69,7 @@
                         ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
                       </div>
                     </td>
-                    <td><span class="num-ltr" style="font-weight:800;">${cert.total_hours} h</span></td>
+                    <td><span class="cert-hours-chip">${cert.total_hours} h</span></td>
                     <td>${formatDate(cert.issue_date)}</td>
                     <td><span class="badge badge-neutral">${(cert.language || 'ar').toUpperCase()}</span></td>
                     <td>
