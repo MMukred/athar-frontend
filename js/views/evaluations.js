@@ -74,7 +74,7 @@
                       ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
                     </td>
                     <td><span class="badge badge-primary">${ev.period_label}</span></td>
-                    <td><span style="font-weight:800; color:#F59E0B; font-size:14px;">${ev.overall_score} / 5.0</span></td>
+                    <td><span style="font-weight:800; color:var(--warning); font-size:14px;">${ev.overall_score} / 5.0</span></td>
                     <td>
                       ${c.complete
           ? `<span class="badge badge-success num-ltr">✓ ${c.done}/${c.total}</span>`

@@ -723,6 +723,7 @@
                   ` : `
                     <div class="empty-state-title">${t("no_filter_results")}</div>
                     <div class="empty-state-desc">${search ? `&ldquo;${escAttr(search)}&rdquo;` : ''}</div>
+                    <div class="empty-state-hint">${t("empty_try_again")}</div>
                     <button class="btn btn-secondary" id="btn-empty-clear-filters" style="margin-top:14px;">${ic("x", 15)} ${t("clear_filters")}</button>
                   `}
                 </div></td></tr>
@@ -1374,7 +1375,7 @@
             ? `<span class="badge badge-success" style="margin-inline-start:8px;">✓ ${t("eval_complete")}</span>`
             : `<span class="badge badge-warning" style="margin-inline-start:8px;">⚠ ${missing.length} ${t("eval_missing_items")}</span>`}
               </div>
-              <div style="font-size:18px; font-weight:800; color:#F59E0B;">${e.overall_score} / 5.0</div>
+              <div style="font-size:18px; font-weight:800; color:var(--warning);">${e.overall_score} / 5.0</div>
             </div>
             <p style="color:var(--neutral-700); font-size:13px; margin-bottom:12px;">${e.notes || ''}</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; background:var(--neutral-50); padding:12px; border-radius:var(--radius-md);">
@@ -1466,10 +1467,10 @@
         ${activeTab === "overview" ? `
           <div class="profile-stats-grid">
             <div class="stat-box"><span class="stat-box-label">${t("kpi_total_hours")}</span><span class="stat-box-value num-ltr" style="color:var(--primary);">${ps.totalHours} h</span><span style="font-size:11px; color:var(--neutral-500);">${ps.hoursEntries} ${App.currentLang === 'ar' ? 'سجل ساعات' : 'hour entries'}</span></div>
-            <div class="stat-box"><span class="stat-box-label">${t("pending_hours")}</span><span class="stat-box-value num-ltr" style="color:#F59E0B;">${ps.pendingHours} h</span>${ps.rejectedHours > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.rejectedHours} ${t("rejected")}</span>` : ''}</div>
+            <div class="stat-box"><span class="stat-box-label">${t("pending_hours")}</span><span class="stat-box-value num-ltr" style="color:var(--warning);">${ps.pendingHours} h</span>${ps.rejectedHours > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.rejectedHours} ${t("rejected")}</span>` : ''}</div>
             <div class="stat-box"><span class="stat-box-label">${t("attendance_rate")}</span><span class="stat-box-value num-ltr" style="color:var(--success);">${ps.attendanceRate != null ? ps.attendanceRate + '%' : '—'}</span>${ps.attTotal > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.attAttended} / ${ps.attTotal}</span>` : ''}</div>
             <div class="stat-box"><span class="stat-box-label">${t("meetings_attended")}</span><span class="stat-box-value num-ltr">${ps.attAttended}</span>${ps.attTotal > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.attAbsent} ${t("absent")}${ps.attExcused ? ` · ${ps.attExcused} ${t("excused")}` : ''}</span>` : ''}</div>
-            <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr" style="color:#F59E0B;">${ps.avgEvaluation != null ? ps.avgEvaluation + ' / 5' : '—'}</span><span style="font-size:11px; color:var(--neutral-500);">${ps.evalsCount} ${t("tab_evaluations")}</span></div>
+            <div class="stat-box"><span class="stat-box-label">${t("avg_evaluation")}</span><span class="stat-box-value num-ltr" style="color:var(--warning);">${ps.avgEvaluation != null ? ps.avgEvaluation + ' / 5' : '—'}</span><span style="font-size:11px; color:var(--neutral-500);">${ps.evalsCount} ${t("tab_evaluations")}</span></div>
             <div class="stat-box"><span class="stat-box-label">${t("kpi_certificates")}</span><span class="stat-box-value num-ltr">${ps.certsCount}</span>${ps.draftCerts > 0 ? `<span style="font-size:11px; color:var(--neutral-500);">${ps.draftCerts} ${t("draft")}</span>` : ''}</div>
           </div>
 

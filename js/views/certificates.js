@@ -36,6 +36,7 @@
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("award", 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No certificates yet</div>
           <p style="color:var(--neutral-500); font-size:13px;">Generate your first certificate for a volunteer with approved hours.</p>
+          <p class="empty-state-hint">Tip: a volunteer needs ≥ the configured approved hours (Settings) and no active certificate.</p>
         </div>
       ` : `
         <div class="table-container">
@@ -339,7 +340,7 @@
                     from <span class="num-ltr">${formatDate(startDate)}</span> to <span class="num-ltr">${formatDate(endDate)}</span>.
                   `}
                 </p>
-                <p style="font-size:13px; color:#666; margin-top:12px;">
+                <p style="font-size:13px; color:var(--neutral-500); margin-top:12px;">
                   ${certLang === 'ar'
           ? 'تقديراً لعطائه وتفانيه في خدمة المجتمع، راجين له دوام التوفيق والتميز.'
           : 'In sincere recognition of exemplary commitment and inspiring contribution to our society.'}

@@ -67,8 +67,8 @@
       ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events')
       : t("nav_meetings");
 
-    const kindColor = isEvent ? "#8A3FFC" : "var(--primary)";
-    const kindBg = isEvent ? "#F1E8FF" : "var(--primary-light)";
+    const kindColor = isEvent ? "var(--event-color)" : "var(--primary)";
+    const kindBg = isEvent ? "var(--event-bg)" : "var(--primary-light)";
     const kindIcon = isEvent ? "sparkles" : "calendar";
 
     container.innerHTML = `

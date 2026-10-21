@@ -12,6 +12,9 @@
   --primary-subtle: rgba(31, 111, 235, 0.12);
   --primary-border: #99C3FF;
 
+  --event-color: #8A3FFC;
+  --event-bg: #F1E8FF;
+
   --success: #2DA44E;
   --success-hover: #238636;
   --success-light: #E8F8ED;
@@ -90,6 +93,9 @@
   --primary-light: #0C2D48;
   --primary-subtle: rgba(68, 147, 248, 0.16);
   --primary-border: #1F4B7F;
+
+  --event-color: #B388FF;
+  --event-bg: #2A1F45;
 
   --success: #3FB950;
   --success-hover: #56D364;
