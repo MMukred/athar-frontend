@@ -63,6 +63,23 @@
     const meetingCount = state.meetings.filter(m => (m.kind || "meeting") === "meeting").length;
     const eventCount = state.meetings.filter(m => m.kind === "event").length;
 
+    // Filters
+    const searchQ = (App.meetingsSearch || "").trim().toLowerCase();
+    const filterComm = App.meetingsFilterComm || "all";
+    const dateFrom = App.meetingsDateFrom || "";
+    const dateTo = App.meetingsDateTo || "";
+
+    const filteredSessions = sessions.filter(m => {
+      if (searchQ) {
+        const hay = ((m.title_en || "") + " " + (m.title_ar || "") + " " + (m.location || "")).toLowerCase();
+        if (!hay.includes(searchQ)) return false;
+      }
+      if (filterComm !== "all" && m.committee_id !== filterComm) return false;
+      if (dateFrom && String(m.meeting_date || "").slice(0,10) < dateFrom) return false;
+      if (dateTo && String(m.meeting_date || "").slice(0,10) > dateTo) return false;
+      return true;
+    });
+
     const label = isEvent
       ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events')
       : t("nav_meetings");
@@ -104,16 +121,30 @@
         </div>
       </div>
 
-      ${sessions.length === 0 ? `
+      ${filteredSessions.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:${kindColor}; margin-bottom:12px;">${ic(kindIcon, 42, { strokeWidth: 1.5 })}</div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">
-            ${isEvent
-          ? (App.currentLang === 'ar' ? 'لا توجد فعاليات بعد' : 'No events yet')
-          : (App.currentLang === 'ar' ? 'لا توجد اجتماعات' : 'No meetings yet')}
+            ${sessions.length === 0
+              ? (isEvent ? (App.currentLang === 'ar' ? 'لا توجد فعاليات بعد' : 'No events yet') : (App.currentLang === 'ar' ? 'لا توجد اجتماعات' : 'No meetings yet'))
+              : (App.currentLang === 'ar' ? 'لا توجد نتائج' : 'No results')}
           </div>
+          ${sessions.length === 0 && canCreate ? `<button class="btn btn-primary" style="margin-top:14px;" id="btn-empty-add-session">${ic("plus", 16)} ${isEvent ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event') : t("add_meeting")}</button>` : ''}
+          ${sessions.length > 0 ? `<button class="btn btn-secondary" style="margin-top:14px;" id="btn-empty-clear-mt-filters">${ic("x", 15)} ${App.currentLang === 'ar' ? 'مسح الفلاتر' : 'Clear filters'}</button>` : ''}
         </div>
       ` : `
+        <div class="filter-bar" style="margin-bottom:12px;">
+          <div class="filter-group" style="flex-wrap:wrap; gap:8px;">
+            <input type="search" id="mt-search" class="form-control" placeholder="${App.currentLang === 'ar' ? 'بحث في ' + (isEvent ? 'الفعاليات' : 'الاجتماعات') + '…' : 'Search ' + (isEvent ? 'events' : 'meetings') + '…'}" value="${App.meetingsSearch || ''}" style="min-width:180px;">
+            <select id="mt-filter-comm" class="form-control">
+              <option value="all">${t("all_committees")}</option>
+              ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${App.meetingsFilterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+            </select>
+            <input type="date" id="mt-date-from" class="form-control" value="${App.meetingsDateFrom || ''}" title="${App.currentLang === 'ar' ? 'من تاريخ' : 'From date'}">
+            <input type="date" id="mt-date-to" class="form-control" value="${App.meetingsDateTo || ''}" title="${App.currentLang === 'ar' ? 'إلى تاريخ' : 'To date'}">
+            <button class="btn btn-secondary btn-sm" id="btn-export-meetings">${t("export_csv")}</button>
+          </div>
+        </div>
         <div class="table-container">
           <table class="data-table">
             <thead>
@@ -130,7 +161,7 @@
               </tr>
             </thead>
             <tbody>
-              ${sessions.map(m => {
+              ${filteredSessions.map(m => {
             const comm = state.committees.find(c => c.id === m.committee_id);
             const summary = m.attendance_summary;
             const presentCount = summary ? (summary.present + summary.late) : 0;
@@ -209,6 +240,46 @@
         } else {
           window.AtharModals.openCreateMeetingSlideover();
         }
+      };
+    }
+
+    // Empty-state CTAs
+    const emptyAdd = document.getElementById("btn-empty-add-session");
+    if (emptyAdd) emptyAdd.onclick = () => (isEvent ? window.AtharModals.openCreateEventSlideover() : window.AtharModals.openCreateMeetingSlideover());
+    const emptyClear = document.getElementById("btn-empty-clear-mt-filters");
+    if (emptyClear) emptyClear.onclick = () => {
+      App.meetingsSearch = ""; App.meetingsFilterComm = "all"; App.meetingsDateFrom = ""; App.meetingsDateTo = "";
+      renderSessionList(container, kind);
+    };
+
+    // Filter wiring
+    const mtSearch = document.getElementById("mt-search");
+    if (mtSearch) {
+      let timer = null;
+      mtSearch.oninput = (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { App.meetingsSearch = e.target.value; renderSessionList(container, kind); }, 200);
+      };
+      mtSearch.value = App.meetingsSearch || "";
+    }
+    const mtComm = document.getElementById("mt-filter-comm");
+    if (mtComm) mtComm.onchange = (e) => { App.meetingsFilterComm = e.target.value; renderSessionList(container, kind); };
+    const mtFrom = document.getElementById("mt-date-from");
+    if (mtFrom) mtFrom.onchange = (e) => { App.meetingsDateFrom = e.target.value; renderSessionList(container, kind); };
+    const mtTo = document.getElementById("mt-date-to");
+    if (mtTo) mtTo.onchange = (e) => { App.meetingsDateTo = e.target.value; renderSessionList(container, kind); };
+
+    // Export CSV
+    const exportMt = document.getElementById("btn-export-meetings");
+    if (exportMt) {
+      exportMt.onclick = () => {
+        const headers = ["Title (EN)", "Title (AR)", "Date", "Time", "Location", "Committee", "Status", "Present", "Total", "Rate"];
+        const rows = filteredSessions.map(m => {
+          const comm = state.committees.find(c => c.id === m.committee_id);
+          const s = m.attendance_summary;
+          return [m.title_en, m.title_ar, m.meeting_date, `${m.start_time}-${m.end_time}`, m.location, comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '', m.status, s ? s.present + s.late : '', s ? s.total : '', s ? s.presentRate + '%' : ''];
+        });
+        window.ExportUtil.downloadCSV(isEvent ? "Events_Report.csv" : "Meetings_Report.csv", headers, rows);
       };
     }
 
