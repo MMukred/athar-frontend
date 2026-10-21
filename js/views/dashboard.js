@@ -154,6 +154,11 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
     const followupCount = state.volunteers.filter(v => v.status === "active" && isIdle(v)).length;
     const readyCount = state.volunteers.filter(v => v.status !== "archived" && isCertReady(v)).length;
 
+    // Needs-attention counts
+    const idleVols = state.volunteers.filter(v => v.status === "active" && isIdle(v)).length;
+    const unassignedVols = state.volunteers.filter(v => v.status !== "archived" && !v.committee_id).length;
+    const emptyComms = state.committees.filter(c => c.status === "active" && state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length === 0).length;
+
     let dupCount = 0;
     try {
       const groups = (window.AtharVolunteers && window.AtharVolunteers.buildDuplicateGroups)
@@ -266,6 +271,8 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           <span class="num-ltr">${hoursThisWeek} ${App.currentLang === "ar" ? "ساعة معتمدة" : "approved hours"}</span>
           <span style="color:var(--neutral-400);">•</span>
           <span class="num-ltr">${meetingsThisWeek} ${App.currentLang === "ar" ? "اجتماع" : "meetings"}</span>
+          <span style="color:var(--neutral-400);">•</span>
+          <span class="num-ltr">${state.evaluations.length} ${App.currentLang === "ar" ? "تقييم" : "evaluations"}</span>
         </div>
       </div>
 
@@ -325,6 +332,79 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           ${topVolunteers.length
         ? topVolunteers.map(v => hBarRow(v.name, v.hours, maxTopHours, "#F59E0B", `window.AtharApp.navigateTo('volunteer-profile', {id:'${v.id}'})`)).join("")
         : `<div class="empty-state" style="padding:24px 16px;"><div class="empty-state-desc">—</div></div>`}
+        </div>
+      </div>
+
+      <!-- Needs attention + Committee health -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">${ic("alert", 18)} ${App.currentLang === "ar" ? "بحاجة لاهتمام" : "Needs attention"}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${idleVols > 0 ? `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('active', { followup: true })">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:var(--warning);">${ic("message_circle", 18)}</span>
+              <span style="font-weight:600; color:var(--neutral-900); font-size:13px;">${idleVols} ${App.currentLang === "ar" ? "متطوع بلا نشاط 30+ يوم" : "volunteers idle 30+ days"}</span>
+            </div>
+            <span class="btn btn-secondary btn-sm">${t("view")}</span>
+          </div>
+          ` : ''}
+          ${unassignedVols > 0 ? `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--neutral-100); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('all', {})">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:var(--neutral-500);">${ic("building", 18)}</span>
+              <span style="font-weight:600; color:var(--neutral-900); font-size:13px;">${unassignedVols} ${App.currentLang === "ar" ? "متطوع بدون لجنة" : "volunteers without committee"}</span>
+            </div>
+            <span class="btn btn-secondary btn-sm">${t("view")}</span>
+          </div>
+          ` : ''}
+          ${pendingVols > 0 ? `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('pending', {})">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:var(--warning);">${ic("users", 18)}</span>
+              <span style="font-weight:600; color:var(--neutral-900); font-size:13px;">${pendingVols} ${t("dash_pending_vols")}</span>
+            </div>
+            <span class="btn btn-secondary btn-sm">${t("view")}</span>
+          </div>
+          ` : ''}
+          ${idleVols === 0 && unassignedVols === 0 && pendingVols === 0 ? `
+          <div class="empty-state" style="padding:20px 16px;">
+            <div class="empty-state-icon">${ic("check_circle", 32, { strokeWidth: 1.5 })}</div>
+            <div class="empty-state-title">${t("dash_no_actions")}</div>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">${ic("building", 18)} ${App.currentLang === "ar" ? "صحة اللجان" : "Committee health"}</div>
+        </div>
+        ${emptyComms > 0 ? `
+        <div style="padding:10px 12px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); margin-bottom:10px;">
+          <div style="font-weight:600; color:var(--neutral-900); font-size:13px; margin-bottom:6px;">${emptyComms} ${App.currentLang === "ar" ? "لجنة بدون أعضاء" : "committees with no members"}</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${state.committees.filter(c => c.status === 'active' && state.volunteers.filter(v => v.committee_id === c.id && v.status !== 'archived').length === 0).map(c => `
+              <span class="mini-chip" style="background:var(--warning-light); color:var(--warning-strong);">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${state.committees.filter(c => c.status === 'active').sort((a,b) => state.volunteers.filter(v => v.committee_id === b.id && v.status !== 'archived').length - state.volunteers.filter(v => v.committee_id === a.id && v.status !== 'archived').length).slice(0, 6).map(c => {
+            const cnt = state.volunteers.filter(v => v.committee_id === c.id && v.status !== 'archived').length;
+            const pct = totalVolunteers > 0 ? Math.round((cnt / totalVolunteers) * 100) : 0;
+            return `
+            <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('all', { comm: '${c.id}' })">
+              <span style="font-size:12px; font-weight:600; color:var(--neutral-900); min-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+              <div style="flex:1; height:6px; background:var(--neutral-200); border-radius:9999px; overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:var(--primary); border-radius:9999px;"></div>
+              </div>
+              <span class="num-ltr" style="font-size:11px; color:var(--neutral-500); min-width:32px; text-align:end;">${cnt}</span>
+            </div>
+            `;
+          }).join('')}
         </div>
       </div>
 
