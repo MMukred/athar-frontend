@@ -450,6 +450,7 @@
             const issued = await window.AtharAPI.certificates.approve(certIdToApprove);
             await window.AtharStore.refreshCertificates();
 
+            window.AtharCore.celebrate();
             showToast(`${t("cert_issued_successfully")} (${issued.certificate_no})`, "success");
             navigateTo("certificates");
           } catch (err) {

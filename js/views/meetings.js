@@ -284,7 +284,12 @@
         container.innerHTML = `<div class="empty-state"><p>You do not have permission to view this roster.</p></div>`;
       } else {
         showToast(err.message || "Failed to load roster", "error");
-        container.innerHTML = `<div class="empty-state"><p>Failed to load roster.</p></div>`;
+        container.innerHTML = `<div class="empty-state">
+         <div class="empty-state-icon">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
+         <div class="empty-state-title">${App.currentLang === 'ar' ? 'تعذّر تحميل كشف الحضور' : 'Could not load the roster'}</div>
+         <div class="empty-state-desc">${err.message || ''}</div>
+         <button class="btn btn-primary" style="margin-top:14px;" onclick="window.AtharViews.meetingDetail(document.getElementById('main-content'), {id:'${meetingId}'})">${App.currentLang === 'ar' ? 'إعادة المحاولة' : 'Try again'}</button>
+       </div>`;
       }
       return;
     }

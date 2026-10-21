@@ -339,6 +339,7 @@
       try {
         await window.AtharAPI.volunteers.update(volId, { status: "active" });
         await window.AtharStore.refreshVolunteers();
+        window.AtharCore.celebrate(1200);
         showToast(App.currentLang === "ar" ? "تم قبول المتطوع" : "Volunteer approved", "success");
         renderCurrentView();
       } catch (err) {

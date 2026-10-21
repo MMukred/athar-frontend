@@ -585,8 +585,30 @@ window.AtharCore = (function () {
     `;
   }
   // ===========================================================
-  // Public API
+  // Celebration (confetti) — for gift moments (cert issue, etc.)
   // ===========================================================
+  function celebrate(duration) {
+    duration = duration || 1800;
+    const container = document.createElement("div");
+    container.style.cssText = "position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;";
+    document.body.appendChild(container);
+    const colors = ["#1F6FEB", "#2DA44E", "#D29922", "#8A3FFC", "#EC4899", "#F59E0B"];
+    const count = 120;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("div");
+      const size = 6 + Math.random() * 6;
+      p.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:${colors[i % colors.length]}; left:${Math.random()*100}%; top:-10px; border-radius:${Math.random() > 0.5 ? "50%" : "2px"}; opacity:0.9;`;
+      container.appendChild(p);
+      const dx = (Math.random() - 0.5) * 200;
+      const dy = 400 + Math.random() * 400;
+      const rot = Math.random() * 720;
+      p.animate([
+        { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)`, opacity: 0 },
+      ], { duration: duration + Math.random() * 600, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" });
+    }
+    setTimeout(() => container.remove(), duration + 800);
+  }
   return {
     App,
     t,
@@ -599,6 +621,7 @@ window.AtharCore = (function () {
     showToast,
     showUndoToast,
     showConfirmModal,
+    celebrate,
     hasPermission,
     setLanguage,
     updateUserMenuBadge,
