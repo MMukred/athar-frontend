@@ -4031,3 +4031,8 @@ button.dup-mark:hover { background: var(--warning-light); }
 
 /* Empty state CTA */
 .empty-state-cta { margin-top: 12px; }
+
+
+/* ===== Round 11: accessibility + focus rings ===== */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn-icon:focus-visible, .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
