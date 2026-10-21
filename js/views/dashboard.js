@@ -100,6 +100,7 @@
     const commCounts = state.committees
       .filter(c => c.status === "active")
       .map(c => ({
+        id: c.id,
         name: App.currentLang === "ar" ? c.name_ar : c.name_en,
         count: state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length,
       }))
@@ -240,6 +241,19 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
         </div>
       </div>
 
+      <!-- Quick actions -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">${ic("zap", 18)} ${App.currentLang === "ar" ? "إجراءات سريعة" : "Quick actions"}</div>
+        </div>
+        <div class="quick-actions-grid">
+          ${hp("volunteers", "create") ? `<button type="button" class="quick-action-btn" onclick="window.AtharModals.openAddVolunteerSlideover()">${ic("users", 18)}<span>${t("quick_add_volunteer")}</span></button>` : ''}
+          ${hp("volunteer_hours", "create") ? `<button type="button" class="quick-action-btn" onclick="window.AtharModals.openLogHoursSlideover()">${ic("clock", 18)}<span>${t("quick_add_hours")}</span></button>` : ''}
+          ${hp("meetings", "create") ? `<button type="button" class="quick-action-btn" onclick="window.AtharModals.openCreateMeetingSlideover()">${ic("calendar", 18)}<span>${t("quick_add_meeting")}</span></button>` : ''}
+          ${hp("certificates", "create") ? `<button type="button" class="quick-action-btn" onclick="window.AtharCore.navigateTo('generate-certificate')">${ic("award", 18)}<span>${t("generate_certificate")}</span></button>` : ''}
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
           <div class="card-title">${ic("alert", 18)} ${t("dash_action_title")}</div>
@@ -273,7 +287,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <div class="card-title">${ic("building", 18)} ${t("committee_distribution")}</div>
           </div>
           ${commCounts.length
-        ? commCounts.map(c => hBarRow(c.name, c.count, maxCommCount, "var(--primary)")).join("")
+        ? commCounts.map(c => hBarRow(c.name, c.count, maxCommCount, "var(--primary)", `window.AtharApp.goVolunteersFilter('all', { comm: '${c.id}' })`)).join("")
         : `<div class="empty-state" style="padding:24px 16px;"><div class="empty-state-desc">—</div></div>`}
         </div>
         <div class="card">
@@ -318,20 +332,39 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <div class="card-title">${ic("clock", 18)} ${t("pending_approvals")}</div>
           </div>
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-hours')">
+            ${pendingVols > 0 ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('pending', {})">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="color:var(--warning);">${ic("users", 20)}</span>
+                <span style="font-weight:600; color:var(--neutral-900);">${pendingVols} ${t("dash_pending_vols")}</span>
+              </div>
+              <span class="btn btn-secondary btn-sm">${t("view")}</span>
+            </div>
+            ` : ''}
+            ${pendingHours > 0 ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--warning-light); border:1px solid var(--warning-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.goHoursFilter('pending')">
               <div style="display:flex; align-items:center; gap:10px;">
                 <span style="color:var(--warning);">${ic("clock", 20)}</span>
                 <span style="font-weight:600; color:var(--neutral-900);">${pendingHours} ${t("hours_awaiting_approval")}</span>
               </div>
               <span class="btn btn-secondary btn-sm">${t("view")}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('certificates')">
+            ` : ''}
+            ${draftCerts > 0 ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharCore.navigateTo('certificates')">
               <div style="display:flex; align-items:center; gap:10px;">
                 <span style="color:var(--primary);">${ic("award", 20)}</span>
                 <span style="font-weight:600; color:var(--neutral-900);">${draftCerts} ${t("certs_in_draft")}</span>
               </div>
               <span class="btn btn-secondary btn-sm">${t("view")}</span>
             </div>
+            ` : ''}
+            ${pendingVols === 0 && pendingHours === 0 && draftCerts === 0 ? `
+            <div class="empty-state" style="padding:24px 16px;">
+              <div class="empty-state-icon">${ic("check_circle", 36, { strokeWidth: 1.5 })}</div>
+              <div class="empty-state-title">${t("dash_no_actions")}</div>
+            </div>
+            ` : ''}
           </div>
         </div>
 
