@@ -6,7 +6,7 @@
 
   const {
     App, t, formatDate, age, genderStyle, splitNotes,
-    ic, showToast, showConfirmModal, hasPermission, navigateTo
+    ic, showToast, showConfirmModal, hasPermission, navigateTo, escapeHtml
   } = window.AtharCore;
 
   // =========================================================================
@@ -765,7 +765,7 @@
                         ${avatarHtml(v, 40)}
                         <div>
                           <div class="vol-name-cell">
-                            ${volDisplayName(v)}
+                            ${escapeHtml(volDisplayName(v))}
                           </div>
                           <div style="display:flex; gap:6px; align-items:center; margin-top:2px; flex-wrap:wrap;">
                             ${genderChip(v.gender)}
@@ -1398,7 +1398,7 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('volunteers')">${t("back_to_volunteers")}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>${volDisplayName(vol)}</span>
+            <span>${escapeHtml(volDisplayName(vol))}</span>
           </div>
         </div>
       </div>
@@ -1408,7 +1408,7 @@
           ${avatarHtml(vol, 84)}
           <div class="profile-hero-info">
             <div class="profile-name-row">
-              <span class="profile-name">${volDisplayName(vol)}</span>
+              <span class="profile-name">${escapeHtml(volDisplayName(vol))}</span>
               <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
               ${leadershipBadge}
               ${genderChip(vol.gender)}

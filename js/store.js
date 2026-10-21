@@ -269,7 +269,7 @@ window.AtharStore = (function () {
       return state;
     }
 
-    console.log("[Store] Loading from API…");
+    // (loading logged previously)
     const api = window.AtharAPI;
 
     const results = await Promise.allSettled([
@@ -344,7 +344,6 @@ window.AtharStore = (function () {
       // No permission to list users — keep the current user only.
     }
 
-    console.log(`[Store] Loaded ${state.volunteers.length}v ${state.committees.length}c ${state.meetings.length}m ${state.volunteer_hours.length}h ${state.certificates.length}cert ${state.audit_logs.length}audit`);
     return state;
   }
 
