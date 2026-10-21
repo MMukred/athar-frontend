@@ -600,6 +600,9 @@
           <button class="btn btn-secondary btn-sm" id="btn-export-vols-csv">
             ${ic("download", 14)} ${t("export_csv")}
           </button>
+          <button class="btn btn-secondary btn-sm" id="btn-print-dir">
+            ${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة الدليل' : 'Print directory'}
+          </button>
           ${canCreate ? `
             <button class="btn btn-secondary btn-sm" id="btn-import-vols-csv">
               ${ic("upload", 14)} ${t("import_csv")}
@@ -681,6 +684,16 @@
               </button>
             ` : ''}
             ${canEdit ? `<button class="btn btn-secondary btn-sm" id="btn-bulk-transfer">${ic("arrow_right", 14)} ${t("bulk_transfer")}</button>` : ''}
+            ${canEdit ? `
+              <select id="bulk-status-select" class="form-control" style="width:120px; height:30px; padding:2px 6px; font-size:12px;">
+                <option value="">${App.currentLang === 'ar' ? 'تغيير الحالة…' : 'Set status…'}</option>
+                <option value="active">${t("active")}</option>
+                <option value="pending">${t("pending")}</option>
+                <option value="suspended">${t("suspended")}</option>
+                <option value="completed">${t("completed")}</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" id="btn-bulk-status">${ic("check", 14)} ${App.currentLang === 'ar' ? 'تطبيق' : 'Apply'}</button>
+            ` : ''}
             <button class="btn btn-whatsapp btn-sm" id="btn-bulk-whatsapp">${ic("whatsapp", 14)} ${t("reminder_title")}</button>
             <button class="btn btn-secondary btn-sm" id="btn-bulk-export">${t("export_csv")}</button>
             ${canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-bulk-archive">${t("archive")}</button>` : ''}
@@ -1154,6 +1167,27 @@
           },
         });
       };
+
+     // ---- Bulk: change status ----
+     const bulkStatusBtn = document.getElementById("btn-bulk-status");
+     if (bulkStatusBtn) {
+       bulkStatusBtn.onclick = async () => {
+         const sel = document.getElementById("bulk-status-select");
+         const newStatus = sel ? sel.value : "";
+         if (!newStatus) { showToast(App.currentLang === 'ar' ? 'اختر حالة' : 'Pick a status', "warning"); return; }
+         const ids = Array.from(App.selectedVolunteerIds);
+         if (!ids.length) return;
+         bulkStatusBtn.disabled = true;
+         const results = await Promise.allSettled(ids.map(id => window.AtharAPI.volunteers.update(id, { status: newStatus })));
+         const ok = results.filter(r => r.status === "fulfilled").length;
+         const fail = results.length - ok;
+         App.selectedVolunteerIds.clear();
+         await window.AtharStore.refreshVolunteers();
+         if (fail === 0) showToast(`${App.currentLang === 'ar' ? 'تم التحديث' : 'Updated'} (${ok})`, "success");
+         else showToast(`${ok} ✓ • ${fail} ✗`, "warning");
+         renderVolunteersList(container);
+       };
+     }
     }
 
     const bulkExport = document.getElementById("btn-bulk-export");
@@ -1191,6 +1225,21 @@
           ];
         });
         window.ExportUtil.downloadCSV("Athar_Volunteers_Filtered.csv", headers, rows);
+      };
+    }
+
+    const printDir = document.getElementById("btn-print-dir");
+    if (printDir) {
+      printDir.onclick = () => {
+        const w = window.open("", "_blank");
+        if (!w) return;
+        const rows = filtered.map(v => {
+          const c = state.committees.find(x => x.id === v.committee_id);
+          const comm = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : '—';
+          return `<tr><td>${escapeHtml(volDisplayName(v))}</td><td>${v.phone || '—'}</td><td>${v.whatsapp || '—'}</td><td>${v.email || '—'}</td><td>${comm}</td><td>${t(v.status)}</td></tr>`;
+        }).join("");
+        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Volunteer Directory</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? 'دليل المتطوعين' : 'Volunteer Directory'}</h1><p>${filtered.length} ${App.currentLang === 'ar' ? 'متطوع' : 'volunteers'} • ${new Date().toLocaleDateString()}</p><table><thead><tr><th>${App.currentLang === 'ar' ? 'الاسم' : 'Name'}</th><th>${App.currentLang === 'ar' ? 'الهاتف' : 'Phone'}</th><th>WhatsApp</th><th>Email</th><th>${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'}</th><th>${t("status")}</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
+        w.document.close();
       };
     }
 
