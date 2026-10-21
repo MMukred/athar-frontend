@@ -23,6 +23,7 @@
     // -------- Dynamic "this month" trends --------
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const newVolsThisMonth = state.volunteers.filter(v => {
       if (v.status === "archived" || !v.join_date) return false;
@@ -42,6 +43,21 @@
       if (c.status !== "issued" || !c.issue_date) return false;
       const d = new Date(c.issue_date);
       return !isNaN(d) && d >= monthStart;
+    }).length;
+    // -------- This week --------
+    const newVolsThisWeek = state.volunteers.filter(v => {
+      if (v.status === "archived" || !v.join_date) return false;
+      const d = new Date(v.join_date);
+      return !isNaN(d) && d >= weekStart;
+    }).length;
+    const hoursThisWeek = state.volunteer_hours
+      .filter(h => h.status === "approved" && h.date)
+      .filter(h => { const d = new Date(h.date); return !isNaN(d) && d >= weekStart; })
+      .reduce((sum, h) => sum + Number(h.hours), 0);
+    const meetingsThisWeek = state.meetings.filter(m => {
+      if (!m.meeting_date) return false;
+      const d = new Date(m.meeting_date);
+      return !isNaN(d) && d >= weekStart && d <= now;
     }).length;
     // --------------------------------------------
 
@@ -89,7 +105,7 @@
       const x = pos * (barW + gap);
       const y = chartH - barH;
       return `
-            <rect class="chart-bar" x="${x}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="6" fill="var(--primary)" opacity="${h > 0 ? 0.9 : 0.15}"></rect>
+            <rect class="chart-bar" x="${x}" y="${y}" width="${barW}" height="${Math.max(barH, 2)}" rx="6" fill="var(--primary)" opacity="${h > 0 ? 0.9 : 0.15}" style="cursor:pointer;" onclick="window.AtharCore.App.hoursDateFrom='${monthKeys[i]}-01'; window.AtharCore.App.hoursDateTo='${monthKeys[i].slice(0,4)}-${monthKeys[i].slice(5,7)}-'+new Date(${monthKeys[i].slice(0,4)}, ${parseInt(monthKeys[i].slice(5,7))}, 0).getDate(); window.AtharCore.App.hoursFilterStatus='all'; window.AtharCore.navigateTo('volunteer-hours')"></rect>
             <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--neutral-600)">${h > 0 ? Math.round(h) : ""}</text>
             <text x="${x + barW / 2}" y="${chartH + 20}" text-anchor="middle" font-size="11" fill="var(--neutral-500)">${monthLabels[i]}</text>
           `;
@@ -238,6 +254,18 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           </div>
           <div class="kpi-value num-ltr" data-count-to="${totalCerts}">${totalCerts}</div>
           ${trend(certsThisMonth, "")}
+        </div>
+      </div>
+
+      <!-- This week summary -->
+      <div class="card" style="margin-bottom:16px; padding:12px 16px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;">
+          <span style="font-weight:700; color:var(--neutral-900);">${App.currentLang === "ar" ? "هذا الأسبوع" : "This week"}:</span>
+          <span class="num-ltr">${newVolsThisWeek} ${App.currentLang === "ar" ? "متطوع جديد" : "new volunteers"}</span>
+          <span style="color:var(--neutral-400);">•</span>
+          <span class="num-ltr">${hoursThisWeek} ${App.currentLang === "ar" ? "ساعة معتمدة" : "approved hours"}</span>
+          <span style="color:var(--neutral-400);">•</span>
+          <span class="num-ltr">${meetingsThisWeek} ${App.currentLang === "ar" ? "اجتماع" : "meetings"}</span>
         </div>
       </div>
 
@@ -433,12 +461,13 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             ${recentAudit.length === 0
         ? `<p style="color:var(--neutral-500); font-size:13px; padding:12px 0;">No activity recorded yet.</p>`
         : recentAudit.map(al => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--neutral-200); font-size:13px;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="badge ${al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' ? 'badge-danger' : 'badge-neutral'}">${al.action}</span>
-                    <span style="font-weight:600; color:var(--neutral-900);">${al.details}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--neutral-200); font-size:13px; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                    <span style="color:${al.action === 'create' ? 'var(--success)' : al.action === 'approve' || al.action === 'issue' ? 'var(--primary)' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'var(--danger)' : 'var(--neutral-500)'}; flex-shrink:0;">${ic(al.action === 'create' ? 'plus' : al.action === 'approve' || al.action === 'issue' ? 'check_circle' : al.action === 'revoke' || al.action === 'delete' ? 'trash' : al.action === 'archive' ? 'archive' : 'activity', 16)}</span>
+                    <span class="badge ${al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'badge-danger' : 'badge-neutral'}">${al.action}</span>
+                    <span style="font-weight:600; color:var(--neutral-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${al.details}</span>
                   </div>
-                  <div style="font-size:12px; color:var(--neutral-500);" class="num-ltr">
+                  <div style="font-size:11px; color:var(--neutral-500); flex-shrink:0;" class="num-ltr">
                     ${al.user_name} &bull; ${al.created_at}
                   </div>
                 </div>
