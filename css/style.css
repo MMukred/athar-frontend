@@ -4042,3 +4042,5 @@ button.dup-mark:hover { background: var(--warning-light); }
 /* ===== Round 11: accessibility + focus rings ===== */
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .btn-icon:focus-visible, .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.action-tile-sub { font-size: 11px; color: var(--neutral-500); margin-top: 1px; }

@@ -1413,6 +1413,7 @@
               <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
               ${leadershipBadge}
               ${genderChip(vol.gender)}
+              ${ps.totalHours >= 100 ? `<span class="badge badge-warning" title="${App.currentLang === 'ar' ? '100+ ساعة تطوع' : '100+ volunteer hours'}">🏅 ${App.currentLang === 'ar' ? '100+ ساعة' : '100+ h'}</span>` : ps.totalHours >= 50 ? `<span class="badge badge-success" title="${App.currentLang === 'ar' ? '50+ ساعة تطوع' : '50+ volunteer hours'}">⭐ ${App.currentLang === 'ar' ? '50+ ساعة' : '50+ h'}</span>` : ''}
             </div>
             <div class="profile-progress-wrap" style="margin-top:8px; max-width:280px;">
               <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--neutral-500); margin-bottom:3px;">

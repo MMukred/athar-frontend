@@ -351,9 +351,16 @@
     // Hours actions
     // =========================================================
     approveHours: async function (hoursId) {
+      const state = window.AtharStore.getState();
+      const entry = state.volunteer_hours.find(function (h) { return h.id === hoursId; });
+      const vol = entry ? state.volunteers.find(v => v.id === entry.volunteer_id) : null;
+      const prevTotal = vol ? (window.AtharStore.getVolunteerStats(vol.id)?.totalHours || 0) : 0;
       try {
         await window.AtharAPI.hours.approve(hoursId);
         await window.AtharStore.refreshHours();
+        const newTotal = vol ? (window.AtharStore.getVolunteerStats(vol.id)?.totalHours || 0) : 0;
+        const crossed = (prevTotal < 50 && newTotal >= 50) || (prevTotal < 100 && newTotal >= 100);
+        if (crossed) window.AtharCore.celebrate(1600);
         showToast(t("approved_successfully"), "success");
         renderCurrentView();
       } catch (err) {

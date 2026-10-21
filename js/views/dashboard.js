@@ -147,13 +147,28 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
       dupCount = dupMembers.size;
     } catch (e) { dupCount = 0; }
 
+    const nowMs = Date.now();
+    const dayMs = 86400000;
+    const oldestPendingHoursDays = (() => {
+      const pendings = state.volunteer_hours.filter(h => h.status === "pending");
+      if (!pendings.length) return 0;
+      const oldest = Math.min(...pendings.map(h => new Date(h.date || h.created_at || nowMs).getTime()));
+      return Math.max(0, Math.floor((nowMs - oldest) / dayMs));
+    })();
+    const oldestPendingVolDays = (() => {
+      const pendings = state.volunteers.filter(v => v.status === "pending" && v.join_date);
+      if (!pendings.length) return 0;
+      const oldest = Math.min(...pendings.map(v => new Date(v.join_date).getTime()));
+      return Math.max(0, Math.floor((nowMs - oldest) / dayMs));
+    })();
+
     const actionItems = [];
     const hp = window.AtharCore.hasPermission;
-    if (pendingVols > 0 && (hp("volunteers", "approve") || hp("volunteers", "edit"))) actionItems.push({ key: "pendingVols", icon: "users", color: "var(--warning)", bg: "var(--warning-light)", count: pendingVols, label: t("dash_pending_vols"), onClick: "window.AtharApp.goVolunteersFilter('pending', {})" });
-    if (pendingHours > 0 && hp("volunteer_hours", "approve")) actionItems.push({ key: "pendingHours", icon: "clock", color: "var(--info)", bg: "var(--info-light)", count: pendingHours, label: t("dash_pending_hours"), onClick: "window.AtharApp.goHoursFilter('pending')" });
-    if (followupCount > 0 && hp("volunteers", "view")) actionItems.push({ key: "followup", icon: "message_circle", color: "var(--primary)", bg: "var(--primary-light)", count: followupCount, label: t("dash_needs_followup"), onClick: "window.AtharApp.goVolunteersFilter('active', { followup: true })" });
-    if (readyCount > 0 && (hp("certificates", "create") || hp("volunteers", "view"))) actionItems.push({ key: "ready", icon: "award", color: "var(--success)", bg: "var(--success-light)", count: readyCount, label: t("dash_ready_certs"), onClick: "window.AtharApp.goVolunteersFilter('all', { ready: true })" });
-    if (dupCount > 0 && (hp("volunteers", "edit") || hp("volunteers", "delete"))) actionItems.push({ key: "dup", icon: "alert", color: "var(--warning)", bg: "var(--warning-light)", count: dupCount, label: t("dash_possible_dupes"), onClick: "window.AtharApp.goVolunteersFilter('all', { dup: true })" });
+    if (pendingVols > 0 && (hp("volunteers", "approve") || hp("volunteers", "edit"))) actionItems.push({ key: "pendingVols", icon: "users", color: "var(--warning)", bg: "var(--warning-light)", count: pendingVols, label: t("dash_pending_vols"), sub: oldestPendingVolDays > 0 ? (App.currentLang === "ar" ? `أقدمها منذ ${oldestPendingVolDays} يوم` : `oldest ${oldestPendingVolDays}d`) : "", onClick: "window.AtharApp.goVolunteersFilter('pending', {})" });
+    if (pendingHours > 0 && hp("volunteer_hours", "approve")) actionItems.push({ key: "pendingHours", icon: "clock", color: "var(--info)", bg: "var(--info-light)", count: pendingHours, label: t("dash_pending_hours"), sub: oldestPendingHoursDays > 0 ? (App.currentLang === "ar" ? `أقدمها منذ ${oldestPendingHoursDays} يوم` : `oldest ${oldestPendingHoursDays}d`) : "", onClick: "window.AtharApp.goHoursFilter('pending')" });
+    if (followupCount > 0 && hp("volunteers", "view")) actionItems.push({ key: "followup", icon: "message_circle", color: "var(--primary)", bg: "var(--primary-light)", count: followupCount, label: t("dash_needs_followup"), sub: "", onClick: "window.AtharApp.goVolunteersFilter('active', { followup: true })" });
+    if (readyCount > 0 && (hp("certificates", "create") || hp("volunteers", "view"))) actionItems.push({ key: "ready", icon: "award", color: "var(--success)", bg: "var(--success-light)", count: readyCount, label: t("dash_ready_certs"), sub: "", onClick: "window.AtharApp.goVolunteersFilter('all', { ready: true })" });
+    if (dupCount > 0 && (hp("volunteers", "edit") || hp("volunteers", "delete"))) actionItems.push({ key: "dup", icon: "alert", color: "var(--warning)", bg: "var(--warning-light)", count: dupCount, label: t("dash_possible_dupes"), sub: "", onClick: "window.AtharApp.goVolunteersFilter('all', { dup: true })" });
 
     const hBarRow = (name, value, max, color, onClick) => {
       const pct = Math.max(4, Math.round((value / max) * 100));
@@ -238,6 +253,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
                   <div class="action-tile-body">
                     <div class="action-tile-count num-ltr">${a.count}</div>
                     <div class="action-tile-label">${a.label}</div>
+                    ${a.sub ? `<div class="action-tile-sub">${a.sub}</div>` : ""}
                   </div>
                   <span class="action-tile-arrow">${ic("chevron_right", 14)}</span>
                 </button>
