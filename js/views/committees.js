@@ -20,12 +20,16 @@
 
     let isGridView = App.committeesView !== "list";
     let filterStatus = App.committeesFilterStatus || "active";
+    let searchQuery = App.committeesSearch || "";
 
     const allCommittees = state.committees || [];
     const visible = allCommittees.filter(c => {
-      if (filterStatus === "all") return true;
-      if (filterStatus === "active") return c.status === "active";
-      if (filterStatus === "archived") return c.status === "archived";
+      if (filterStatus === "all") { /* ok */ } else if (filterStatus === "active") { if (c.status !== "active") return false; } else if (filterStatus === "archived") { if (c.status !== "archived") return false; }
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const hay = ((App.currentLang === 'ar' ? c.name_ar : c.name_en) + " " + (App.currentLang === 'ar' ? c.name_en : c.name_ar) + " " + (c.description_ar || "") + " " + (c.description_en || "")).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
 
@@ -44,6 +48,7 @@
           </p>
         </div>
         <div class="view-header-actions">
+          <input type="search" id="comm-search" class="form-control" style="width:180px;" placeholder="${App.currentLang === 'ar' ? 'بحث في اللجان…' : 'Search committees…'}">
           <select id="comm-filter-status" class="form-control" style="width:140px;">
             <option value="active" ${filterStatus === 'active' ? 'selected' : ''}>${t("active")}</option>
             <option value="archived" ${filterStatus === 'archived' ? 'selected' : ''}>${t("archived")}</option>
@@ -181,6 +186,19 @@
       };
     }
 
+    const commSearch = document.getElementById("comm-search");
+    if (commSearch) {
+      let timer = null;
+      commSearch.oninput = (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          App.committeesSearch = e.target.value;
+          renderCommitteesList(container);
+        }, 200);
+      };
+      commSearch.value = searchQuery;
+    }
+
     // Grid/list toggle
     const toggleBtn = document.getElementById("btn-toggle-comm-view");
     if (toggleBtn) {
@@ -297,6 +315,7 @@
         <div class="view-header-actions">
           ${isArchived && canEdit ? `<button class="btn btn-success btn-sm" id="btn-restore-comm">${ic("refresh", 14)} ${t("restore")}</button>` : ''}
           ${!isArchived && canEdit ? `<button class="btn btn-secondary btn-sm" id="btn-edit-comm-name">${ic("pencil", 14)} ${t("edit")}</button>` : ''}
+          <button class="btn btn-secondary btn-sm" id="btn-print-comm">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة تقرير' : 'Print report'}</button>
           ${!isArchived && hasPermission("meetings", "create") ? `<button class="btn btn-primary btn-sm" onclick="window.AtharModals.openCreateMeetingSlideover('${comm.id}')">${ic("plus", 14)} ${t("add_meeting")}</button>` : ''}
           ${!isArchived && canDelete ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-comm">${ic("trash", 14)} ${t("delete")}</button>` : ''}
         </div>
@@ -381,12 +400,17 @@
 
       <div id="comm-tab-container">
         ${activeTab === 'members' ? `
+          <div class="filter-bar" style="margin-bottom:12px;">
+            <div class="filter-group">
+              <input type="search" id="comm-member-search" class="form-control" placeholder="${App.currentLang === 'ar' ? 'بحث في الأعضاء…' : 'Search members…'}" style="min-width:180px;">
+            </div>
+          </div>
           <div class="table-container">
             <table class="data-table">
               <thead>
                 <tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr>
               </thead>
-              <tbody>
+              <tbody id="comm-members-tbody">
                 ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : `
                   ${pinnedMembers.map(({ volunteer: m, role }) => {
       const s = window.AtharStore.getVolunteerStats(m.id);
@@ -471,8 +495,36 @@
       };
     });
 
+    // Member search filter
+    const memberSearch = document.getElementById("comm-member-search");
+    if (memberSearch) {
+      memberSearch.oninput = () => {
+        const q = memberSearch.value.trim().toLowerCase();
+        const tbody = document.getElementById("comm-members-tbody");
+        if (!tbody) return;
+        tbody.querySelectorAll("tr").forEach(tr => {
+          const name = (tr.textContent || "").toLowerCase();
+          tr.style.display = (!q || name.includes(q)) ? "" : "none";
+        });
+      };
+    }
+
     const editBtn = document.getElementById("btn-edit-comm-name");
     if (editBtn) editBtn.onclick = () => window.AtharModals.openAddCommitteeModal(comm.id);
+
+    const printCommBtn = document.getElementById("btn-print-comm");
+    if (printCommBtn) {
+      printCommBtn.onclick = () => {
+        const w = window.open("", "_blank");
+        if (!w) return;
+        const rows = members.map(m => {
+          const s = window.AtharStore.getVolunteerStats(m.id);
+          return `<tr><td>${escapeHtml(memberName(m))}</td><td>${m.status}</td><td>${s ? s.totalHours : 0} h</td><td>${(m.skills || []).join(", ") || '—'}</td></tr>`;
+        }).join("");
+        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Committee Report</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:4px;} .meta{color:#555;font-size:13px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</h1><div class="meta">${comm.name_en} • ${App.currentLang === 'ar' ? 'الأعضاء' : 'Members'}: ${members.length} • ${App.currentLang === 'ar' ? 'الساعات' : 'Hours'}: ${totalHours} h • ${comm.leader ? (App.currentLang === 'ar' ? 'الرئيس' : 'Leader') + ': ' + escapeHtml(memberName(comm.leader)) : ''}</div><table><thead><tr><th>${App.currentLang === 'ar' ? 'العضو' : 'Member'}</th><th>${t("status")}</th><th>${t("hours")}</th><th>${App.currentLang === 'ar' ? 'المهارات' : 'Skills'}</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No members</td></tr>'}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
+        w.document.close();
+      };
+    }
 
     // ---- Member leadership: inline picker on the details page ----
     const editLeadershipBtn = document.getElementById("btn-edit-leadership");
