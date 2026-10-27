@@ -407,6 +407,10 @@
     const canDelete = hasPermission("volunteers", "delete");
 
     let filterComm = App.volFilterComm || "all";
+    if (App.currentUser && App.currentUser.role === "committee_leader" && App.currentUser.committee_id) {
+      filterComm = App.currentUser.committee_id;
+      App.volFilterComm = filterComm;
+    }
     let filterStatus = App.volFilterStatus || "active";
     let filterSkill = App.volFilterSkill || "all";
     let filterGender = App.volFilterGender || "all";
@@ -619,7 +623,7 @@
       <div class="filter-bar">
         <div class="filter-group">
           <input type="text" id="vol-search-box" class="form-control" style="width:200px;" placeholder="${t("search_volunteers_ph")}" value="${search}">
-          <select id="vol-filter-comm" class="form-control">
+          <select id="vol-filter-comm" class="form-control" ${App.currentUser && App.currentUser.role === 'committee_leader' ? 'disabled' : ''}>
             <option value="all">${t("all_committees")}</option>
             ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
           </select>

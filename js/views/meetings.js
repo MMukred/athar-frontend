@@ -65,6 +65,9 @@
 
     // Filters
     const searchQ = (App.meetingsSearch || "").trim().toLowerCase();
+    if (App.currentUser && App.currentUser.role === "committee_leader" && App.currentUser.committee_id) {
+      App.meetingsFilterComm = App.currentUser.committee_id;
+    }
     const filterComm = App.meetingsFilterComm || "all";
     const dateFrom = App.meetingsDateFrom || "";
     const dateTo = App.meetingsDateTo || "";

@@ -70,6 +70,7 @@ window.AtharAuth = (function () {
       full_name_ar: apiUser.fullNameAr || apiUser.full_name_ar || null,
       preferred_language: apiUser.preferredLanguage || apiUser.preferred_language || "ar",
       role: apiUser.role,
+      committee_id: apiUser.committeeId || apiUser.committee_id || null,
       is_active: apiUser.isActive !== false,
       must_change_password: apiUser.mustChangePassword || apiUser.must_change_password || false,
       permissions: apiUser.permissions || {},

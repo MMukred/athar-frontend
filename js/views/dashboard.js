@@ -212,7 +212,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <span>${t("nav_dashboard")}</span>
           </div>
           <h1 class="view-title">${t("nav_dashboard")}</h1>
-          <p class="view-subtitle">${t("welcome_back")} ${(App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || ''} &bull; ${new Date().toLocaleDateString(App.currentLang === 'ar' ? 'ar-SA' : 'en-US')}</p>
+          <p class="view-subtitle">${t("welcome_back")} ${(App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || ''}${App.currentUser && App.currentUser.role === "committee_leader" && App.currentUser.committee_id ? ' &bull; ' + (state.committees.find(c => c.id === App.currentUser.committee_id) ? (App.currentLang === 'ar' ? state.committees.find(c => c.id === App.currentUser.committee_id).name_ar : state.committees.find(c => c.id === App.currentUser.committee_id).name_en) : '') : ''} &bull; ${new Date().toLocaleDateString(App.currentLang === 'ar' ? 'ar-SA' : 'en-US')}</p>
         </div>
         <div class="view-header-actions">
           <button class="btn btn-secondary btn-sm" id="btn-dash-refresh">
