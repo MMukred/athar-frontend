@@ -184,6 +184,7 @@ window.AtharAPI = (function () {
       update: async (id, p) => (await patch(`/volunteers/${id}`, p)).volunteer,
       archive: async (id) => (await del(`/volunteers/${id}`)).volunteer,
       restore: async (id) => (await post(`/volunteers/${id}/restore`)).volunteer,
+      permanentDelete: async (id) => del(`/volunteers/${id}/permanent`),
       transfer: async (id, toCommitteeId, reason) =>
         (await post(`/volunteers/${id}/transfer`, { toCommitteeId, reason })).volunteer,
       importRows: (rows) => post("/volunteers/import", { rows }),

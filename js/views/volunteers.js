@@ -818,7 +818,8 @@
                         ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openAddVolunteerSlideover('${v.id}')">${t("edit")}</button>` : ''}
                         ${v.status === 'archived'
           ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.restoreVolunteer('${v.id}')">${t("restore")}</button>`
-          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.archiveVolunteer('${v.id}')">${t("archive")}</button>` : '')}
+          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.archiveVolunteer('${v.id}')" title="${App.currentLang === 'ar' ? 'أرشفة (تُستبعد من الإجمالي)' : 'Archive (excluded from totals)'}">${t("archive")}</button>` : '')}
+          ${App.currentUser && App.currentUser.role === 'super_admin' ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.permanentDeleteVolunteer('${v.id}')" title="${App.currentLang === 'ar' ? 'حذف نهائي' : 'Permanent delete'}">${ic("trash", 12)}</button>` : ''}
                       </div>
                     </td>
                   </tr>

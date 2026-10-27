@@ -335,6 +335,30 @@
       }
     },
 
+    permanentDeleteVolunteer: function (volId) {
+      const state = window.AtharStore.getState();
+      const v = state.volunteers.find(x => x.id === volId);
+      if (!v) return;
+      window.AtharCore.showConfirmModal({
+        title: App.currentLang === "ar" ? "حذف نهائي" : "Permanent delete",
+        message: App.currentLang === "ar"
+          ? `سيتم حذف "${v.full_name}" نهائياً مع جميع سجلات الحضور، الساعات، التقييمات، والشهادات. لا يمكن التراجع.`
+          : `Permanently delete "${v.full_name}" along with all attendance, hours, evaluations, and certificates. This cannot be undone.`,
+        confirmText: App.currentLang === "ar" ? "حذف نهائي" : "Delete permanently",
+        isDanger: true,
+        onConfirm: async () => {
+          try {
+            await window.AtharAPI.volunteers.permanentDelete(volId);
+            await window.AtharStore.refreshVolunteers();
+            window.AtharCore.showToast(App.currentLang === "ar" ? "تم الحذف النهائي" : "Permanently deleted", "warning");
+            window.AtharCore.navigateTo("volunteers");
+          } catch (err) {
+            window.AtharCore.showToast(err.message || "Delete failed", "error");
+          }
+        },
+      });
+    },
+
     approveVolunteer: async function (volId) {
       try {
         await window.AtharAPI.volunteers.update(volId, { status: "active" });
