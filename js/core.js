@@ -198,7 +198,7 @@ window.AtharCore = (function () {
       dismissed = true;
       toast.style.opacity = "0";
       toast.style.transform = "translateY(8px)";
-      toast.style.transition = "all 0.2s ease";
+      toast.style.transition = "all 0.2s cubic-bezier(0.4, 0, 1, 1)";
       setTimeout(() => toast.remove(), 250);
     };
     if (action) {

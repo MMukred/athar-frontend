@@ -79,6 +79,9 @@
   --sidebar-collapsed-width: 72px;
   --transition-speed: 0.2s;
   --transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ==========================================================================
@@ -267,7 +270,7 @@ textarea {
   color: var(--neutral-600);
   background: var(--neutral-100);
   border: 1px solid var(--neutral-300);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .sidebar-toggle-btn:hover {
@@ -303,7 +306,7 @@ textarea {
   border-radius: var(--radius-md);
   font-size: 13px;
   color: var(--neutral-900);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .search-input:focus {
@@ -342,7 +345,7 @@ textarea {
   font-size: 13px;
   font-weight: 600;
   color: var(--neutral-700);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .lang-toggle-btn:hover {
@@ -358,7 +361,7 @@ textarea {
   border-radius: var(--radius-full);
   border: 1px solid var(--neutral-300);
   background: var(--surface);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .user-menu-btn:hover {
@@ -451,7 +454,7 @@ textarea {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   position: relative;
   text-decoration: none;
 }
@@ -606,7 +609,7 @@ textarea {
   font-weight: 600;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   white-space: nowrap;
   user-select: none;
 }
@@ -716,7 +719,7 @@ textarea {
   box-shadow: var(--shadow-sm);
   padding: 20px;
   position: relative;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .card:hover {
@@ -753,7 +756,7 @@ textarea {
   border-radius: var(--radius-lg);
   padding: 20px;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -768,7 +771,7 @@ textarea {
   height: 4px;
   background: var(--primary);
   opacity: 0;
-  transition: opacity var(--transition-speed);
+  transition: opacity var(--transition-speed) var(--ease-spring);
 }
 
 .kpi-card:hover {
@@ -953,7 +956,7 @@ textarea {
   background: var(--neutral-50);
   color: var(--neutral-900);
   font-size: 13px;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .form-control:focus {
@@ -1136,7 +1139,7 @@ select.form-control {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .tab-btn:hover {
@@ -1284,7 +1287,7 @@ select.form-control {
   flex-direction: column;
   justify-content: space-between;
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   position: relative;
   overflow: hidden;
 }
@@ -2058,7 +2061,7 @@ select.form-control {
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-md);
   background: var(--neutral-50);
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   font-family: inherit;
 }
 
@@ -2194,7 +2197,7 @@ body.is-logged-out .main-layout {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
   user-select: none;
 }
 
@@ -2281,7 +2284,7 @@ body.is-logged-out .main-layout {
   font-weight: 600;
   cursor: pointer;
   user-select: none;
-  transition: all var(--transition-speed);
+  transition: all var(--transition-speed) var(--ease-spring);
 }
 
 .wa-active-toggle.on {
@@ -2428,7 +2431,7 @@ button:focus-visible,
   height: 2px;
   width: 100%;
   background: var(--neutral-300);
-  animation: toastProgress 3.5s linear forwards;
+  animation: toastProgress 3.5s var(--ease-entrance) forwards;
 }
 
 .toast.toast-success::after {
@@ -2569,7 +2572,7 @@ button:focus-visible,
   border-top-color: transparent;
   border-radius: 50%;
   color: var(--white);
-  animation: spinner 0.6s linear infinite;
+  animation: spinner 0.6s var(--ease-spring) infinite;
 }
 
 @keyframes spinner {
@@ -2864,7 +2867,7 @@ input[type="radio"] {
 .hbar-fill {
   height: 100%;
   border-radius: 6px;
-  transition: width 0.4s ease;
+  transition: width 0.4s var(--ease-entrance);
 }
 
 .hbar-value {
@@ -2884,7 +2887,7 @@ input[type="radio"] {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s var(--ease-spring);
 }
 
 .login-apply-link:hover { opacity: 0.75; text-decoration: underline; }
@@ -3312,7 +3315,7 @@ input[type="radio"] {
     background: rgba(15, 23, 42, 0.5);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s var(--ease-spring);
     z-index: 92;
   }
   .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
@@ -3684,7 +3687,7 @@ input[type="radio"] {
   height: 100%;
   border-radius: 9999px;
   background: var(--primary);
-  transition: width 0.3s ease;
+  transition: width 0.3s var(--ease-entrance);
 }
 
 /* Inline edit buttons in table cells */
@@ -4002,7 +4005,7 @@ button.dup-mark:hover { background: var(--warning-light); }
 
 /* Progress bar for profile completeness */
 .profile-progress { height: 6px; background: var(--neutral-200); border-radius: 9999px; overflow: hidden; }
-.profile-progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), #8A3FFC); border-radius: 9999px; transition: width 0.3s ease; }
+.profile-progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), #8A3FFC); border-radius: 9999px; transition: width 0.3s var(--ease-entrance); }
 
 /* Empty state guidance */
 .empty-state-hint { font-size: 12px; color: var(--neutral-500); margin-top: 4px; }
