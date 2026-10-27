@@ -2245,6 +2245,93 @@ window.AtharModals = (function () {
     };
   }
 
+  function openAddUserModal() {
+    const state = window.AtharStore.getState();
+    const modal = document.getElementById("modal-container");
+    modal.innerHTML = `
+      <div class="overlay-backdrop" id="au-backdrop">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">${ic("user_plus", 18)} ${App.currentLang === 'ar' ? 'إنشاء مستخدم' : 'Create user'}</h3>
+            <button class="btn-icon" id="au-close">&times;</button>
+          </div>
+          <form id="au-form">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'الاسم' : 'Full name'} <span class="required-asterisk">*</span></label>
+                <input type="text" id="au-name" class="form-control" required>
+              </div>
+              <div class="form-field">
+                <label class="field-label">Email <span class="required-asterisk">*</span></label>
+                <input type="email" id="au-email" class="form-control" required dir="ltr">
+              </div>
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'كلمة المرور' : 'Password'} <span class="required-asterisk">*</span></label>
+                <input type="password" id="au-password" class="form-control" required minlength="8" dir="ltr">
+              </div>
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'الدور' : 'Role'} <span class="required-asterisk">*</span></label>
+                <select id="au-role" class="form-control">
+                  <option value="trusted_admin">${App.currentLang === 'ar' ? 'مدير موثوق' : 'Trusted admin'}</option>
+                  <option value="committee_leader">${App.currentLang === 'ar' ? 'رئيس لجنة' : 'Committee leader'}</option>
+                </select>
+              </div>
+              <div class="form-field" id="au-comm-field" style="display:none;">
+                <label class="field-label">${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'} <span class="required-asterisk">*</span></label>
+                <select id="au-comm" class="form-control">
+                  <option value="">—</option>
+                  ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">${App.currentLang === 'ar' ? 'اللغة' : 'Language'}</label>
+                <select id="au-lang" class="form-control">
+                  <option value="ar">العربية</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="au-cancel">${t("cancel")}</button>
+              <button type="submit" class="btn btn-primary">${t("save")}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    const close = () => { modal.innerHTML = ""; };
+    document.getElementById("au-close").onclick = close;
+    document.getElementById("au-cancel").onclick = close;
+    document.getElementById("au-backdrop").onclick = (e) => { if (e.target.id === "au-backdrop") close(); };
+
+    const roleSel = document.getElementById("au-role");
+    const commField = document.getElementById("au-comm-field");
+    const toggleComm = () => {
+      if (commField) commField.style.display = roleSel.value === "committee_leader" ? "" : "none";
+    };
+    if (roleSel) { roleSel.onchange = toggleComm; toggleComm(); }
+
+    document.getElementById("au-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("au-name").value.trim();
+      const email = document.getElementById("au-email").value.trim();
+      const password = document.getElementById("au-password").value;
+      const role = document.getElementById("au-role").value;
+      const commId = document.getElementById("au-comm").value || null;
+      const lang = document.getElementById("au-lang").value;
+      if (role === "committee_leader" && !commId) { showToast(App.currentLang === 'ar' ? 'اختر لجنة' : 'Pick a committee', "error"); return; }
+      try {
+        await window.AtharAPI.users.create({ fullName: name, email, password, role, committeeId: commId, preferredLanguage: lang, mustChangePassword: true });
+        await window.AtharStore.loadAll();
+        showToast(App.currentLang === 'ar' ? 'تم إنشاء المستخدم' : 'User created', "success");
+        close();
+        window.AtharCore.renderCurrentView();
+      } catch (err) {
+        showToast(err.message || "Failed", "error");
+      }
+    };
+  }
+
   return {
     openAddVolunteerSlideover,
     openTransferModal,
@@ -2256,6 +2343,7 @@ window.AtharModals = (function () {
     openDiffModal,
     openRoleSimulatorModal,
     openRevokeCertModal,
+    openAddUserModal,
     openUserMenuModal,
     openEditWhatsAppTemplate,
     duplicateWhatsAppTemplate,

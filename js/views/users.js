@@ -51,7 +51,7 @@
                   ${u.must_change_password ? `<span class="badge badge-warning" style="font-size:9px; margin-inline-start:6px;">${t("default_password_flag")}</span>` : ''}
                 </td>
                 <td style="font-family:var(--font-mono);">${u.email}</td>
-                <td><span class="badge ${u.role === 'super_admin' ? 'badge-primary' : 'badge-neutral'}">${u.role === 'super_admin' ? t("super_admin") : t("trusted_admin")}</span></td>
+                <td><span class="badge ${u.role === 'super_admin' ? 'badge-primary' : u.role === 'committee_leader' ? 'badge-success' : 'badge-neutral'}">${u.role === 'super_admin' ? t("super_admin") : u.role === 'committee_leader' ? (App.currentLang === 'ar' ? 'رئيس لجنة' : 'Committee leader') : t("trusted_admin")}</span></td>
                 <td><span style="font-weight:600;">${u.preset ? u.preset.toUpperCase() : 'FULL / SUPER'}</span></td>
                 <td><span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">${u.is_active ? 'Active' : 'Deactivated'}</span></td>
                 <td class="num-ltr">${u.last_login_at ? String(u.last_login_at).replace("T", " ").slice(0, 16) : '—'}</td>
