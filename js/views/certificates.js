@@ -234,6 +234,7 @@
               <button class="btn btn-primary" id="btn-download-pdf">${ic("download", 14)} Download</button>
             ` : `
               <button class="btn btn-secondary" id="btn-preview-print">${ic("printer", 14)} Print Preview</button>
+              <button class="btn btn-secondary" id="btn-print-png">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة (قالب PNG)' : 'Print (PNG template)'}</button>
             `}
           </div>
         </div>
@@ -550,6 +551,23 @@
       if (previewPrintBtn) {
         previewPrintBtn.onclick = () => {
           window.ExportUtil.printElement("printable-certificate-document", "Certificate Preview");
+        };
+      }
+
+      // ---- Print using PNG template (name centered) ----
+      const pngPrintBtn = document.getElementById("btn-print-png");
+      if (pngPrintBtn) {
+        pngPrintBtn.onclick = () => {
+          const volName = (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) || '';
+          const w = window.open("", "_blank");
+          if (!w) return;
+          w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate</title><style>
+            @page { size: landscape; margin: 0; }
+            html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+            .cert { position: relative; width: 100vw; height: 100vh; background: url('assets/Certifcate.png') center/contain no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .name { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 42px; font-weight: 800; color: #1F2328; text-align: center; white-space: nowrap; }
+          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div></div><script>window.onload=()=>{setTimeout(()=>window.print(),300);};</script></body></html>`);
+          w.document.close();
         };
       }
     }
