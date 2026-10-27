@@ -4,7 +4,23 @@
 (function () {
   "use strict";
 
-  const { App, t, ic, showToast, formatDate } = window.AtharCore;
+  const { App, t, ic, showToast, formatDate, escapeHtml } = window.AtharCore;
+
+  function parseDevice(ua) {
+    if (!ua) return "";
+    let browser = "Browser";
+    if (/Edg\//.test(ua)) browser = "Edge";
+    else if (/Chrome\//.test(ua)) browser = "Chrome";
+    else if (/Firefox\//.test(ua)) browser = "Firefox";
+    else if (/Safari\//.test(ua)) browser = "Safari";
+    let os = "";
+    if (/Windows/.test(ua)) os = "Windows";
+    else if (/Mac OS X/.test(ua)) os = "macOS";
+    else if (/Android/.test(ua)) os = "Android";
+    else if (/iPhone|iPad/.test(ua)) os = "iOS";
+    else if (/Linux/.test(ua)) os = "Linux";
+    return os ? `${browser} · ${os}` : browser;
+  }
 
   async function renderAuditLogs(container) {
     // ---- Loading state ----
@@ -103,14 +119,18 @@
                 <th>Action</th>
                 <th>Entity</th>
                 <th>Summary</th>
-                <th style="text-align:right;">Diff Viewer</th>
+                <th>IP / Device</th>
+                <th style="text-align:right;">Diff</th>
               </tr>
             </thead>
             <tbody>
               ${logs.map(l => `
                 <tr>
                   <td class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${l.created_at}</td>
-                  <td style="font-weight:700;">${l.user_name}</td>
+                  <td style="font-weight:700;">
+                    <div>${l.user_name}</div>
+                    ${l.user_email ? `<div style="font-size:10px; color:var(--neutral-500); font-weight:400;">${l.user_email}</div>` : ''}
+                  </td>
                   <td>
                     <span class="badge ${l.action === 'create' ? 'badge-success'
         : l.action === 'delete' || l.action === 'revoke' ? 'badge-danger'
@@ -122,8 +142,11 @@
                   <td style="font-size:13px; color:var(--neutral-800); max-width:420px;">
                     ${l.details || '—'}
                   </td>
+                  <td style="font-size:11px; color:var(--neutral-500); max-width:140px;">
+                    ${l.ip_address ? `<div class="num-ltr" title="IP address">${l.ip_address}</div>` : '<div style="color:var(--neutral-400);">—</div>'}
+                    ${l.user_agent ? `<div title="${l.user_agent}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help; font-size:10px;">${parseDevice(l.user_agent)}</div>` : ''}
+                  </td>
                   <td>
-                    <div class="row-actions-cell">
                       <button class="btn btn-secondary btn-sm" data-log-id="${l.id}">
                         ${ic("eye", 14)} View Diff
                       </button>

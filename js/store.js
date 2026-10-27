@@ -248,6 +248,7 @@ window.AtharStore = (function () {
       id: l.id,
       user_id: l.userId,
       user_name: l.userName || (l.user && l.user.fullName) || "System",
+      user_email: l.userEmail || (l.user && l.user.email) || null,
       action: l.action,
       entity: l.entity,
       entity_id: l.entityId,
