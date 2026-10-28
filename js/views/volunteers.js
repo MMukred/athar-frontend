@@ -39,8 +39,8 @@
     const s = genderStyle(gender);
     const label = gender === "female" ? (t("female") || "Female") : (t("male") || "Male");
     const dotColor = s.border;
-    return `<span style="display:inline-flex; align-items:center; gap:5px; padding:2px 10px; border-radius:9999px; font-size:11px; font-weight:800; background:${s.bg}; color:${s.text}; border:1.5px solid ${s.border}; box-shadow:0 1px 3px ${s.ring};">
-      <span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; box-shadow:0 0 0 2px ${s.bg};"></span>${label}
+    return `<span style="display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:9999px; font-size:10px; font-weight:600; background:${s.bg}; color:${s.text}; border:1px solid ${s.border};">
+      <span style="width:5px; height:5px; border-radius:50%; background:${dotColor};"></span>${label}
     </span>`;
   }
 

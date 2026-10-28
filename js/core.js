@@ -120,17 +120,17 @@ window.AtharCore = (function () {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     if (gender === "female") {
       return dark
-        ? { border: "#E879F9", bg: "#4A1942", text: "#F9A8D4", ring: "rgba(232,121,249,0.35)" }
-        : { border: "#EC4899", bg: "#FCE7F3", text: "#9D174D", ring: "rgba(236,72,153,0.30)" };
+        ? { border: "#9D5C7C", bg: "#2D1B28", text: "#E8A0BF", ring: "rgba(236,72,153,0.15)" }
+        : { border: "#E8A0BF", bg: "#FDF2F8", text: "#9D174D", ring: "rgba(236,72,153,0.12)" };
     }
     if (gender === "male") {
       return dark
-        ? { border: "#60A5FA", bg: "#1E3A8A", text: "#BFDBFE", ring: "rgba(96,165,250,0.35)" }
-        : { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.30)" };
+        ? { border: "#5B7FA6", bg: "#1A2744", text: "#A8C5E8", ring: "rgba(59,130,246,0.15)" }
+        : { border: "#A8C5E8", bg: "#EFF6FF", text: "#1E40AF", ring: "rgba(59,130,246,0.12)" };
     }
     return dark
-      ? { border: "var(--neutral-300)", bg: "var(--neutral-100)", text: "var(--neutral-500)", ring: "rgba(140,149,159,0.20)" }
-      : { border: "#D0D7DE", bg: "#F6F8FA", text: "#57606A", ring: "rgba(140,149,159,0.20)" };
+      ? { border: "var(--neutral-300)", bg: "var(--neutral-100)", text: "var(--neutral-500)", ring: "rgba(140,149,159,0.12)" }
+      : { border: "#D0D7DE", bg: "#F6F8FA", text: "#57606A", ring: "rgba(140,149,159,0.12)" };
   }
 
   // ===========================================================
