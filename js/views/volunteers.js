@@ -37,10 +37,9 @@
   function genderChip(gender) {
     if (!gender) return "";
     const s = genderStyle(gender);
-    const label = gender === "female" ? (t("female") || "Female") : (t("male") || "Male");
     const dotColor = s.border;
-    return `<span style="display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:9999px; font-size:10px; font-weight:600; background:${s.bg}; color:${s.text}; border:1px solid ${s.border};">
-      <span style="width:5px; height:5px; border-radius:50%; background:${dotColor};"></span>${label}
+    return `<span style="display:inline-flex; align-items:center; padding:0; background:transparent; border:none;">
+      <span style="width:8px; height:8px; border-radius:50%; background:transparent; border:1.5px solid ${dotColor}; display:inline-block;"></span>
     </span>`;
   }
 
