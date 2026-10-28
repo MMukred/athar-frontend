@@ -120,13 +120,13 @@ window.AtharCore = (function () {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     if (gender === "female") {
       return dark
-        ? { border: "#9D3B69", bg: "#3B1B2B", text: "#F9A8D4", ring: "rgba(236,72,153,0.30)" }
-        : { border: "#EC4899", bg: "#FCE7F3", text: "#BE185D", ring: "rgba(236,72,153,0.25)" };
+        ? { border: "#E879F9", bg: "#4A1942", text: "#F9A8D4", ring: "rgba(232,121,249,0.35)" }
+        : { border: "#EC4899", bg: "#FCE7F3", text: "#9D174D", ring: "rgba(236,72,153,0.30)" };
     }
     if (gender === "male") {
       return dark
-        ? { border: "#2F5FA8", bg: "#152741", text: "#93C5FD", ring: "rgba(59,130,246,0.30)" }
-        : { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.25)" };
+        ? { border: "#60A5FA", bg: "#1E3A8A", text: "#BFDBFE", ring: "rgba(96,165,250,0.35)" }
+        : { border: "#3B82F6", bg: "#DBEAFE", text: "#1E40AF", ring: "rgba(59,130,246,0.30)" };
     }
     return dark
       ? { border: "var(--neutral-300)", bg: "var(--neutral-100)", text: "var(--neutral-500)", ring: "rgba(140,149,159,0.20)" }
