@@ -324,7 +324,27 @@
             </div>
           </div>
 
-          <div id="printable-certificate-document">
+          <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="checkbox" id="toggle-png-template" ${App.certUsePngTemplate !== false ? 'checked' : ''}>
+              ${App.currentLang === 'ar' ? 'استخدام قالب PNG' : 'Use PNG template'}
+            </label>
+          </div>
+
+          <div id="png-template-preview" style="${App.certUsePngTemplate === false ? 'display:none;' : ''}">
+            <div class="cert-png-template" id="cert-png-preview">
+              <div class="cert-png-name" id="cert-png-name" style="top:${localStorage.getItem('cert_png_name_top')||'50'}%; left:${localStorage.getItem('cert_png_name_left')||'50'}%;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
+              <div class="cert-png-hours" id="cert-png-hours" style="top:${localStorage.getItem('cert_png_hours_top')||'62'}%; left:${localStorage.getItem('cert_png_hours_left')||'50'}%;">${hoursVal} ${certLang === 'ar' ? 'ساعة' : 'hours'}</div>
+            </div>
+            <div class="cert-pos-controls">
+              <div><label>${certLang === 'ar' ? 'اسم - أعلى %' : 'Name - top %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_name_top')||'50'}" id="pos-name-top"></div>
+              <div><label>${certLang === 'ar' ? 'اسم - يسار %' : 'Name - left %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_name_left')||'50'}" id="pos-name-left"></div>
+              <div><label>${certLang === 'ar' ? 'ساعات - أعلى %' : 'Hours - top %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_hours_top')||'62'}" id="pos-hours-top"></div>
+              <div><label>${certLang === 'ar' ? 'ساعات - يسار %' : 'Hours - left %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_hours_left')||'50'}" id="pos-hours-left"></div>
+            </div>
+          </div>
+
+          <div id="printable-certificate-document" style="${App.certUsePngTemplate !== false ? 'display:none;' : ''}">
             <div class="cert-preview-card" dir="${certLang === 'ar' ? 'rtl' : 'ltr'}">
               <div class="cert-corner-ornament cert-corner-tl"></div>
               <div class="cert-corner-ornament cert-corner-tr"></div>
@@ -575,11 +595,37 @@
             @page { size: landscape; margin: 0; }
             html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
             .cert { position: relative; width: 100vw; height: 100vh; background: url('assets/Certifcate.png') center/contain no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .name { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 42px; font-weight: 800; color: #1F2328; text-align: center; white-space: nowrap; }
-          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div></div><script>window.onload=()=>{setTimeout(()=>window.print(),300);};</script></body></html>`);
+            .name { position: absolute; top: ${localStorage.getItem('cert_png_name_top')||'50'}%; left: ${localStorage.getItem('cert_png_name_left')||'50'}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 42px; font-weight: 800; color: #1F2328; text-align: center; white-space: nowrap; }
+            .hours { position: absolute; top: ${localStorage.getItem('cert_png_hours_top')||'62'}%; left: ${localStorage.getItem('cert_png_hours_left')||'50'}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 24px; font-weight: 700; color: #1F2328; text-align: center; white-space: nowrap; }
+          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${hoursVal} ${certLang === 'ar' ? 'ساعة' : 'hours'}</div></div><script>window.onload=()=>{setTimeout(()=>window.print(),300);};</script></body></html>`);
           w.document.close();
         };
       }
+
+     // ---- PNG template toggle + position sliders ----
+     const togglePng = document.getElementById("toggle-png-template");
+     if (togglePng) {
+       togglePng.onchange = () => {
+         App.certUsePngTemplate = togglePng.checked;
+         const pngPrev = document.getElementById("png-template-preview");
+         const stdPrev = document.getElementById("printable-certificate-document");
+         if (pngPrev) pngPrev.style.display = togglePng.checked ? "" : "none";
+         if (stdPrev) stdPrev.style.display = togglePng.checked ? "none" : "";
+       };
+     }
+     const bindPos = (id, key, targetId, prop) => {
+       const el = document.getElementById(id);
+       if (!el) return;
+       el.oninput = () => {
+         localStorage.setItem(key, el.value);
+         const target = document.getElementById(targetId);
+         if (target) target.style[prop] = el.value + '%';
+       };
+     };
+     bindPos("pos-name-top", "cert_png_name_top", "cert-png-name", "top");
+     bindPos("pos-name-left", "cert_png_name_left", "cert-png-name", "left");
+     bindPos("pos-hours-top", "cert_png_hours_top", "cert-png-hours", "top");
+     bindPos("pos-hours-left", "cert_png_hours_left", "cert-png-hours", "left");
     }
 
     render();

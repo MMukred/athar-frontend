@@ -4108,3 +4108,47 @@ button.dup-mark:hover { background: var(--warning-light); }
 .action-menu-item:hover { background: var(--neutral-100); }
 .action-menu-item.action-menu-danger { color: var(--danger); }
 .action-menu-item.action-menu-danger:hover { background: var(--danger-light, #FEE2E2); }
+
+/* ===== PNG certificate template preview ===== */
+.cert-png-template {
+  position: relative;
+  width: 100%;
+  max-width: 820px;
+  aspect-ratio: 1550 / 255;
+  background: url('../assets/Certifcate.png') center/contain no-repeat;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cert-png-name {
+  position: absolute;
+  font-family: 'Cairo','Inter',sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1F2328;
+  white-space: nowrap;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.cert-png-hours {
+  position: absolute;
+  font-family: 'Cairo','Inter',sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1F2328;
+  white-space: nowrap;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.cert-pos-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.cert-pos-controls label { font-size: 11px; color: var(--neutral-500); font-weight: 600; }
+.cert-pos-controls input { width: 100%; }
