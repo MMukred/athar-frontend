@@ -190,12 +190,17 @@
                   </td>
                   <td>
                     <div class="row-actions-cell">
-                      ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharApp.editHours('${h.id}')" title="${App.currentLang === 'ar' ? 'تعديل الساعات' : 'Adjust hours'}">${ic("pencil", 12)}</button>` : ''}
-                      ${canApprove && h.status === 'pending' ? `
-                        <button class="btn btn-success btn-sm" onclick="window.AtharApp.approveHours('${h.id}')" title="${t("approve")}">${ic("check", 12)}</button>
-                        <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.rejectHours('${h.id}')" title="${t("reject")}">${ic("x", 12)}</button>
-                      ` : ''}
-                      ${canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteHoursEntry('${h.id}')" title="${t("delete")}">${ic("trash", 12)}</button>` : ''}
+                      ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharApp.editHours('${h.id}')" title="${App.currentLang === 'ar' ? 'تعديل' : 'Edit'}">${ic("pencil", 12)} ${App.currentLang === 'ar' ? 'تعديل' : 'Edit'}</button>` : ''}
+                      <div class="action-menu-wrap">
+                        <button type="button" class="btn btn-secondary btn-sm action-menu-trigger" data-action-menu="h-${h.id}" title="${App.currentLang === 'ar' ? 'المزيد' : 'More'}">${ic("more_vertical", 14)}</button>
+                        <div class="action-menu-dropdown" data-action-dropdown="h-${h.id}" hidden>
+                          ${canApprove && h.status === 'pending' ? `
+                            <button type="button" class="action-menu-item" onclick="window.AtharApp.approveHours('${h.id}')">${ic("check", 14)} ${t("approve")}</button>
+                            <button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharApp.rejectHours('${h.id}')">${ic("x", 14)} ${t("reject")}</button>
+                          ` : ''}
+                          ${canDelete ? `<button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharApp.deleteHoursEntry('${h.id}')">${ic("trash", 14)} ${t("delete")}</button>` : ''}
+                        </div>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -395,6 +400,18 @@
         });
       };
     }
+
+    // ---- Kebab action menu toggle ----
+    container.querySelectorAll("[data-action-menu]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-action-menu");
+        const dd = container.querySelector(`[data-action-dropdown="${id}"]`);
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => { if (d !== dd) d.hidden = true; });
+        if (dd) dd.hidden = !dd.hidden;
+      };
+    });
+
   }
 
   window.AtharViews.volunteerHours = (c, p) => renderVolunteerHours(c);

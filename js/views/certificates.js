@@ -79,30 +79,18 @@
                     </td>
                     <td>
                       <div class="row-actions-cell">
-                        <button class="btn btn-secondary btn-sm" data-cert-action="open" data-cert-id="${cert.id}">
-                          ${t("view")}
-                        </button>
-                        ${isIssued ? `
-                          <button class="btn btn-secondary btn-sm" data-cert-action="pdf" data-cert-id="${cert.id}" title="Download PDF">
-                            ${ic("download", 12)} PDF
-                          </button>
-                        ` : ''}
-                        ${isIssued && vol && vol.whatsapp ? `
-                          <button class="btn btn-whatsapp btn-sm" onclick="window.AtharApp.sendCertWhatsApp('${cert.id}')">
-                            ${ic("whatsapp", 12)} Send
-                          </button>
-                        ` : ''}
-                        ${isSuper && isIssued ? `
-                          <button class="btn btn-danger-outline btn-sm" onclick="window.AtharModals.openRevokeCertModal('${cert.id}')">
-                            ${ic("x_circle", 14)} ${t("revoke_certificate")}
-                          </button>
-                        ` : ''}
-                        ${isDraft && isSuper ? `
-                          <button class="btn btn-primary btn-sm" data-cert-action="approve" data-cert-id="${cert.id}">
-                            ${ic("award", 12)} ${t("approve_and_issue")}
-                          </button>
-                        ` : ''}
+                        <button class="btn btn-secondary btn-sm" data-cert-action="open" data-cert-id="${cert.id}">${t("view")}</button>
+                        <div class="action-menu-wrap">
+                          <button type="button" class="btn btn-secondary btn-sm action-menu-trigger" data-action-menu="c-${cert.id}" title="${App.currentLang === 'ar' ? 'المزيد' : 'More'}">${ic("more_vertical", 14)}</button>
+                          <div class="action-menu-dropdown" data-action-dropdown="c-${cert.id}" hidden>
+                            ${isIssued ? `<button type="button" class="action-menu-item" data-cert-action="pdf" data-cert-id="${cert.id}">${ic("download", 14)} PDF</button>` : ''}
+                            ${isIssued && vol && vol.whatsapp ? `<button type="button" class="action-menu-item" onclick="window.AtharApp.sendCertWhatsApp('${cert.id}')">${ic("whatsapp", 14)} ${App.currentLang === 'ar' ? 'إرسال' : 'Send'}</button>` : ''}
+                            ${isSuper && isIssued ? `<button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharModals.openRevokeCertModal('${cert.id}')">${ic("x_circle", 14)} ${t("revoke_certificate")}</button>` : ''}
+                            ${isDraft && isSuper ? `<button type="button" class="action-menu-item" data-cert-action="approve" data-cert-id="${cert.id}">${ic("award", 14)} ${t("approve_and_issue")}</button>` : ''}
+                          </div>
+                        </div>
                       </div>
+                    </td>
                     </td>
                   </tr>
                 `;
@@ -116,7 +104,18 @@
     const addBtn = document.getElementById("btn-add-cert");
     if (addBtn) addBtn.onclick = () => navigateTo("generate-certificate");
 
-    // Wire row actions
+    // ---- Kebab action menu toggle ----
+    container.querySelectorAll("[data-action-menu]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-action-menu");
+        const dd = container.querySelector(`[data-action-dropdown="${id}"]`);
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => { if (d !== dd) d.hidden = true; });
+        if (dd) dd.hidden = !dd.hidden;
+      };
+    });
+
+    // ---- Wire row actions ----
     container.querySelectorAll("[data-cert-action]").forEach(btn => {
       btn.onclick = async () => {
         const id = btn.getAttribute("data-cert-id");
@@ -165,6 +164,17 @@
           }
           return;
         }
+      };
+    });
+
+    // ---- Kebab action menu toggle ----
+    container.querySelectorAll("[data-action-menu]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-action-menu");
+        const dd = container.querySelector(`[data-action-dropdown="${id}"]`);
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => { if (d !== dd) d.hidden = true; });
+        if (dd) dd.hidden = !dd.hidden;
       };
     });
   }

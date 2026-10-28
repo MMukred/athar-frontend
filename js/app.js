@@ -168,6 +168,12 @@
       };
     }
 
+    // ---- Kebab action menu: close on outside click ----
+    document.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".action-menu-wrap")) return;
+      document.querySelectorAll(".action-menu-dropdown").forEach(d => d.hidden = true);
+    });
+
     // ---- Global search (quick-jump: volunteers, committees, meetings, certificates) ----
     if (window.AtharSearch) window.AtharSearch.init();
 
