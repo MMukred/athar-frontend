@@ -626,6 +626,44 @@
      bindPos("pos-name-left", "cert_png_name_left", "cert-png-name", "left");
      bindPos("pos-hours-top", "cert_png_hours_top", "cert-png-hours", "top");
      bindPos("pos-hours-left", "cert_png_hours_left", "cert-png-hours", "left");
+     // ---- Drag-and-drop positioning ----
+     const makeDraggable = (el, topKey, leftKey, topSliderId, leftSliderId) => {
+       if (!el) return;
+       el.style.cursor = "move";
+       el.style.userSelect = "none";
+       let dragging = false;
+       const onDown = (e) => {
+         dragging = true;
+         try { el.setPointerCapture(e.pointerId); } catch(_) {}
+         e.preventDefault();
+       };
+       const onMove = (e) => {
+         if (!dragging) return;
+         const rect = el.parentElement.getBoundingClientRect();
+         const x = ((e.clientX - rect.left) / rect.width) * 100;
+         const y = ((e.clientY - rect.top) / rect.height) * 100;
+         const clampedX = Math.max(2, Math.min(98, x));
+         const clampedY = Math.max(2, Math.min(98, y));
+         el.style.left = clampedX + "%";
+         el.style.top = clampedY + "%";
+         const topSlider = document.getElementById(topSliderId);
+         const leftSlider = document.getElementById(leftSliderId);
+         if (topSlider) topSlider.value = Math.round(clampedY);
+         if (leftSlider) leftSlider.value = Math.round(clampedX);
+       };
+       const onUp = () => {
+         if (!dragging) return;
+         dragging = false;
+         localStorage.setItem(topKey, Math.round(parseFloat(el.style.top)));
+         localStorage.setItem(leftKey, Math.round(parseFloat(el.style.left)));
+       };
+       el.addEventListener("pointerdown", onDown);
+       window.addEventListener("pointermove", onMove);
+       window.addEventListener("pointerup", onUp);
+     };
+     makeDraggable(document.getElementById("cert-png-name"), "cert_png_name_top", "cert_png_name_left", "pos-name-top", "pos-name-left");
+     makeDraggable(document.getElementById("cert-png-hours"), "cert_png_hours_top", "cert_png_hours_left", "pos-hours-top", "pos-hours-left");
+
     }
 
     render();
