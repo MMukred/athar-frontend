@@ -815,14 +815,19 @@
                     <td data-label="${t("last_activity")}"><div class="activity-cell">${activityCellInner}</div></td>
                     <td class="vol-card-actions">
                       <div class="row-actions-cell">
-                        ${v.status === 'pending' && canEdit ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.approveVolunteer('${v.id}')">${ic("check", 12)} ${t("approve_volunteer")}</button>` : ''}
-                        <button class="btn btn-secondary btn-sm" onclick="window.AtharVolunteers.openDetails('${v.id}')" title="${App.currentLang === 'ar' ? 'تفاصيل سريعة' : 'Quick details'}">${ic("eye", 12)}</button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${v.id}'})">${t("view")}</button>
-                        ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openAddVolunteerSlideover('${v.id}')">${t("edit")}</button>` : ''}
-                        ${v.status === 'archived'
-          ? `<button class="btn btn-success btn-sm" onclick="window.AtharApp.restoreVolunteer('${v.id}')">${t("restore")}</button>`
-          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.archiveVolunteer('${v.id}')" title="${App.currentLang === 'ar' ? 'أرشفة (تُستبعد من الإجمالي)' : 'Archive (excluded from totals)'}">${t("archive")}</button>` : '')}
-          ${App.currentUser && App.currentUser.role === 'super_admin' ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.permanentDeleteVolunteer('${v.id}')" title="${App.currentLang === 'ar' ? 'حذف نهائي' : 'Permanent delete'}">${ic("trash", 12)}</button>` : ''}
+                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${v.id}'})" title="${t("view")}">${t("view")}</button>
+                        <div class="action-menu-wrap">
+                          <button type="button" class="btn btn-secondary btn-sm action-menu-trigger" data-action-menu="${v.id}" title="${App.currentLang === 'ar' ? 'المزيد' : 'More'}">${ic("more_vertical", 14)}</button>
+                          <div class="action-menu-dropdown" data-action-dropdown="${v.id}" hidden>
+                            ${v.status === 'pending' && canEdit ? `<button type="button" class="action-menu-item" onclick="window.AtharApp.approveVolunteer('${v.id}')">${ic("check", 14)} ${t("approve_volunteer")}</button>` : ''}
+                            ${canEdit ? `<button type="button" class="action-menu-item" onclick="window.AtharModals.openAddVolunteerSlideover('${v.id}')">${ic("pencil", 14)} ${t("edit")}</button>` : ''}
+                            <button type="button" class="action-menu-item" onclick="window.AtharVolunteers.openDetails('${v.id}')">${ic("eye", 14)} ${App.currentLang === 'ar' ? 'تفاصيل' : 'Details'}</button>
+                            ${v.status === 'archived'
+                              ? `<button type="button" class="action-menu-item" onclick="window.AtharApp.restoreVolunteer('${v.id}')">${ic("refresh", 14)} ${t("restore")}</button>`
+                              : (canDelete ? `<button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharApp.archiveVolunteer('${v.id}')">${ic("archive", 14)} ${t("archive")}</button>` : '')}
+                            ${App.currentUser && App.currentUser.role === 'super_admin' ? `<button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharApp.permanentDeleteVolunteer('${v.id}')">${ic("trash", 14)} ${App.currentLang === 'ar' ? 'حذف نهائي' : 'Delete'}</button>` : ''}
+                          </div>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -869,6 +874,17 @@
     };
 
     bind("vol-search-box", "input", (e) => { App.searchQuery = e.target.value; App.pagination.volunteersPage = 1; renderVolunteersList(container); });
+
+    // ---- Kebab action menu toggle ----
+    container.querySelectorAll("[data-action-menu]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-action-menu");
+        const dd = container.querySelector(`[data-action-dropdown="${id}"]`);
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => { if (d !== dd) d.hidden = true; });
+        if (dd) dd.hidden = !dd.hidden;
+      };
+    });
     bind("vol-filter-comm", "change", (e) => { App.volFilterComm = e.target.value; App.pagination.volunteersPage = 1; renderVolunteersList(container); });
     bind("vol-filter-status", "change", (e) => { App.volFilterStatus = e.target.value; App.pagination.volunteersPage = 1; renderVolunteersList(container); });
     bind("vol-filter-gender", "change", (e) => { App.volFilterGender = e.target.value; App.pagination.volunteersPage = 1; renderVolunteersList(container); });
