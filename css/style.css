@@ -4114,7 +4114,7 @@ button.dup-mark:hover { background: var(--warning-light); }
   position: relative;
   width: 100%;
   max-width: 820px;
-  aspect-ratio: 1550 / 255;
+  aspect-ratio: 2000 / 1414;
   background: url('../assets/Certifcate.png') center/contain no-repeat;
   border-radius: var(--radius-md);
   overflow: hidden;
