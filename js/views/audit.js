@@ -51,7 +51,21 @@
 
     try {
       const res = await window.AtharAPI.audit.list({ limit: 100 });
-      logs = res.items || [];
+      logs = (res.items || []).map(l => ({
+        id: l.id,
+        user_id: l.userId,
+        user_name: l.userName || (l.user && l.user.fullName) || "System",
+        user_email: l.userEmail || (l.user && l.user.email) || null,
+        action: l.action,
+        entity: l.entity,
+        entity_id: l.entityId,
+        details: l.details,
+        old_value: l.oldValue,
+        new_value: l.newValue,
+        ip_address: l.ipAddress,
+        user_agent: l.userAgent,
+        created_at: l.createdAt,
+      }));
       meta = res.meta || null;
       // Sync cache so openDiffModal can use it
       const state = window.AtharStore.getState();
