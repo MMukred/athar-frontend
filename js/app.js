@@ -149,6 +149,25 @@
       if (quickAddMenu && !quickAddMenu.hidden && !e.target.closest("#quick-add-wrap")) closeQuickAdd();
     });
 
+    // ---- Scroll to top button ----
+    const scrollTopBtn = document.getElementById("scroll-top-btn");
+    if (scrollTopBtn) {
+      const scrollContainer = () => document.querySelector(".content-area") || window;
+      const onScroll = () => {
+        const el = document.querySelector(".content-area");
+        const scrolled = el ? el.scrollTop : window.scrollY;
+        scrollTopBtn.classList.toggle("show", scrolled > 300);
+      };
+      const contentArea = document.querySelector(".content-area");
+      if (contentArea) contentArea.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("scroll", onScroll, { passive: true });
+      scrollTopBtn.onclick = () => {
+        const el = document.querySelector(".content-area");
+        if (el) el.scrollTo({ top: 0, behavior: "smooth" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+    }
+
     // ---- Global search (quick-jump: volunteers, committees, meetings, certificates) ----
     if (window.AtharSearch) window.AtharSearch.init();
 

@@ -511,7 +511,7 @@ textarea {
   top: 4px;
   right: 6px;
   padding: 2px 5px;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .sidebar-footer {
@@ -4052,3 +4052,23 @@ button.dup-mark:hover { background: var(--warning-light); }
 .quick-action-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border: 1px solid var(--neutral-300); border-radius: var(--radius-md); background: var(--surface); cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--neutral-800); transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s; }
 .quick-action-btn:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06)); color: var(--primary); }
 .quick-action-btn span { text-align: center; }
+
+/* ===== Round 27: UX checklist (mobile touch targets, no tiny fonts) ===== */
+@media (max-width: 720px) {
+  .btn, .btn-sm, .btn-icon { min-height: 40px; min-width: 40px; }
+  .form-control { min-height: 40px; }
+  .nav-item { min-height: 44px; }
+}
+
+/* Scroll-to-top button */
+.scroll-top-btn {
+  position: fixed; bottom: 24px; inset-inline-end: 24px;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--primary); color: #fff; border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  cursor: pointer; z-index: 900;
+  display: none; align-items: center; justify-content: center;
+  transition: transform 0.2s var(--ease-spring), opacity 0.2s var(--ease-entrance);
+}
+.scroll-top-btn.show { display: flex; }
+.scroll-top-btn:hover { transform: translateY(-3px); }
