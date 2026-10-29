@@ -647,6 +647,7 @@
             };
             img.onerror = go;
             img.src = '${pngUrl}';
+            setTimeout(go, 1500);
           </script></body></html>`);
           w.document.close();
         };
