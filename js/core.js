@@ -157,6 +157,23 @@ window.AtharCore = (function () {
       .replace(/'/g, "&#039;");
   }
 
+  // Tagged template that escapes every interpolated value by default.
+  // Wrap trusted markup with raw() to opt out: html`<b>${raw markup}</b>`.
+  function raw(value) { return { __raw: true, value: String(value == null ? "" : value) }; }
+  function html(strings, ...values) {
+    let out = "";
+    for (let i = 0; i < strings.length; i++) {
+      out += strings[i];
+      if (i < values.length) {
+        const v = values[i];
+        if (v && v.__raw) out += v.value;
+        else if (Array.isArray(v)) out += v.map(x => (x && x.__raw) ? x.value : escapeHtml(x)).join("");
+        else out += escapeHtml(v);
+      }
+    }
+    return out;
+  }
+
   // ===========================================================
   // Icon helper
   // ===========================================================
@@ -617,7 +634,8 @@ window.AtharCore = (function () {
     genderStyle,
     splitNotes,
     escapeHtml,
-    ic,
+    html,
+    raw,    ic,
     showToast,
     showUndoToast,
     showConfirmModal,

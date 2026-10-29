@@ -23,9 +23,10 @@ window.AtharAPI = (function () {
   function loadTokens() {
     try {
       const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
-      const store = remembered ? localStorage : sessionStorage;
       accessToken = sessionStorage.getItem(ACCESS_KEY) || localStorage.getItem(ACCESS_KEY);
-      refreshToken = store.getItem(REFRESH_KEY) || localStorage.getItem(REFRESH_KEY);
+      // Refresh token is shared across tabs via localStorage to avoid
+      // concurrent rotations revoking the whole token family.
+      refreshToken = localStorage.getItem(REFRESH_KEY) || (remembered ? null : sessionStorage.getItem(REFRESH_KEY));
     } catch { }
   }
 
@@ -34,12 +35,32 @@ window.AtharAPI = (function () {
     refreshToken = rt;
     try {
       sessionStorage.setItem(ACCESS_KEY, at);
-      const store = remember ? localStorage : sessionStorage;
-      const other = remember ? sessionStorage : localStorage;
-      store.setItem(REFRESH_KEY, rt);
+      // Share the refresh token across tabs to coordinate rotation.
+      localStorage.setItem(REFRESH_KEY, rt);
+      localStorage.setItem(ACCESS_KEY, at);
       localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
-      other.removeItem(REFRESH_KEY);
+      if (!remember) sessionStorage.setItem(REFRESH_KEY, rt);
+      broadcastTokens(at, rt);
     } catch { }
+  }
+
+  // Cross-tab coordination
+  let authChannel = null;
+  try { authChannel = new BroadcastChannel("athar-auth"); } catch { }
+  function broadcastTokens(at, rt) {
+    try { authChannel && authChannel.postMessage({ type: "tokens", accessToken: at, refreshToken: rt }); } catch { }
+  }
+  if (authChannel) {
+    authChannel.onmessage = (ev) => {
+      const m = ev && ev.data;
+      if (!m || m.type !== "tokens") return;
+      if (m.accessToken && m.accessToken !== accessToken) accessToken = m.accessToken;
+      if (m.refreshToken && m.refreshToken !== refreshToken) refreshToken = m.refreshToken;
+      try {
+        if (m.accessToken) sessionStorage.setItem(ACCESS_KEY, m.accessToken);
+        if (m.refreshToken) localStorage.setItem(REFRESH_KEY, m.refreshToken);
+      } catch { }
+    };
   }
 
   function clearTokens() {
@@ -116,17 +137,34 @@ window.AtharAPI = (function () {
   async function ensureFreshToken() {
     if (refreshInFlight) return refreshInFlight;
     refreshInFlight = (async () => {
-      if (!refreshToken) throw new ApiError(401, "NO_REFRESH", "No refresh token");
-      const res = await fetch(`${BASE_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (!res.ok) throw new ApiError(res.status, "REFRESH_FAILED", "Refresh failed");
-      const data = await res.json();
-      const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
-      saveTokens(data.accessToken, data.refreshToken, remembered);
-      return data;
+      const doRefresh = async () => {
+        // Another tab may have already rotated the token; adopt it.
+        try {
+          const sharedRt = localStorage.getItem(REFRESH_KEY);
+          const sharedAt = localStorage.getItem(ACCESS_KEY);
+          if (sharedRt && sharedRt !== refreshToken && sharedAt) {
+            accessToken = sharedAt;
+            refreshToken = sharedRt;
+            try { sessionStorage.setItem(ACCESS_KEY, sharedAt); } catch { }
+            return { accessToken: sharedAt, refreshToken: sharedRt };
+          }
+        } catch { }
+        if (!refreshToken) throw new ApiError(401, "NO_REFRESH", "No refresh token");
+        const res = await fetch(`${BASE_URL}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
+        if (!res.ok) throw new ApiError(res.status, "REFRESH_FAILED", "Refresh failed");
+        const data = await res.json();
+        const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
+        saveTokens(data.accessToken, data.refreshToken, remembered);
+        return data;
+      };
+      if (navigator.locks && navigator.locks.request) {
+        return navigator.locks.request("athar-refresh", { mode: "exclusive" }, doRefresh);
+      }
+      return doRefresh();
     })();
     try { return await refreshInFlight; } finally { refreshInFlight = null; }
   }

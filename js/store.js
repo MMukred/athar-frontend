@@ -269,6 +269,13 @@ window.AtharStore = (function () {
       console.warn("[Store] No API session");
       return state;
     }
+    // Server-enforced password change: skip data loading until the user
+    // changes their password; the change-password modal is forced in boot().
+    const me = window.AtharAuth && window.AtharAuth.getCurrentUser && window.AtharAuth.getCurrentUser();
+    if (me && me.must_change_password) {
+      console.info("[Store] Skipping loadAll until password is changed");
+      return state;
+    }
 
     // (loading logged previously)
     const api = window.AtharAPI;
@@ -336,8 +343,8 @@ window.AtharStore = (function () {
     }
 
     // Users directory: admins get the full list, others just themselves
-    const me = window.AtharAuth?.getCurrentUser?.();
-    if (me) state.users = [adaptUser(me)];
+    const currentUser = window.AtharAuth?.getCurrentUser?.();
+    if (currentUser) state.users = [adaptUser(currentUser)];
     try {
       const usersRes = await api.users.list();
       if (usersRes?.items?.length) state.users = usersRes.items.map(adaptUser);
