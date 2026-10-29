@@ -85,8 +85,8 @@
                 <div>
                   <div class="committee-card-header">
                     <div>
-                      <div class="committee-card-title">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</div>
-                      <div style="font-size:12px; color:var(--neutral-500);">${App.currentLang === 'ar' ? comm.name_en : comm.name_ar}</div>
+                      <div class="committee-card-title">${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</div>
+                      <div style="font-size:12px; color:var(--neutral-500);">${escapeHtml(App.currentLang === 'ar' ? comm.name_en : comm.name_ar)}</div>
                     </div>
                     <span class="badge ${comm.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t(comm.status)}</span>
                   </div>
@@ -118,8 +118,8 @@
                       ${t("view")} ${t("details")}
                     </button>
                     ${isArchived
-          ? (canEdit ? `<button class="btn btn-success btn-sm" data-comm-action="restore" data-comm-id="${comm.id}" data-comm-name="${comm.name_en}">${t("restore")}</button>` : '')
-          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" data-comm-action="archive" data-comm-id="${comm.id}" data-comm-name="${comm.name_en}">${t("delete")}</button>` : '')
+          ? (canEdit ? `<button class="btn btn-success btn-sm" data-comm-action="restore" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("restore")}</button>` : '')
+          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" data-comm-action="archive" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("delete")}</button>` : '')
         }
                   </div>
                 </div>
@@ -148,8 +148,8 @@
       return `
                   <tr>
                     <td>
-                      <div style="font-weight:700;">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</div>
-                      <div style="font-size:11px; color:var(--neutral-500);">${comm.name_en}</div>
+                      <div style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</div>
+                      <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm.name_en)}</div>
                     </td>
                     <td>
                       <div style="font-weight:600;">${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}</div>
@@ -163,8 +163,8 @@
                       <div class="row-actions-cell">
                         <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">${t("view")}</button>
                         ${isArchived
-          ? (canEdit ? `<button class="btn btn-success btn-sm" data-comm-action="restore" data-comm-id="${comm.id}" data-comm-name="${comm.name_en}">${t("restore")}</button>` : '')
-          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" data-comm-action="archive" data-comm-id="${comm.id}" data-comm-name="${comm.name_en}">${t("delete")}</button>` : '')
+          ? (canEdit ? `<button class="btn btn-success btn-sm" data-comm-action="restore" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("restore")}</button>` : '')
+          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" data-comm-action="archive" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("delete")}</button>` : '')
         }
                       </div>
                     </td>
@@ -304,11 +304,11 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('committees')">${t("back_to_committees")}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</span>
+            <span>${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</span>
           </div>
-          <h1 class="view-title">${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</h1>
+          <h1 class="view-title">${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</h1>
           <p class="view-subtitle">
-            ${comm.name_en} &bull; ${t("leader")}: ${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}
+            ${escapeHtml(comm.name_en)} &bull; ${t("leader")}: ${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}
             ${isArchived ? '&bull; <span class="badge badge-neutral">' + t("archived") + '</span>' : ''}
           </p>
         </div>
@@ -521,7 +521,7 @@
           const s = window.AtharStore.getVolunteerStats(m.id);
           return `<tr><td>${escapeHtml(memberName(m))}</td><td>${m.status}</td><td>${s ? s.totalHours : 0} h</td><td>${(m.skills || []).join(", ") || '—'}</td></tr>`;
         }).join("");
-        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Committee Report</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:4px;} .meta{color:#555;font-size:13px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? comm.name_ar : comm.name_en}</h1><div class="meta">${comm.name_en} • ${App.currentLang === 'ar' ? 'الأعضاء' : 'Members'}: ${members.length} • ${App.currentLang === 'ar' ? 'الساعات' : 'Hours'}: ${totalHours} h • ${comm.leader ? (App.currentLang === 'ar' ? 'الرئيس' : 'Leader') + ': ' + escapeHtml(memberName(comm.leader)) : ''}</div><table><thead><tr><th>${App.currentLang === 'ar' ? 'العضو' : 'Member'}</th><th>${t("status")}</th><th>${t("hours")}</th><th>${App.currentLang === 'ar' ? 'المهارات' : 'Skills'}</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No members</td></tr>'}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
+        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Committee Report</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:4px;} .meta{color:#555;font-size:13px;margin-bottom:12px;}</style></head><body><h1>${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</h1><div class="meta">${escapeHtml(comm.name_en)} • ${App.currentLang === 'ar' ? 'الأعضاء' : 'Members'}: ${members.length} • ${App.currentLang === 'ar' ? 'الساعات' : 'Hours'}: ${totalHours} h • ${comm.leader ? (App.currentLang === 'ar' ? 'الرئيس' : 'Leader') + ': ' + escapeHtml(memberName(comm.leader)) : ''}</div><table><thead><tr><th>${App.currentLang === 'ar' ? 'العضو' : 'Member'}</th><th>${t("status")}</th><th>${t("hours")}</th><th>${App.currentLang === 'ar' ? 'المهارات' : 'Skills'}</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No members</td></tr>'}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
         w.document.close();
       };
     }
@@ -602,7 +602,7 @@
       deleteBtn.onclick = () => {
         showConfirmModal({
           title: t("confirm_destructive"),
-          message: `Delete committee "${comm.name_en}"?\n\nIt will be archived (soft-deleted) and can be restored later. Committees with active members cannot be archived.`,
+          message: `Delete committee "${escapeHtml(comm.name_en)}"?\n\nIt will be archived (soft-deleted) and can be restored later. Committees with active members cannot be archived.`,
           confirmText: t("delete"),
           isDanger: true,
           onConfirm: async () => {

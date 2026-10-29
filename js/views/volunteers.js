@@ -202,7 +202,7 @@
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</div>
-                <div style="font-weight:600; font-size:14px;">${v.study_level || "—"}</div>
+                <div style="font-weight:600; font-size:14px;">${escapeHtml(v.study_level || "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("dob") || "Date of Birth"}</div>
@@ -1256,7 +1256,7 @@
         const rows = filtered.map(v => {
           const c = state.committees.find(x => x.id === v.committee_id);
           const comm = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : '—';
-          return `<tr><td>${escapeHtml(volDisplayName(v))}</td><td>${v.phone || '—'}</td><td>${v.whatsapp || '—'}</td><td>${v.email || '—'}</td><td>${comm}</td><td>${t(v.status)}</td></tr>`;
+          return `<tr><td>${escapeHtml(volDisplayName(v))}</td><td>${escapeHtml(v.phone || '—')}</td><td>${escapeHtml(v.whatsapp || '—')}</td><td>${escapeHtml(v.email || '—')}</td><td>${escapeHtml(comm)}</td><td>${t(v.status)}</td></tr>`;
         }).join("");
         w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Volunteer Directory</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? 'دليل المتطوعين' : 'Volunteer Directory'}</h1><p>${filtered.length} ${App.currentLang === 'ar' ? 'متطوع' : 'volunteers'} • ${new Date().toLocaleDateString()}</p><table><thead><tr><th>${App.currentLang === 'ar' ? 'الاسم' : 'Name'}</th><th>${App.currentLang === 'ar' ? 'الهاتف' : 'Phone'}</th><th>WhatsApp</th><th>Email</th><th>${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'}</th><th>${t("status")}</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
         w.document.close();
@@ -1494,7 +1494,7 @@
             <div class="profile-meta-row">
               ${a !== null ? `<div class="profile-meta-item"><strong>${a}</strong> ${App.currentLang === 'ar' ? 'سنة' : 'years old'}</div>` : ''}
               ${vol.nationality ? `<div class="profile-meta-item">${escapeHtml(vol.nationality)}</div>` : ''}
-              ${vol.study_level ? `<div class="profile-meta-item">${vol.study_level}</div>` : ''}
+              ${vol.study_level ? `<div class="profile-meta-item">${escapeHtml(vol.study_level)}</div>` : ''}
               <div class="profile-meta-item">
                 <span>${ic("building", 14)}</span>
                 <span>${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—'}</span>
@@ -1555,7 +1555,7 @@
             <div class="card-title" style="margin-bottom:12px;">${ic("info", 16)} ${App.currentLang === 'ar' ? 'التفاصيل الشخصية' : 'Personal Details'}</div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</div><div style="font-weight:600;">${escapeHtml(vol.nationality || '—')}</div></div>
-              <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</div><div style="font-weight:600;">${vol.study_level || '—'}</div></div>
+              <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</div><div style="font-weight:600;">${escapeHtml(vol.study_level || '—')}</div></div>
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${t("dob")}</div><div class="num-ltr" style="font-weight:600;">${vol.dob || '—'} ${a !== null ? `(${a} ${App.currentLang === 'ar' ? 'سنة' : 'y'})` : ''}</div></div>
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${t("gender")}</div><div style="font-weight:600;">${genderChip(vol.gender) || '—'}</div></div>
             </div>
@@ -1626,10 +1626,10 @@
               ${hoursLog.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding:24px;">—</td></tr>` : hoursLog.map(h => `
                 <tr>
                   <td>${formatDate(h.date)}</td>
-                  <td style="font-weight:600;">${h.activity}</td>
+                  <td style="font-weight:600;">${escapeHtml(h.activity)}</td>
                   <td><span class="num-ltr" style="font-weight:700;">${h.hours} h</span></td>
                   <td><span class="badge ${h.status === 'approved' ? 'badge-success' : h.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${t(h.status)}</span></td>
-                  <td style="color:var(--neutral-600); font-size:12px;">${h.description || ''}</td>
+                  <td style="color:var(--neutral-600); font-size:12px;">${escapeHtml(h.description || '')}</td>
                   <td>
                     <div class="row-actions-cell">
                       ${canEditHours ? `<button class="btn btn-secondary btn-sm" data-volhr-edit="${h.id}" title="${App.currentLang === 'ar' ? 'تعديل' : 'Adjust'}">${ic("pencil", 12)}</button>` : ''}
@@ -1665,7 +1665,7 @@
                     <div class="tl-dot">${ev.icon}</div>
                     <div class="tl-body">
                       <div class="tl-head">
-                        <span class="tl-title">${ev.title}</span>
+                        <span class="tl-title">${escapeHtml(ev.title)}</span>
                         <span class="tl-date num-ltr">${formatDate(dateOnly(ev.date))}</span>
                       </div>
                       ${ev.meta ? `<div class="tl-meta">${ev.meta}</div>` : ''}

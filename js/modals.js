@@ -309,7 +309,7 @@ window.AtharModals = (function () {
           </div>
           <form id="tr-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
-              <div><strong>Volunteer:</strong> ${vol.full_name}</div>
+              <div><strong>Volunteer:</strong> ${escapeHtml(vol.full_name)}</div>
               ${(isLeaderHere || isCoLeaderHere) ? `
                 <div class="alert-soft alert-warning-soft">
                   ⚠️ ${isLeaderHere ? t("leader_badge") : t("coleader_badge")} — ${t("leadership_transfer_warning")}
@@ -875,7 +875,7 @@ window.AtharModals = (function () {
               <div style="padding:12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md);">
                 <div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:6px;">${vols.length} ${App.currentLang === 'ar' ? 'متطوع سيحصل على نفس القيد' : 'volunteer(s) will get the same entry'}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:110px; overflow-y:auto;">
-                  ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
+                  ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(v.full_name)}</span>`).join('')}
                 </div>
               </div>
               <div class="form-field">
@@ -990,7 +990,7 @@ window.AtharModals = (function () {
                 </div>
               ` : ''}
               <div style="display:flex; flex-wrap:wrap; gap:6px; max-height:90px; overflow-y:auto;">
-                ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${v.full_name}</span>`).join('')}
+                ${vols.map(v => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(v.full_name)}</span>`).join('')}
               </div>
               <div class="form-grid">
                 <div class="form-field">
@@ -1202,7 +1202,7 @@ window.AtharModals = (function () {
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
               <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
                 <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
-                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${entry.activity}</div>
+                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${escapeHtml(entry.activity)}</div>
                 <div style="margin-top:4px;"><strong>${t("hours")}:</strong> <span class="num-ltr">${entry.hours}</span> h</div>
                 <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
               </div>
@@ -1270,7 +1270,7 @@ window.AtharModals = (function () {
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
               <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
                 <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
-                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${entry.activity}</div>
+                <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${escapeHtml(entry.activity)}</div>
                 <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
                 <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الحالي' : 'Current'}:</strong> <span class="num-ltr" style="color:var(--primary); font-weight:700;">${entry.hours} h</span></div>
               </div>

@@ -829,7 +829,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
 
     const hBarRow = (name, value, max, color, onClick) => {
       const pct = Math.max(4, Math.round((value / max) * 100));
-      const safeName = String(name || "").replace(/[<>&"]/g, "");
+      const safeName = escapeHtml(name);
       return `
         <div class="hbar-row" ${onClick ? `style="cursor:pointer;" onclick="${onClick}"` : ""}>
           <div class="hbar-label" title="${safeName}">${safeName}</div>
@@ -1157,7 +1157,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
                     <div class="user-avatar" style="width:28px; height:28px; font-size:11px;">${item.vol.full_name.charAt(0)}</div>
                     <div>
                       <div style="font-weight:700; color:var(--neutral-900); font-size:13px;">${App.currentLang === 'ar' ? (item.vol.full_name_ar || item.vol.full_name) : item.vol.full_name}</div>
-                      <div style="font-size:11px; color:var(--neutral-500);">${item.vol.skills ? item.vol.skills.slice(0, 2).join(', ') : ''}</div>
+                      <div style="font-size:11px; color:var(--neutral-500);">${item.vol.skills ? item.vol.skills.slice(0, 2).map(escapeHtml).join(', ') : ''}</div>
                     </div>
                   </div>
                   <div style="font-weight:800; color:var(--success); font-size:14px;" class="num-ltr">${item.hours} h</div>
@@ -1183,7 +1183,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
                     <span style="font-weight:600; color:var(--neutral-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${al.details}</span>
                   </div>
                   <div style="font-size:11px; color:var(--neutral-500); flex-shrink:0;" class="num-ltr">
-                    ${al.user_name} &bull; ${al.created_at}
+                    ${escapeHtml(al.user_name)} &bull; ${al.created_at}
                   </div>
                 </div>
               `).join('')
