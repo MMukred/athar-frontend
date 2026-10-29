@@ -255,7 +255,10 @@ window.AtharAuth = (function () {
     if (toggleBtn) {
       toggleBtn.onclick = function () {
         const pw = document.getElementById("login-password");
-        pw.type = pw.type === "password" ? "text" : "password";
+        const showing = pw.type === "password";
+        pw.type = showing ? "text" : "password";
+        toggleBtn.setAttribute("aria-pressed", showing ? "true" : "false");
+        toggleBtn.setAttribute("aria-label", showing ? "Hide password" : "Show password");
       };
     }
 

@@ -840,7 +840,7 @@ textarea {
 
 .kpi-certs .kpi-icon-badge {
   background: var(--warning-light);
-  color: var(--warning);
+  color: var(--warning-strong);
 }
 
 .kpi-value {
@@ -1113,7 +1113,7 @@ textarea {
 
 .badge-warning {
   background: var(--warning-light);
-  color: var(--warning);
+  color: var(--warning-strong);
   border: 1px solid var(--warning-border);
 }
 
@@ -1811,6 +1811,11 @@ select.form-control {
   flex: 1;
   min-width: 120px;
   font-size: 13px;
+}
+.tag-input-field:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Certificate Preview & Document Staging */
@@ -4060,7 +4065,7 @@ input[type="radio"] {
 button.dup-mark {
   display: inline-flex; align-items: center; justify-content: center;
   width: 17px; height: 17px; padding: 0; border: none; border-radius: 50%;
-  background: var(--warning-subtle); color: var(--warning);
+  background: var(--warning-subtle); color: var(--warning-strong);
   cursor: pointer; vertical-align: middle;
 }
 button.dup-mark:hover { background: var(--warning-light); }
