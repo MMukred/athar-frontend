@@ -186,19 +186,19 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("phone") || "Phone"}</div>
-                <div class="num-ltr" style="font-weight:600; font-size:14px;">${v.phone || "—"}</div>
+                <div class="num-ltr" style="font-weight:600; font-size:14px;">${escapeHtml(v.phone || "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("whatsapp") || "WhatsApp"}</div>
-                <div class="num-ltr" style="font-weight:600; font-size:14px;">${v.whatsapp || "—"}</div>
+                <div class="num-ltr" style="font-weight:600; font-size:14px;">${escapeHtml(v.whatsapp || "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("email") || "Email"}</div>
-                <div style="font-weight:600; font-size:13px; word-break:break-all;">${v.email || "—"}</div>
+                <div style="font-weight:600; font-size:13px; word-break:break-all;">${escapeHtml(v.email || "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</div>
-                <div style="font-weight:600; font-size:14px;">${v.nationality || "—"}</div>
+                <div style="font-weight:600; font-size:14px;">${escapeHtml(v.nationality || "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</div>
@@ -240,7 +240,7 @@
 
             ${(v.skills && v.skills.length) ? `
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                ${v.skills.map(s => `<span class="tag-chip">#${s}</span>`).join('')}
+                ${v.skills.map(s => `<span class="tag-chip">#${escapeHtml(s)}</span>`).join('')}
               </div>
             ` : ''}
           </div>
@@ -786,8 +786,8 @@
                           </div>
                           <div style="display:flex; gap:6px; align-items:center; margin-top:2px; flex-wrap:wrap;">
                             ${genderChip(v.gender)}
-                            ${v.nationality ? `<span style="font-size:10px; color:var(--neutral-500);">${v.nationality}</span>` : ''}
-                            ${(v.skills || []).slice(0, 2).map(s => `<span class="mini-chip">#${escAttr(s)}</span>`).join('')}
+                            ${v.nationality ? `<span style="font-size:10px; color:var(--neutral-500);">${escapeHtml(v.nationality)}</span>` : ''}
+                            ${(v.skills || []).slice(0, 2).map(s => `<span class="mini-chip">#${escapeHtml(s)}</span>`).join('')}
                             ${(v.skills || []).length > 2 ? `<span class="mini-chip" title="${escAttr((v.skills || []).join(', '))}">+${(v.skills || []).length - 2}</span>` : ''}
                             ${dgr && dgr.length ? `<button type="button" class="dup-mark" title="${escAttr(t("dup_mark_title"))}" onclick="event.stopPropagation(); window.AtharVolunteers.openDuplicatesFinder()">${ic("alert", 11)}</button>` : ''}
                           </div>
@@ -1493,7 +1493,7 @@
             </div>
             <div class="profile-meta-row">
               ${a !== null ? `<div class="profile-meta-item"><strong>${a}</strong> ${App.currentLang === 'ar' ? 'سنة' : 'years old'}</div>` : ''}
-              ${vol.nationality ? `<div class="profile-meta-item">${vol.nationality}</div>` : ''}
+              ${vol.nationality ? `<div class="profile-meta-item">${escapeHtml(vol.nationality)}</div>` : ''}
               ${vol.study_level ? `<div class="profile-meta-item">${vol.study_level}</div>` : ''}
               <div class="profile-meta-item">
                 <span>${ic("building", 14)}</span>
@@ -1503,15 +1503,15 @@
                 <span>${ic("calendar", 14)}</span>
                 <span>${formatDate(vol.join_date)}</span>
               </div>
-              ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${vol.phone}</span><button type="button" class="copy-quick" data-copy="${escAttr(vol.phone)}" title="${t("copy")}">${ic("copy", 11)}</button></div>` : ''}
+              ${vol.phone ? `<div class="profile-meta-item">${ic("user", 14)} <span class="num-ltr">${escapeHtml(vol.phone)}</span><button type="button" class="copy-quick" data-copy="${escAttr(vol.phone)}" title="${t("copy")}">${ic("copy", 11)}</button></div>` : ''}
               ${vol.whatsapp ? `
                 <a href="https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-whatsapp btn-sm" style="padding:3px 10px;">
                   ${ic("whatsapp", 12)} WhatsApp
                 </a>
-                <span class="num-ltr profile-meta-item" style="font-family:var(--font-mono); font-size:12px; color:var(--neutral-700);">${vol.whatsapp}</span>
+                <span class="num-ltr profile-meta-item" style="font-family:var(--font-mono); font-size:12px; color:var(--neutral-700);">${escapeHtml(vol.whatsapp)}</span>
                 <button type="button" class="copy-quick" data-copy="${escAttr(vol.whatsapp)}" title="${t("copy")}">${ic("copy", 11)}</button>
               ` : ''}
-              ${vol.email ? `<a class="profile-meta-item" href="mailto:${escAttr(vol.email)}" style="text-decoration:none; color:inherit;">${ic("send", 14)} ${vol.email}</a>` : ''}
+              ${vol.email ? `<a class="profile-meta-item" href="mailto:${escAttr(vol.email)}" style="text-decoration:none; color:inherit;">${ic("send", 14)} ${escapeHtml(vol.email)}</a>` : ''}
             </div>
           </div>
         </div>
@@ -1547,14 +1547,14 @@
           <div class="card" style="margin-bottom:16px;">
             <div class="card-title" style="margin-bottom:12px;">${ic("tag", 16)} ${t("skills")}</div>
             <div style="display:flex; flex-wrap:wrap; gap:8px;">
-              ${(vol.skills && vol.skills.length > 0) ? vol.skills.map(s => `<span class="tag-chip">#${s}</span>`).join('') : '<p style="color:var(--neutral-500);">—</p>'}
+              ${(vol.skills && vol.skills.length > 0) ? vol.skills.map(s => `<span class="tag-chip">#${escapeHtml(s)}</span>`).join('') : '<p style="color:var(--neutral-500);">—</p>'}
             </div>
           </div>
 
           <div class="card" style="margin-bottom:16px;">
             <div class="card-title" style="margin-bottom:12px;">${ic("info", 16)} ${App.currentLang === 'ar' ? 'التفاصيل الشخصية' : 'Personal Details'}</div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-              <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</div><div style="font-weight:600;">${vol.nationality || '—'}</div></div>
+              <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</div><div style="font-weight:600;">${escapeHtml(vol.nationality || '—')}</div></div>
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</div><div style="font-weight:600;">${vol.study_level || '—'}</div></div>
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${t("dob")}</div><div class="num-ltr" style="font-weight:600;">${vol.dob || '—'} ${a !== null ? `(${a} ${App.currentLang === 'ar' ? 'سنة' : 'y'})` : ''}</div></div>
               <div><div style="font-size:11px; color:var(--neutral-500); font-weight:700;">${t("gender")}</div><div style="font-weight:600;">${genderChip(vol.gender) || '—'}</div></div>

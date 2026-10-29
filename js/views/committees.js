@@ -420,12 +420,12 @@
       return `
                     <tr style="${role === "leader" ? "background:rgba(245,183,49,0.12);" : "background:rgba(74,144,226,0.08);"}">
                       <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
-                        ${App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name}
+                        ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
                         ${roleBadge}
                       </td>
                       <td><span class="badge badge-success">${m.status}</span></td>
                       <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
-                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${sk}</span>`).join(' ')}</td>
+                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
                       <td>
                         <div class="row-actions-cell">
                           <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
@@ -440,11 +440,11 @@
       return `
                     <tr>
                       <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
-                        ${App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name}
+                        ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
                       </td>
                       <td><span class="badge badge-success">${m.status}</span></td>
                       <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
-                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${sk}</span>`).join(' ')}</td>
+                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
                       <td>
                         <div class="row-actions-cell">
                           <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>

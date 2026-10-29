@@ -71,19 +71,19 @@ window.AtharModals = (function () {
 
               <div class="form-field">
                 <label class="field-label">${t("volunteer_name")} (EN) <span class="required-asterisk">*</span></label>
-                <input type="text" id="vol-name-en" class="form-control" maxlength="150" value="${existing ? existing.full_name : ''}">
+                <input type="text" id="vol-name-en" class="form-control" maxlength="150" value="${existing ? escapeHtml(existing.full_name) : ''}">
                 <span class="field-hint" id="vol-name-en-err" style="color:var(--danger); display:none;"></span>
               </div>
 
               <div class="form-field">
                 <label class="field-label">${t("volunteer_name")} (AR)</label>
-                <input type="text" id="vol-name-ar" class="form-control" maxlength="150" value="${existing ? (existing.full_name_ar || '') : ''}">
+                <input type="text" id="vol-name-ar" class="form-control" maxlength="150" value="${existing ? escapeHtml(existing.full_name_ar || '') : ''}">
               </div>
 
               <div class="form-grid">
                 <div class="form-field">
                   <label class="field-label">${t("whatsapp")}</label>
-                  <input type="tel" id="vol-wa" class="form-control" placeholder="+96650..." maxlength="30" value="${existing ? (existing.whatsapp || '') : ''}">
+                  <input type="tel" id="vol-wa" class="form-control" placeholder="+96650..." maxlength="30" value="${existing ? escapeHtml(existing.whatsapp || '') : ''}">
                   <span class="field-hint" id="vol-wa-err" style="color:var(--danger); display:none;"></span>
                   <div class="dup-warning" id="vol-wa-dup"></div>
                 </div>
@@ -117,7 +117,7 @@ window.AtharModals = (function () {
                 </div>
                 <div class="form-field">
                   <label class="field-label">${App.currentLang === 'ar' ? 'الجنسية' : 'Nationality'}</label>
-                  <input type="text" id="vol-nationality" class="form-control" maxlength="100" value="${existing ? (existing.nationality || '') : ''}" placeholder="${App.currentLang === 'ar' ? 'سعودي' : 'Saudi'}">
+                  <input type="text" id="vol-nationality" class="form-control" maxlength="100" value="${existing ? escapeHtml(existing.nationality || '') : ''}" placeholder="${App.currentLang === 'ar' ? 'سعودي' : 'Saudi'}">
                 </div>
               </div>
 
@@ -156,7 +156,7 @@ window.AtharModals = (function () {
 
               <div class="form-field">
                 <label class="field-label">${t("notes")}</label>
-                <textarea id="vol-notes" class="form-control" rows="3">${existing ? (existing.notes || '') : ''}</textarea>
+                <textarea id="vol-notes" class="form-control" rows="3">${existing ? escapeHtml(existing.notes || '') : ''}</textarea>
               </div>
 
               <div class="drawer-footer">
