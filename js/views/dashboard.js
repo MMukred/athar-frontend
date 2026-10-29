@@ -14,6 +14,7 @@
   function renderLeaderDashboard(container, committeeId) {
     const state = window.AtharStore.getState();
     const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
+    const arMembers = (n) => (n === 1 ? "عضو" : n === 2 ? "عضوان" : n <= 10 ? "أعضاء" : "عضوًا");
     const hp = window.AtharCore.hasPermission;
     const userName = (App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "";
 
@@ -134,7 +135,9 @@
       if (d === null) return "—";
       if (d === 0) return L("اليوم", "Today");
       if (d === 1) return L("أمس", "Yesterday");
-      return L(`قبل ${d} يوم`, `${d}d ago`);
+      if (d === 2) return L("قبل يومين", "2d ago");
+      if (d <= 10) return L(`قبل ${d} أيام`, `${d}d ago`);
+      return L(`قبل ${d} يومًا`, `${d}d ago`);
     };
 
     const unratedIds = members.filter(v => !evalCountByMember[v.id]).map(v => v.id);
@@ -216,7 +219,9 @@
       actionItems.push({
         icon: "clock", color: "var(--warning)", bg: "var(--warning-light)",
         count: pendingHours.length,
-        label: L("اقتراحات ساعات بانتظار الموافقة", "Hours suggestions awaiting approval"),
+        label: pendingHours.length === 1
+          ? L("اقتراح ساعات بانتظار الموافقة", "Hour suggestion awaiting approval")
+          : L("اقتراحات ساعات بانتظار الموافقة", "Hours suggestions awaiting approval"),
         sub: L("يعتمدها مدير النظام", "Approved by a super admin"),
         onClick: "window.AtharApp.goHoursFilter('pending')",
       });
@@ -225,7 +230,9 @@
       actionItems.push({
         icon: "message_circle", color: "var(--primary)", bg: "var(--primary-light)",
         count: idleCount,
-        label: L("أعضاء بلا نشاط 30+ يوم", "Members idle 30+ days"),
+        label: idleCount === 1
+          ? L("عضو بلا نشاط منذ 30 يومًا", "Member idle 30+ days")
+          : L("أعضاء بلا نشاط منذ 30 يومًا", "Members idle 30+ days"),
         sub: L("تواصل معهم", "Reach out"),
         onClick: "window.AtharApp.goVolunteersFilter('active', { followup: true })",
       });
@@ -234,7 +241,9 @@
       actionItems.push({
         icon: "star", color: "var(--success)", bg: "var(--success-light)",
         count: unratedIds.length,
-        label: L("أعضاء بلا تقييم", "Members not rated yet"),
+        label: unratedIds.length === 1
+          ? L("عضو بلا تقييم", "Member not rated yet")
+          : L("أعضاء بلا تقييم", "Members not rated yet"),
         sub: L("ابدأ التقييم", "Start rating"),
         onClick: "window.AtharApp.navigateTo('evaluations')",
       });
@@ -346,7 +355,7 @@
           ${committeeDesc ? `<div class="leader-committee-desc">${escapeHtml(committeeDesc)}</div>` : ""}
         </div>
         <div class="leader-committee-meta">
-          <span class="badge badge-primary num-ltr">${members.length} ${L("عضو", "members")}</span>
+          <span class="badge badge-primary num-ltr">${App.currentLang === "ar" ? `${members.length} ${arMembers(members.length)}` : `${members.length} members`}</span>
           <span class="badge badge-success num-ltr">${totalApproved.toLocaleString()} h</span>
           <button type="button" class="btn btn-secondary btn-sm" id="leader-open-committee">${ic("building", 14)} ${L("صفحة اللجنة", "Committee page")}</button>
         </div>
