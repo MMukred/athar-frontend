@@ -273,7 +273,6 @@ window.AtharStore = (function () {
     // changes their password; the change-password modal is forced in boot().
     const me = window.AtharAuth && window.AtharAuth.getCurrentUser && window.AtharAuth.getCurrentUser();
     if (me && me.must_change_password) {
-      console.info("[Store] Skipping loadAll until password is changed");
       return state;
     }
 
@@ -360,6 +359,8 @@ window.AtharStore = (function () {
   // ---------------------------------------------------------
   async function refreshVolunteers() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.volunteers.list({ limit: 100, includeArchived: true });
     state.volunteers = (r.items || []).map(adaptVolunteer);
   }
@@ -367,6 +368,8 @@ window.AtharStore = (function () {
   // Latest hours + attendance date per volunteer (server-aggregated).
   async function refreshActivity() {
     if (!window.AtharAPI?.hasSession()) return state.volunteer_activity;
+    const _u2 = window.AtharAuth?.getCurrentUser?.();
+    if (_u2 && _u2.must_change_password) return state.volunteer_activity;
     try {
       const r = await window.AtharAPI.volunteers.activity();
       const actMap = {};
@@ -385,31 +388,43 @@ window.AtharStore = (function () {
   }
   async function refreshCommittees() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.committees.list({ limit: 100 });
     state.committees = (r.items || []).map(adaptCommittee);
   }
   async function refreshMeetings() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.meetings.list({ limit: 100 });
     state.meetings = (r.items || []).map(adaptMeeting);
   }
   async function refreshHours() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.hours.list({ limit: 100 });
     state.volunteer_hours = (r.items || []).map(adaptHours);
   }
   async function refreshCriteria() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const items = await window.AtharAPI.criteria.list();
     state.criteria = (items || []).map(adaptCriterion);
   }
   async function refreshEvaluations() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.evaluations.list({ limit: 100 });
     state.evaluations = (r.items || []).map(adaptEvaluation);
   }
   async function refreshCertificates() {
     if (!window.AtharAPI?.hasSession()) return;
+    const _u = window.AtharAuth?.getCurrentUser?.();
+    if (_u && _u.must_change_password) return;
     const r = await window.AtharAPI.certificates.list({ limit: 100 });
     state.certificates = (r.items || []).map(adaptCertificate);
   }
