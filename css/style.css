@@ -4116,7 +4116,7 @@ button.dup-mark:hover { background: var(--warning-light); }
   gap: 24px;
   align-items: start;
 }
-@media (max-width: 980px) {
+@media (max-width: 1200px) {
   .cert-layout { grid-template-columns: minmax(0, 1fr); }
 }
 .cert-preview-column { min-width: 0; }
