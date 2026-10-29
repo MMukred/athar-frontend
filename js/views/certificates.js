@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
   // =========================================================================
   // Certificates List
@@ -192,6 +192,13 @@
     const isIssued = existingCert && existingCert.status === "issued";
     const isRevoked = existingCert && existingCert.status === "revoked";
 
+    // PNG template positioning — defaults tuned to the uploaded template
+    const PNG_POS_DEFAULTS = { name_top: 46.5, name_left: 51.5, hours_top: 58.2, hours_left: 48.5 };
+    const pngPos = (key) => {
+      const raw = parseFloat(localStorage.getItem("cert_png_v2_" + key));
+      return Number.isFinite(raw) ? raw : PNG_POS_DEFAULTS[key];
+    };
+
     // Current form state (initialized from existing cert, or defaults)
     let targetVolId = volunteerId
       || (existingCert ? existingCert.volunteer_id : null)
@@ -211,10 +218,12 @@
 
     function render() {
       const vol = state.volunteers.find(v => v.id === targetVolId);
-      const comm = vol ? state.committees.find(c => c.id === vol.committee_id) : null;
       const hoursVal = existingCert
         ? existingCert.total_hours
         : computeApprovedHours(targetVolId, startDate, endDate);
+      const hoursDisplay = Number.isFinite(Number(hoursVal))
+        ? Number(Number(hoursVal).toFixed(2))
+        : hoursVal;
       const certNumber = existingCert ? (existingCert.certificate_no || "DRAFT (Unassigned)") : "DRAFT (Unassigned)";
       const qrSvg = window.generateQRCodeSVG(
         (existingCert && existingCert.qr_code) ||
@@ -241,15 +250,16 @@
           <div class="view-header-actions">
             ${isIssued ? `
               <button class="btn btn-secondary" id="btn-open-pdf">${ic("printer", 14)} ${t("print")} / ${t("export_pdf")}</button>
+              <button class="btn btn-secondary" id="btn-print-png">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة (قالب PNG)' : 'Print (PNG template)'}</button>
               <button class="btn btn-primary" id="btn-download-pdf">${ic("download", 14)} Download</button>
             ` : `
-              <button class="btn btn-secondary" id="btn-preview-print">${ic("printer", 14)} Print Preview</button>
+              <button class="btn btn-secondary" id="btn-preview-print" style="${App.certUsePngTemplate !== false ? 'display:none;' : ''}">${ic("printer", 14)} Print Preview</button>
               <button class="btn btn-secondary" id="btn-print-png">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة (قالب PNG)' : 'Print (PNG template)'}</button>
             `}
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 360px 1fr; gap:24px; align-items:start;">
+        <div class="cert-layout">
           <div class="card">
             <h3 style="font-size:15px; margin-bottom:14px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">Configuration</h3>
 
@@ -324,25 +334,40 @@
             </div>
           </div>
 
-          <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; font-weight:600;">
-              <input type="checkbox" id="toggle-png-template" ${App.certUsePngTemplate !== false ? 'checked' : ''}>
-              ${App.currentLang === 'ar' ? 'استخدام قالب PNG' : 'Use PNG template'}
-            </label>
-          </div>
+          <div class="cert-preview-column">
+            <div class="card cert-preview-panel">
+              <div class="cert-preview-toolbar">
+                <div>
+                  <h3 class="cert-preview-title">${App.currentLang === 'ar' ? 'معاينة الشهادة' : 'Certificate preview'}</h3>
+                  <p class="cert-preview-sub">${App.currentLang === 'ar' ? 'اسحب الاسم أو عدد الساعات على القالب لتحديد الموضع' : 'Drag the name or hours onto the template to set their position'}</p>
+                </div>
+                <label class="cert-png-toggle">
+                  <input type="checkbox" id="toggle-png-template" ${App.certUsePngTemplate !== false ? 'checked' : ''}>
+                  <span>${App.currentLang === 'ar' ? 'قالب PNG' : 'PNG template'}</span>
+                </label>
+              </div>
 
-          <div id="png-template-preview" style="${App.certUsePngTemplate === false ? 'display:none;' : ''}">
-            <div class="cert-png-template" id="cert-png-preview">
-              <div class="cert-png-name" id="cert-png-name" style="top:${localStorage.getItem('cert_png_name_top')||'50'}%; left:${localStorage.getItem('cert_png_name_left')||'50'}%;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
-              <div class="cert-png-hours" id="cert-png-hours" style="top:${localStorage.getItem('cert_png_hours_top')||'62'}%; left:${localStorage.getItem('cert_png_hours_left')||'50'}%;">${hoursVal} ${certLang === 'ar' ? 'ساعة' : 'hours'}</div>
-            </div>
-            <div class="cert-pos-controls">
-              <div><label>${certLang === 'ar' ? 'اسم - أعلى %' : 'Name - top %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_name_top')||'50'}" id="pos-name-top"></div>
-              <div><label>${certLang === 'ar' ? 'اسم - يسار %' : 'Name - left %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_name_left')||'50'}" id="pos-name-left"></div>
-              <div><label>${certLang === 'ar' ? 'ساعات - أعلى %' : 'Hours - top %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_hours_top')||'62'}" id="pos-hours-top"></div>
-              <div><label>${certLang === 'ar' ? 'ساعات - يسار %' : 'Hours - left %'}</label><input type="range" min="5" max="95" value="${localStorage.getItem('cert_png_hours_left')||'50'}" id="pos-hours-left"></div>
-            </div>
-          </div>
+              <div id="png-template-preview" style="${App.certUsePngTemplate === false ? 'display:none;' : ''}">
+                <div class="cert-png-stage">
+                  <div class="cert-png-template" id="cert-png-preview">
+                    <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
+                    <div class="cert-png-hours" id="cert-png-hours" style="top:${pngPos('hours_top')}%; left:${pngPos('hours_left')}%;">${hoursDisplay}</div>
+                  </div>
+                </div>
+                <div class="cert-pos-actions">
+                  <span class="cert-pos-hint">${App.currentLang === 'ar' ? 'اسحب النص مباشرة — الموضع يُحفظ تلقائياً' : 'Drag the text directly — position saves automatically'}</span>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-reset-cert-pos">${App.currentLang === 'ar' ? 'إعادة الضبط' : 'Reset position'}</button>
+                </div>
+                <details class="cert-pos-finetune">
+                  <summary>${App.currentLang === 'ar' ? 'ضبط دقيق للموضع' : 'Fine-tune position'}</summary>
+                  <div class="cert-pos-controls">
+                    <div><label>${certLang === 'ar' ? 'اسم - أعلى %' : 'Name - top %'}</label><input type="range" min="2" max="98" value="${pngPos('name_top')}" id="pos-name-top"></div>
+                    <div><label>${certLang === 'ar' ? 'اسم - يسار %' : 'Name - left %'}</label><input type="range" min="2" max="98" value="${pngPos('name_left')}" id="pos-name-left"></div>
+                    <div><label>${certLang === 'ar' ? 'ساعات - أعلى %' : 'Hours - top %'}</label><input type="range" min="2" max="98" value="${pngPos('hours_top')}" id="pos-hours-top"></div>
+                    <div><label>${certLang === 'ar' ? 'ساعات - يسار %' : 'Hours - left %'}</label><input type="range" min="2" max="98" value="${pngPos('hours_left')}" id="pos-hours-left"></div>
+                  </div>
+                </details>
+              </div>
 
           <div id="printable-certificate-document" style="${App.certUsePngTemplate !== false ? 'display:none;' : ''}">
             <div class="cert-preview-card" dir="${certLang === 'ar' ? 'rtl' : 'ltr'}">
@@ -362,12 +387,10 @@
                 </div>
                 <p>
                   ${certLang === 'ar' ? `
-                    قد أتم بنجاح وتفانٍ <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> ساعة من الخدمة التطوعية الفاعلة مع
-                    <span class="cert-highlight">${comm ? comm.name_ar : 'مؤسسة أثر'}</span>
+                    قد أتم بنجاح وتفانٍ <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> ساعة من الخدمة التطوعية الفاعلة
                     خلال الفترة من <span class="num-ltr">${formatDate(startDate)}</span> إلى <span class="num-ltr">${formatDate(endDate)}</span>.
                   ` : `
-                    has passionately and successfully completed <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> hours of distinguished volunteer service with
-                    <span class="cert-highlight">${comm ? comm.name_en : 'Athar Foundation'}</span>
+                    has passionately and successfully completed <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> hours of distinguished volunteer service
                     from <span class="num-ltr">${formatDate(startDate)}</span> to <span class="num-ltr">${formatDate(endDate)}</span>.
                   `}
                 </p>
@@ -391,6 +414,8 @@
                   <div class="cert-no-label" id="cert-preview-no">${certNumber}</div>
                 </div>
               </div>
+            </div>
+          </div>
             </div>
           </div>
         </div>
@@ -580,89 +605,142 @@
       const previewPrintBtn = document.getElementById("btn-preview-print");
       if (previewPrintBtn) {
         previewPrintBtn.onclick = () => {
+          if (App.certUsePngTemplate !== false) {
+            const pngBtn = document.getElementById("btn-print-png");
+            if (pngBtn) { pngBtn.click(); return; }
+          }
           window.ExportUtil.printElement("printable-certificate-document", "Certificate Preview");
         };
       }
 
-      // ---- Print using PNG template (name centered) ----
+      // ---- Print using PNG template ----
       const pngPrintBtn = document.getElementById("btn-print-png");
       if (pngPrintBtn) {
         pngPrintBtn.onclick = () => {
-          const volName = (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) || '';
+          const currentVol = state.volunteers.find(v => v.id === targetVolId);
+          const printHoursRaw = existingCert ? existingCert.total_hours : computeApprovedHours(targetVolId, startDate, endDate);
+          const printHours = Number.isFinite(Number(printHoursRaw)) ? Number(Number(printHoursRaw).toFixed(2)) : printHoursRaw;
+          const volName = (certLang === 'ar' ? (currentVol?.full_name_ar || currentVol?.full_name) : currentVol?.full_name) || '';
+          const pngUrl = new URL("assets/Certifcate.png", window.location.href).href;
           const w = window.open("", "_blank");
           if (!w) return;
-          w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate</title><style>
-            @page { size: landscape; margin: 0; }
-            html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
-            .cert { position: relative; width: 100vw; height: 100vh; background: url('assets/Certifcate.png') center/contain no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .name { position: absolute; top: ${localStorage.getItem('cert_png_name_top')||'50'}%; left: ${localStorage.getItem('cert_png_name_left')||'50'}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 42px; font-weight: 800; color: #1F2328; text-align: center; white-space: nowrap; }
-            .hours { position: absolute; top: ${localStorage.getItem('cert_png_hours_top')||'62'}%; left: ${localStorage.getItem('cert_png_hours_left')||'50'}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 24px; font-weight: 700; color: #1F2328; text-align: center; white-space: nowrap; }
-          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${hoursVal} ${certLang === 'ar' ? 'ساعة' : 'hours'}</div></div><script>window.onload=()=>{setTimeout(()=>window.print(),300);};</script></body></html>`);
+          w.document.write(`<!DOCTYPE html><html dir="${certLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Certificate</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&display=swap" rel="stylesheet">
+          <style>
+            @page { size: A4 landscape; margin: 0; }
+            html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; }
+            .cert { position: relative; width: 100vw; aspect-ratio: 2000 / 1414; background: url('${pngUrl}') center/100% 100% no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 4.2vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
+            .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 2.1vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
+          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${printHours}</div></div><script>
+            var img = new Image();
+            var printed = false;
+            var go = function () {
+              if (printed) return;
+              printed = true;
+              setTimeout(function () { window.print(); }, 250);
+            };
+            img.onload = function () {
+              if (document.fonts && document.fonts.ready) { document.fonts.ready.then(go); } else { go(); }
+            };
+            img.onerror = go;
+            img.src = '${pngUrl}';
+          </script></body></html>`);
           w.document.close();
         };
       }
 
-     // ---- PNG template toggle + position sliders ----
-     const togglePng = document.getElementById("toggle-png-template");
-     if (togglePng) {
-       togglePng.onchange = () => {
-         App.certUsePngTemplate = togglePng.checked;
-         const pngPrev = document.getElementById("png-template-preview");
-         const stdPrev = document.getElementById("printable-certificate-document");
-         if (pngPrev) pngPrev.style.display = togglePng.checked ? "" : "none";
-         if (stdPrev) stdPrev.style.display = togglePng.checked ? "none" : "";
-       };
-     }
-     const bindPos = (id, key, targetId, prop) => {
-       const el = document.getElementById(id);
-       if (!el) return;
-       el.oninput = () => {
-         localStorage.setItem(key, el.value);
-         const target = document.getElementById(targetId);
-         if (target) target.style[prop] = el.value + '%';
-       };
-     };
-     bindPos("pos-name-top", "cert_png_name_top", "cert-png-name", "top");
-     bindPos("pos-name-left", "cert_png_name_left", "cert-png-name", "left");
-     bindPos("pos-hours-top", "cert_png_hours_top", "cert-png-hours", "top");
-     bindPos("pos-hours-left", "cert_png_hours_left", "cert-png-hours", "left");
-     // ---- Drag-and-drop positioning ----
-     const makeDraggable = (el, topKey, leftKey, topSliderId, leftSliderId) => {
-       if (!el) return;
-       el.style.cursor = "move";
-       el.style.userSelect = "none";
-       let dragging = false;
-       const onDown = (e) => {
-         dragging = true;
-         try { el.setPointerCapture(e.pointerId); } catch(_) {}
-         e.preventDefault();
-       };
-       const onMove = (e) => {
-         if (!dragging) return;
-         const rect = el.parentElement.getBoundingClientRect();
-         const x = ((e.clientX - rect.left) / rect.width) * 100;
-         const y = ((e.clientY - rect.top) / rect.height) * 100;
-         const clampedX = Math.max(2, Math.min(98, x));
-         const clampedY = Math.max(2, Math.min(98, y));
-         el.style.left = clampedX + "%";
-         el.style.top = clampedY + "%";
-         const topSlider = document.getElementById(topSliderId);
-         const leftSlider = document.getElementById(leftSliderId);
-         if (topSlider) topSlider.value = Math.round(clampedY);
-         if (leftSlider) leftSlider.value = Math.round(clampedX);
-       };
-       const onUp = () => {
-         if (!dragging) return;
-         dragging = false;
-         localStorage.setItem(topKey, Math.round(parseFloat(el.style.top)));
-         localStorage.setItem(leftKey, Math.round(parseFloat(el.style.left)));
-       };
-       el.addEventListener("pointerdown", onDown);
-       window.addEventListener("pointermove", onMove);
-       window.addEventListener("pointerup", onUp);
-     };
-     makeDraggable(document.getElementById("cert-png-name"), "cert_png_name_top", "cert_png_name_left", "pos-name-top", "pos-name-left");
-     makeDraggable(document.getElementById("cert-png-hours"), "cert_png_hours_top", "cert_png_hours_left", "pos-hours-top", "pos-hours-left");
+      // ---- PNG template toggle + position sliders ----
+      const togglePng = document.getElementById("toggle-png-template");
+      if (togglePng) {
+        togglePng.onchange = () => {
+          App.certUsePngTemplate = togglePng.checked;
+          const pngPrev = document.getElementById("png-template-preview");
+          const stdPrev = document.getElementById("printable-certificate-document");
+          const stdPrintBtn = document.getElementById("btn-preview-print");
+          if (pngPrev) pngPrev.style.display = togglePng.checked ? "" : "none";
+          if (stdPrev) stdPrev.style.display = togglePng.checked ? "none" : "";
+          if (stdPrintBtn) stdPrintBtn.style.display = togglePng.checked ? "none" : "";
+        };
+      }
+      const bindPos = (id, key, targetId, prop) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.oninput = () => {
+          localStorage.setItem("cert_png_v2_" + key, el.value);
+          const target = document.getElementById(targetId);
+          if (target) target.style[prop] = el.value + "%";
+        };
+      };
+      bindPos("pos-name-top", "name_top", "cert-png-name", "top");
+      bindPos("pos-name-left", "name_left", "cert-png-name", "left");
+      bindPos("pos-hours-top", "hours_top", "cert-png-hours", "top");
+      bindPos("pos-hours-left", "hours_left", "cert-png-hours", "left");
+
+      // ---- Reset positions ----
+      const resetPosBtn = document.getElementById("btn-reset-cert-pos");
+      if (resetPosBtn) {
+        resetPosBtn.onclick = () => {
+          const map = {
+            name_top: ["cert-png-name", "top", "pos-name-top"],
+            name_left: ["cert-png-name", "left", "pos-name-left"],
+            hours_top: ["cert-png-hours", "top", "pos-hours-top"],
+            hours_left: ["cert-png-hours", "left", "pos-hours-left"],
+          };
+          Object.entries(map).forEach(([key, [targetId, prop, sliderId]]) => {
+            localStorage.removeItem("cert_png_v2_" + key);
+            const target = document.getElementById(targetId);
+            const slider = document.getElementById(sliderId);
+            if (target) target.style[prop] = PNG_POS_DEFAULTS[key] + "%";
+            if (slider) slider.value = PNG_POS_DEFAULTS[key];
+          });
+        };
+      }
+      // ---- Drag-and-drop positioning ----
+      const makeDraggable = (el, topKey, leftKey, topSliderId, leftSliderId) => {
+        if (!el) return;
+        el.style.cursor = "grab";
+        el.style.userSelect = "none";
+        let dragging = false;
+        const onDown = (e) => {
+          if (e.button !== undefined && e.button !== 0) return;
+          dragging = true;
+          el.classList.add("is-dragging");
+          el.style.cursor = "grabbing";
+          try { el.setPointerCapture(e.pointerId); } catch (_) {}
+          e.preventDefault();
+        };
+        const onMove = (e) => {
+          if (!dragging) return;
+          const rect = el.parentElement.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          const clampedX = Math.max(2, Math.min(98, x));
+          const clampedY = Math.max(2, Math.min(98, y));
+          el.style.left = clampedX + "%";
+          el.style.top = clampedY + "%";
+          const topSlider = document.getElementById(topSliderId);
+          const leftSlider = document.getElementById(leftSliderId);
+          if (topSlider) topSlider.value = Math.round(clampedY);
+          if (leftSlider) leftSlider.value = Math.round(clampedX);
+        };
+        const onUp = () => {
+          if (!dragging) return;
+          dragging = false;
+          el.classList.remove("is-dragging");
+          el.style.cursor = "grab";
+          localStorage.setItem("cert_png_v2_" + topKey, Math.round(parseFloat(el.style.top)));
+          localStorage.setItem("cert_png_v2_" + leftKey, Math.round(parseFloat(el.style.left)));
+        };
+        el.addEventListener("pointerdown", onDown);
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointercancel", onUp);
+      };
+      makeDraggable(document.getElementById("cert-png-name"), "name_top", "name_left", "pos-name-top", "pos-name-left");
+      makeDraggable(document.getElementById("cert-png-hours"), "hours_top", "hours_left", "pos-hours-top", "pos-hours-left");
 
     }
 

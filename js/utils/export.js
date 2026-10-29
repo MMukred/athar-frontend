@@ -123,6 +123,8 @@ window.ExportUtil = (function () {
 
     const isRTL = document.documentElement.getAttribute("dir") === "rtl";
     const lang = document.documentElement.getAttribute("lang") || "en";
+    const cssUrl = new URL("css/style.css", window.location.href).href;
+    const rtlCssUrl = new URL("css/rtl.css", window.location.href).href;
 
     printWindow.document.write(`
 <!DOCTYPE html>
@@ -130,8 +132,8 @@ window.ExportUtil = (function () {
 <head>
   <meta charset="utf-8">
   <title>${title || "Athar Export"}</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/rtl.css">
+  <link rel="stylesheet" href="${cssUrl}">
+  <link rel="stylesheet" href="${rtlCssUrl}">
   <style>
     body { background: white !important; padding: 24px !important; color: #111 !important; }
     .no-print, button, .btn { display: none !important; }
