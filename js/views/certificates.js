@@ -194,10 +194,10 @@
 
     // PNG template positioning — defaults tuned to the uploaded template
     const PNG_POS_DEFAULTS = {
-      name_top: 46.5, name_left: 51.5,
-      hours_top: 58.2, hours_left: 48.5,
-      qr_top: 73.5, qr_left: 85.5,
-      code_top: 85, code_left: 85.5,
+      name_top: 46.5, name_left: 51.5, name_font_size: 4.2,
+      hours_top: 58.2, hours_left: 48.5, hours_font_size: 2.1,
+      qr_top: 73.5, qr_left: 85.5, qr_size: 12.5,
+      code_top: 85, code_left: 85.5, code_font_size: 1.4,
     };
     const pngPos = (key) => {
       const raw = parseFloat(localStorage.getItem("cert_png_v2_" + key));
@@ -365,10 +365,10 @@
               <div id="png-template-preview" style="${App.certUsePngTemplate === false ? 'display:none;' : ''}">
                 <div class="cert-png-stage">
                   <div class="cert-png-template" id="cert-png-preview">
-                    <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
-                    <div class="cert-png-hours" id="cert-png-hours" style="top:${pngPos('hours_top')}%; left:${pngPos('hours_left')}%;">${hoursDisplay}</div>
-                    <div class="cert-png-qr" id="cert-png-qr" style="top:${pngPos('qr_top')}%; left:${pngPos('qr_left')}%;">${qrSvg}</div>
-                    <div class="cert-png-code" id="cert-png-code" style="top:${pngPos('code_top')}%; left:${pngPos('code_left')}%;">${escapeHtml(codeDisplay)}</div>
+                    <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%; font-size:${pngPos('name_font_size')}cqw;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
+                    <div class="cert-png-hours" id="cert-png-hours" style="top:${pngPos('hours_top')}%; left:${pngPos('hours_left')}%; font-size:${pngPos('hours_font_size')}cqw;">${hoursDisplay}</div>
+                    <div class="cert-png-qr" id="cert-png-qr" style="top:${pngPos('qr_top')}%; left:${pngPos('qr_left')}%; width:${pngPos('qr_size')}cqw; height:${pngPos('qr_size')}cqw;">${qrSvg}</div>
+                    <div class="cert-png-code" id="cert-png-code" style="top:${pngPos('code_top')}%; left:${pngPos('code_left')}%; font-size:${pngPos('code_font_size')}cqw;">${escapeHtml(codeDisplay)}</div>
                   </div>
                 </div>
                 <div class="cert-pos-actions">
@@ -386,6 +386,12 @@
                     <div><label>${certLang === 'ar' ? 'QR - يسار %' : 'QR - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('qr_left')}" id="pos-qr-left"></div>
                     <div><label>${certLang === 'ar' ? 'رقم الشهادة - أعلى %' : 'Code - top %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('code_top')}" id="pos-code-top"></div>
                     <div><label>${certLang === 'ar' ? 'رقم الشهادة - يسار %' : 'Code - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('code_left')}" id="pos-code-left"></div>
+                  </div>
+                  <div class="cert-pos-controls" style="margin-top:8px;">
+                    <div><label>${certLang === 'ar' ? 'حجم اسم (vw)' : 'Name size (vw)'}</label><input type="range" min="2" max="8" step="0.1" value="${pngPos('name_font_size')}" id="pos-name-size"></div>
+                    <div><label>${certLang === 'ar' ? 'حجم ساعات (vw)' : 'Hours size (vw)'}</label><input type="range" min="1" max="5" step="0.1" value="${pngPos('hours_font_size')}" id="pos-hours-size"></div>
+                    <div><label>${certLang === 'ar' ? 'حجم QR (vw)' : 'QR size (vw)'}</label><input type="range" min="8" max="20" step="0.5" value="${pngPos('qr_size')}" id="pos-qr-size"></div>
+                    <div><label>${certLang === 'ar' ? 'حجم رقم (vw)' : 'Code size (vw)'}</label><input type="range" min="0.8" max="3" step="0.1" value="${pngPos('code_font_size')}" id="pos-code-size"></div>
                   </div>
                 </details>
               </div>
@@ -650,17 +656,17 @@
           w.document.write(`<!DOCTYPE html><html dir="${certLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Certificate</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=Amiri:wght@400;700&family=Inter:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
           <style>
             
             @page { size: A4 landscape; margin: 0; }
             html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; }
             .cert { position: relative; width: 100vw; aspect-ratio: 2000 / 1414; background: url('${pngUrl}') center/100% 100% no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: 4.2vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
-            .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: 2.1vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
-            .qr { position: absolute; top: ${pngPos('qr_top')}%; left: ${pngPos('qr_left')}%; width: 12.5vw; height: 12.5vw; transform: translate(-50%, -50%); background: #fff; padding: 0.9vw; box-sizing: border-box; border-radius: 4px; }
+            .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: ${pngPos('name_font_size')}vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
+            .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: ${pngPos('hours_font_size')}vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
+            .qr { position: absolute; top: ${pngPos('qr_top')}%; left: ${pngPos('qr_left')}%; width: ${pngPos('qr_size')}vw; height: ${pngPos('qr_size')}vw; transform: translate(-50%, -50%); background: #fff; padding: 0.9vw; box-sizing: border-box; border-radius: 4px; }
             .qr svg { width: 100%; height: 100%; display: block; }
-            .code { position: absolute; top: ${pngPos('code_top')}%; left: ${pngPos('code_left')}%; transform: translate(-50%, -50%); font-family: 'Inter',monospace; font-size: 1.4vw; font-weight: 700; letter-spacing: .08em; color: #14213D; direction: ltr; text-align: center; white-space: nowrap; }
+            .code { position: absolute; top: ${pngPos('code_top')}%; left: ${pngPos('code_left')}%; transform: translate(-50%, -50%); font-family: 'Inter',monospace; font-size: ${pngPos('code_font_size')}vw; font-weight: 700; letter-spacing: .08em; color: #14213D; direction: ltr; text-align: center; white-space: nowrap; }
           </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${printHours}</div><div class="qr">${qrSvg}</div><div class="code">${escapeHtml(codeDisplay)}</div></div><script>
             var img = new Image();
             var printed = false;
@@ -711,6 +717,27 @@
       bindPos("pos-code-top", "code_top", "cert-png-code", "top");
       bindPos("pos-code-left", "code_left", "cert-png-code", "left");
 
+      const bindSize = (id, key, targetId) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.oninput = () => {
+          localStorage.setItem("cert_png_v2_" + key, el.value);
+          const target = document.getElementById(targetId);
+          if (target) target.style.fontSize = el.value + "cqw";
+        };
+      };
+      bindSize("pos-name-size", "name_font_size", "cert-png-name");
+      bindSize("pos-hours-size", "hours_font_size", "cert-png-hours");
+      bindSize("pos-code-size", "code_font_size", "cert-png-code");
+      const qrSizeEl = document.getElementById("pos-qr-size");
+      if (qrSizeEl) {
+        qrSizeEl.oninput = () => {
+          localStorage.setItem("cert_png_v2_qr_size", qrSizeEl.value);
+          const t = document.getElementById("cert-png-qr");
+          if (t) { t.style.width = qrSizeEl.value + "cqw"; t.style.height = qrSizeEl.value + "cqw"; }
+        };
+      }
+
       // ---- Reset positions ----
       const resetPosBtn = document.getElementById("btn-reset-cert-pos");
       if (resetPosBtn) {
@@ -731,6 +758,24 @@
             const slider = document.getElementById(sliderId);
             if (target) target.style[prop] = PNG_POS_DEFAULTS[key] + "%";
             if (slider) slider.value = PNG_POS_DEFAULTS[key];
+          });
+          // reset font sizes / qr size
+          ["name_font_size","hours_font_size","code_font_size","qr_size"].forEach((key) => {
+            localStorage.removeItem("cert_png_v2_" + key);
+            const slider = document.getElementById("pos-" + key.replace("_font_size","-size").replace("qr_size","qr-size").replace("name_size","name-size").replace("hours_size","hours-size").replace("code_size","code-size"));
+          });
+          const nameEl = document.getElementById("cert-png-name");
+          const hoursEl = document.getElementById("cert-png-hours");
+          const codeEl = document.getElementById("cert-png-code");
+          const qrEl = document.getElementById("cert-png-qr");
+          if (nameEl) nameEl.style.fontSize = PNG_POS_DEFAULTS.name_font_size + "cqw";
+          if (hoursEl) hoursEl.style.fontSize = PNG_POS_DEFAULTS.hours_font_size + "cqw";
+          if (codeEl) codeEl.style.fontSize = PNG_POS_DEFAULTS.code_font_size + "cqw";
+          if (qrEl) { qrEl.style.width = PNG_POS_DEFAULTS.qr_size + "cqw"; qrEl.style.height = PNG_POS_DEFAULTS.qr_size + "cqw"; }
+          ["pos-name-size","pos-hours-size","pos-code-size","pos-qr-size"].forEach((id, i) => {
+            const el = document.getElementById(id);
+            const keys = ["name_font_size","hours_font_size","code_font_size","qr_size"];
+            if (el) el.value = PNG_POS_DEFAULTS[keys[i]];
           });
         };
       }
