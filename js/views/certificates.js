@@ -299,7 +299,7 @@
                 ${t("kpi_total_hours")} ${existingCert ? '(server-computed)' : '(preview — server recomputes on save)'}
               </div>
               <div style="font-size:20px; font-weight:800; color:${hoursVal > 0 ? 'var(--success)' : 'var(--danger)'};"
-                   class="num-ltr" id="cert-live-hours-display">${hoursVal} hours</div>
+                   class="num-ltr" id="cert-live-hours-display">${hoursDisplay} hours</div>
               ${hoursVal === 0 ? `
                 <div style="font-size:11px; color:var(--danger); margin-top:2px;">
                   Warning: Volunteer has 0 approved hours in this range.
@@ -387,10 +387,10 @@
                 </div>
                 <p>
                   ${certLang === 'ar' ? `
-                    قد أتم بنجاح وتفانٍ <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> ساعة من الخدمة التطوعية الفاعلة
+                    قد أتم بنجاح وتفانٍ <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursDisplay}</span> ساعة من الخدمة التطوعية الفاعلة
                     خلال الفترة من <span class="num-ltr">${formatDate(startDate)}</span> إلى <span class="num-ltr">${formatDate(endDate)}</span>.
                   ` : `
-                    has passionately and successfully completed <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursVal}</span> hours of distinguished volunteer service
+                    has passionately and successfully completed <span class="cert-highlight num-ltr" id="cert-preview-hours">${hoursDisplay}</span> hours of distinguished volunteer service
                     from <span class="num-ltr">${formatDate(startDate)}</span> to <span class="num-ltr">${formatDate(endDate)}</span>.
                   `}
                 </p>
