@@ -362,7 +362,14 @@ window.AtharModals = (function () {
     volunteerId = volunteerId || null;
     const state = window.AtharStore.getState();
     const slideover = document.getElementById("slideover-container");
-    const active = state.volunteers.filter(v => v.status !== "archived");
+    const isLeader = !!(App.currentUser && App.currentUser.role === "committee_leader");
+    const leaderCid = isLeader
+      ? (App.currentUser.committee_id || (App.currentUser.committee && App.currentUser.committee.id) || null)
+      : null;
+    const active = state.volunteers.filter(v =>
+      v.status !== "archived" && (!isLeader || v.committee_id === leaderCid)
+    );
+    const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
 
     slideover.innerHTML = `
       <div class="overlay-backdrop" id="hr-backdrop">
@@ -394,12 +401,13 @@ window.AtharModals = (function () {
                 </div>
               </div>
               <div class="form-field">
-                <label class="field-label">${t("notes")}</label>
-                <textarea id="hr-notes" class="form-control" rows="3"></textarea>
+                <label class="field-label">${isLeader ? L("سبب الاقتراح", "Reason for suggestion") : t("notes")}${isLeader ? ' <span class="required-asterisk">*</span>' : ''}</label>
+                <textarea id="hr-notes" class="form-control" rows="3" placeholder="${isLeader ? L("اذكر ما تم إنجازه والأدلة المتوفرة", "Describe what was done and any supporting details") : ''}"></textarea>
+                ${isLeader ? `<div class="field-hint">${L("سيُرسل الاقتراح إلى مدير النظام للموافقة قبل احتساب الساعات.", "This suggestion is sent to a super admin for approval before the hours count.")}</div>` : ''}
               </div>
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="hr-cancel">${t("cancel")}</button>
-                <button type="submit" class="btn btn-primary">${t("save")}</button>
+                <button type="submit" class="btn btn-primary">${isLeader ? L("إرسال الاقتراح", "Submit suggestion") : t("save")}</button>
               </div>
             </form>
           </div>
@@ -422,10 +430,14 @@ window.AtharModals = (function () {
       const date = document.getElementById("hr-date").value;
       const notes = document.getElementById("hr-notes").value;
       if (amount <= 0) { showToast("Hours must be > 0", "error"); return; }
+      if (isLeader && !notes.trim()) {
+        showToast(L("يرجى كتابة سبب الاقتراح", "Please add a reason for the suggestion"), "error");
+        return;
+      }
       try {
         await window.AtharAPI.hours.create({ volunteerId: vId, activity, hours: amount, date, description: notes || undefined });
         await window.AtharStore.refreshHours();
-        showToast(t("saved_successfully"), "success");
+        showToast(isLeader ? L("تم إرسال الاقتراح للموافقة", "Suggestion sent for approval") : t("saved_successfully"), "success");
         close();
         window.AtharCore.renderCurrentView();
       } catch (err) { showToast(err.message || "Failed to log hours", "error"); }
@@ -840,8 +852,15 @@ window.AtharModals = (function () {
     volunteerIds = volunteerIds || Array.from(App.selectedVolunteerIds || []);
     if (!volunteerIds.length) { showToast("No volunteers selected", "error"); return; }
     const state = window.AtharStore.getState();
-    const vols = state.volunteers.filter(v => volunteerIds.includes(v.id));
+    const isLeader = !!(App.currentUser && App.currentUser.role === "committee_leader");
+    const leaderCid = isLeader
+      ? (App.currentUser.committee_id || (App.currentUser.committee && App.currentUser.committee.id) || null)
+      : null;
+    const vols = state.volunteers.filter(v =>
+      volunteerIds.includes(v.id) && (!isLeader || v.committee_id === leaderCid)
+    );
     if (!vols.length) { showToast("No matching volunteers", "error"); return; }
+    const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
 
     const slideover = document.getElementById("slideover-container");
     slideover.innerHTML = `
@@ -874,15 +893,16 @@ window.AtharModals = (function () {
                 </div>
               </div>
               <div class="form-field">
-                <label class="field-label">${t("notes")}</label>
-                <textarea id="bhr-notes" class="form-control" rows="2"></textarea>
+                <label class="field-label">${isLeader ? L("سبب الاقتراح", "Reason for suggestion") : t("notes")}${isLeader ? ' <span class="required-asterisk">*</span>' : ''}</label>
+                <textarea id="bhr-notes" class="form-control" rows="2" placeholder="${isLeader ? L("اذكر ما تم إنجازه والأدلة المتوفرة", "Describe what was done and any supporting details") : ''}"></textarea>
+                ${isLeader ? `<div class="field-hint">${L("ستُرسل الاقتراحات إلى مدير النظام للموافقة.", "Suggestions are sent to a super admin for approval.")}</div>` : ''}
               </div>
               <div id="bhr-progress" style="display:none; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px; font-weight:600;">
                 ${App.currentLang === 'ar' ? 'جارٍ الحفظ…' : 'Saving…'} <span id="bhr-progress-text">0 / ${vols.length}</span>
               </div>
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="bhr-cancel">${t("cancel")}</button>
-                <button type="submit" class="btn btn-primary" id="bhr-submit">${t("save")} × ${vols.length}</button>
+                <button type="submit" class="btn btn-primary" id="bhr-submit">${isLeader ? L("إرسال الاقتراحات", "Submit suggestions") : t("save")} × ${vols.length}</button>
               </div>
             </form>
           </div>
@@ -903,6 +923,10 @@ window.AtharModals = (function () {
       const notes = document.getElementById("bhr-notes").value.trim();
       if (!activity) { showToast("Activity required", "error"); return; }
       if (!hours || hours <= 0) { showToast("Hours must be > 0", "error"); return; }
+      if (isLeader && !notes) {
+        showToast(L("يرجى كتابة سبب الاقتراح", "Please add a reason for the suggestion"), "error");
+        return;
+      }
       const submitBtn = document.getElementById("bhr-submit");
       submitBtn.disabled = true;
       document.getElementById("bhr-progress").style.display = "block";
@@ -916,7 +940,11 @@ window.AtharModals = (function () {
         } catch (err) { fail++; }
       }
       await window.AtharStore.refreshHours();
-      if (fail === 0) showToast(`Logged ${hours}h for ${ok} volunteer(s)`, "success");
+      if (isLeader) {
+        if (fail === 0) showToast(L(`تم إرسال ${ok} اقتراحاً للموافقة`, `${ok} suggestion(s) sent for approval`), "success");
+        else if (ok === 0) showToast(L(`فشل إرسال ${fail} اقتراحاً`, `All ${fail} suggestions failed`), "error");
+        else showToast(L(`تم إرسال ${ok} وفشل ${fail}`, `Sent ${ok}, failed ${fail}`), "warning");
+      } else if (fail === 0) showToast(`Logged ${hours}h for ${ok} volunteer(s)`, "success");
       else if (ok === 0) showToast(`All ${fail} entries failed`, "error");
       else showToast(`Logged ${ok}, failed ${fail}`, "warning");
       if (App.selectedVolunteerIds) App.selectedVolunteerIds.clear();
