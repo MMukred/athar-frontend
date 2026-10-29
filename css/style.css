@@ -4172,6 +4172,54 @@ button.dup-mark:hover { background: var(--warning-light); }
 }
 .cert-png-name { font-size: 30px; font-size: 4.2cqw; font-weight: 800; }
 .cert-png-hours { font-size: 16px; font-size: 2.1cqw; font-weight: 700; }
+.cert-png-qr {
+  position: absolute;
+  width: 12.5cqw;
+  height: 12.5cqw;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 0.9cqw;
+  box-sizing: border-box;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  outline: 1.5px dashed transparent;
+  outline-offset: 3px;
+  transition: outline-color .15s ease, box-shadow .15s ease;
+}
+.cert-png-qr svg { width: 100%; height: 100%; display: block; }
+.cert-png-code {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: 'Inter', monospace;
+  font-size: 11px;
+  font-size: 1.4cqw;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: #14213D;
+  direction: ltr;
+  text-align: center;
+  white-space: nowrap;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  outline: 1.5px dashed transparent;
+  outline-offset: 2px;
+  transition: outline-color .15s ease, background-color .15s ease;
+}
+.cert-png-qr:hover, .cert-png-qr.is-dragging {
+  outline-color: rgba(37, 99, 235, .55);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, .08);
+}
+.cert-png-qr.is-dragging { cursor: grabbing; }
+.cert-png-code:hover, .cert-png-code.is-dragging {
+  outline-color: rgba(37, 99, 235, .55);
+  background: rgba(37, 99, 235, .08);
+}
+.cert-png-code.is-dragging { cursor: grabbing; }
 .cert-png-name:hover, .cert-png-hours:hover,
 .cert-png-name.is-dragging, .cert-png-hours.is-dragging {
   outline-color: rgba(37, 99, 235, .55);

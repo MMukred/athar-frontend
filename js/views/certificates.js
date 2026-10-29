@@ -193,7 +193,12 @@
     const isRevoked = existingCert && existingCert.status === "revoked";
 
     // PNG template positioning — defaults tuned to the uploaded template
-    const PNG_POS_DEFAULTS = { name_top: 46.5, name_left: 51.5, hours_top: 58.2, hours_left: 48.5 };
+    const PNG_POS_DEFAULTS = {
+      name_top: 46.5, name_left: 51.5,
+      hours_top: 58.2, hours_left: 48.5,
+      qr_top: 73.5, qr_left: 85.5,
+      code_top: 85, code_left: 85.5,
+    };
     const pngPos = (key) => {
       const raw = parseFloat(localStorage.getItem("cert_png_v2_" + key));
       return Number.isFinite(raw) ? raw : PNG_POS_DEFAULTS[key];
@@ -216,6 +221,19 @@
         .reduce((sum, h) => sum + Number(h.hours), 0);
     }
 
+    // ---- Certificate code + QR (shared by preview and print) ----
+    function getCertNumber() {
+      return existingCert ? (existingCert.certificate_no || "DRAFT (Unassigned)") : "DRAFT (Unassigned)";
+    }
+    function getCodeDisplay() {
+      return existingCert ? (existingCert.certificate_no || "DRAFT") : "DRAFT";
+    }
+    function getQrSvg() {
+      const qrText = (existingCert && existingCert.qr_code)
+        || `${window.location.origin}${window.location.pathname}#public-verify/${getCodeDisplay()}`;
+      return window.generateQRCodeSVG(qrText, 100);
+    }
+
     function render() {
       const vol = state.volunteers.find(v => v.id === targetVolId);
       const hoursVal = existingCert
@@ -224,12 +242,9 @@
       const hoursDisplay = Number.isFinite(Number(hoursVal))
         ? Number(Number(hoursVal).toFixed(2))
         : hoursVal;
-      const certNumber = existingCert ? (existingCert.certificate_no || "DRAFT (Unassigned)") : "DRAFT (Unassigned)";
-      const qrSvg = window.generateQRCodeSVG(
-        (existingCert && existingCert.qr_code) ||
-          `${window.location.origin}${window.location.pathname}#public-verify/${certNumber}`,
-        100,
-      );
+      const certNumber = getCertNumber();
+      const codeDisplay = getCodeDisplay();
+      const qrSvg = getQrSvg();
 
       container.innerHTML = `
         <div class="view-header">
@@ -339,7 +354,7 @@
               <div class="cert-preview-toolbar">
                 <div>
                   <h3 class="cert-preview-title">${App.currentLang === 'ar' ? 'معاينة الشهادة' : 'Certificate preview'}</h3>
-                  <p class="cert-preview-sub">${App.currentLang === 'ar' ? 'اسحب الاسم أو عدد الساعات على القالب لتحديد الموضع' : 'Drag the name or hours onto the template to set their position'}</p>
+                  <p class="cert-preview-sub">${App.currentLang === 'ar' ? 'اسحب الاسم أو الساعات أو رمز QR أو رقم الشهادة لتحديد مواضعها' : 'Drag the name, hours, QR, or certificate code to position them'}</p>
                 </div>
                 <label class="cert-png-toggle">
                   <input type="checkbox" id="toggle-png-template" ${App.certUsePngTemplate !== false ? 'checked' : ''}>
@@ -352,6 +367,8 @@
                   <div class="cert-png-template" id="cert-png-preview">
                     <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
                     <div class="cert-png-hours" id="cert-png-hours" style="top:${pngPos('hours_top')}%; left:${pngPos('hours_left')}%;">${hoursDisplay}</div>
+                    <div class="cert-png-qr" id="cert-png-qr" style="top:${pngPos('qr_top')}%; left:${pngPos('qr_left')}%;">${qrSvg}</div>
+                    <div class="cert-png-code" id="cert-png-code" style="top:${pngPos('code_top')}%; left:${pngPos('code_left')}%;">${escapeHtml(codeDisplay)}</div>
                   </div>
                 </div>
                 <div class="cert-pos-actions">
@@ -361,10 +378,14 @@
                 <details class="cert-pos-finetune">
                   <summary>${App.currentLang === 'ar' ? 'ضبط دقيق للموضع' : 'Fine-tune position'}</summary>
                   <div class="cert-pos-controls">
-                    <div><label>${certLang === 'ar' ? 'اسم - أعلى %' : 'Name - top %'}</label><input type="range" min="2" max="98" value="${pngPos('name_top')}" id="pos-name-top"></div>
-                    <div><label>${certLang === 'ar' ? 'اسم - يسار %' : 'Name - left %'}</label><input type="range" min="2" max="98" value="${pngPos('name_left')}" id="pos-name-left"></div>
-                    <div><label>${certLang === 'ar' ? 'ساعات - أعلى %' : 'Hours - top %'}</label><input type="range" min="2" max="98" value="${pngPos('hours_top')}" id="pos-hours-top"></div>
-                    <div><label>${certLang === 'ar' ? 'ساعات - يسار %' : 'Hours - left %'}</label><input type="range" min="2" max="98" value="${pngPos('hours_left')}" id="pos-hours-left"></div>
+                    <div><label>${certLang === 'ar' ? 'اسم - أعلى %' : 'Name - top %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('name_top')}" id="pos-name-top"></div>
+                    <div><label>${certLang === 'ar' ? 'اسم - يسار %' : 'Name - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('name_left')}" id="pos-name-left"></div>
+                    <div><label>${certLang === 'ar' ? 'ساعات - أعلى %' : 'Hours - top %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('hours_top')}" id="pos-hours-top"></div>
+                    <div><label>${certLang === 'ar' ? 'ساعات - يسار %' : 'Hours - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('hours_left')}" id="pos-hours-left"></div>
+                    <div><label>${certLang === 'ar' ? 'QR - أعلى %' : 'QR - top %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('qr_top')}" id="pos-qr-top"></div>
+                    <div><label>${certLang === 'ar' ? 'QR - يسار %' : 'QR - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('qr_left')}" id="pos-qr-left"></div>
+                    <div><label>${certLang === 'ar' ? 'رقم الشهادة - أعلى %' : 'Code - top %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('code_top')}" id="pos-code-top"></div>
+                    <div><label>${certLang === 'ar' ? 'رقم الشهادة - يسار %' : 'Code - left %'}</label><input type="range" min="2" max="98" step="0.5" value="${pngPos('code_left')}" id="pos-code-left"></div>
                   </div>
                 </details>
               </div>
@@ -621,6 +642,8 @@
           const printHoursRaw = existingCert ? existingCert.total_hours : computeApprovedHours(targetVolId, startDate, endDate);
           const printHours = Number.isFinite(Number(printHoursRaw)) ? Number(Number(printHoursRaw).toFixed(2)) : printHoursRaw;
           const volName = (certLang === 'ar' ? (currentVol?.full_name_ar || currentVol?.full_name) : currentVol?.full_name) || '';
+          const qrSvg = getQrSvg();
+          const codeDisplay = getCodeDisplay();
           const pngUrl = new URL("assets/Certifcate.png", window.location.href).href;
           const w = window.open("", "_blank");
           if (!w) return;
@@ -634,7 +657,10 @@
             .cert { position: relative; width: 100vw; aspect-ratio: 2000 / 1414; background: url('${pngUrl}') center/100% 100% no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 4.2vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
             .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: 'Cairo','Inter',sans-serif; font-size: 2.1vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
-          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${printHours}</div></div><script>
+            .qr { position: absolute; top: ${pngPos('qr_top')}%; left: ${pngPos('qr_left')}%; width: 12.5vw; height: 12.5vw; transform: translate(-50%, -50%); background: #fff; padding: 0.9vw; box-sizing: border-box; border-radius: 4px; }
+            .qr svg { width: 100%; height: 100%; display: block; }
+            .code { position: absolute; top: ${pngPos('code_top')}%; left: ${pngPos('code_left')}%; transform: translate(-50%, -50%); font-family: 'Inter',monospace; font-size: 1.4vw; font-weight: 700; letter-spacing: .08em; color: #14213D; direction: ltr; text-align: center; white-space: nowrap; }
+          </style></head><body><div class="cert"><div class="name">${escapeHtml(volName)}</div><div class="hours">${printHours}</div><div class="qr">${qrSvg}</div><div class="code">${escapeHtml(codeDisplay)}</div></div><script>
             var img = new Image();
             var printed = false;
             var go = function () {
@@ -679,6 +705,10 @@
       bindPos("pos-name-left", "name_left", "cert-png-name", "left");
       bindPos("pos-hours-top", "hours_top", "cert-png-hours", "top");
       bindPos("pos-hours-left", "hours_left", "cert-png-hours", "left");
+      bindPos("pos-qr-top", "qr_top", "cert-png-qr", "top");
+      bindPos("pos-qr-left", "qr_left", "cert-png-qr", "left");
+      bindPos("pos-code-top", "code_top", "cert-png-code", "top");
+      bindPos("pos-code-left", "code_left", "cert-png-code", "left");
 
       // ---- Reset positions ----
       const resetPosBtn = document.getElementById("btn-reset-cert-pos");
@@ -689,6 +719,10 @@
             name_left: ["cert-png-name", "left", "pos-name-left"],
             hours_top: ["cert-png-hours", "top", "pos-hours-top"],
             hours_left: ["cert-png-hours", "left", "pos-hours-left"],
+            qr_top: ["cert-png-qr", "top", "pos-qr-top"],
+            qr_left: ["cert-png-qr", "left", "pos-qr-left"],
+            code_top: ["cert-png-code", "top", "pos-code-top"],
+            code_left: ["cert-png-code", "left", "pos-code-left"],
           };
           Object.entries(map).forEach(([key, [targetId, prop, sliderId]]) => {
             localStorage.removeItem("cert_png_v2_" + key);
@@ -742,6 +776,8 @@
       };
       makeDraggable(document.getElementById("cert-png-name"), "name_top", "name_left", "pos-name-top", "pos-name-left");
       makeDraggable(document.getElementById("cert-png-hours"), "hours_top", "hours_left", "pos-hours-top", "pos-hours-left");
+      makeDraggable(document.getElementById("cert-png-qr"), "qr_top", "qr_left", "pos-qr-top", "pos-qr-left");
+      makeDraggable(document.getElementById("cert-png-code"), "code_top", "code_left", "pos-code-top", "pos-code-left");
 
     }
 
