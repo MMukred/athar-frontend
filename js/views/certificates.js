@@ -650,14 +650,14 @@
           w.document.write(`<!DOCTYPE html><html dir="${certLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Certificate</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
           <style>
-            @font-face { font-family: '29LT Zarid Slab'; src: url('assets/fonts/29LTZaridSlab.woff2') format('woff2'); font-weight: 400 800; font-style: normal; font-display: swap; }
+            
             @page { size: A4 landscape; margin: 0; }
             html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; }
             .cert { position: relative; width: 100vw; aspect-ratio: 2000 / 1414; background: url('${pngUrl}') center/100% 100% no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: '29LT Zarid Slab','Cairo','Georgia',serif; font-size: 4.2vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
-            .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: '29LT Zarid Slab','Cairo','Georgia',serif; font-size: 2.1vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
+            .name { position: absolute; top: ${pngPos('name_top')}%; left: ${pngPos('name_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: 4.2vw; font-weight: 800; color: #14213D; text-align: center; white-space: nowrap; }
+            .hours { position: absolute; top: ${pngPos('hours_top')}%; left: ${pngPos('hours_left')}%; transform: translate(-50%, -50%); font-family: 'Amiri','Cairo',serif; font-size: 2.1vw; font-weight: 700; color: #14213D; text-align: center; white-space: nowrap; }
             .qr { position: absolute; top: ${pngPos('qr_top')}%; left: ${pngPos('qr_left')}%; width: 12.5vw; height: 12.5vw; transform: translate(-50%, -50%); background: #fff; padding: 0.9vw; box-sizing: border-box; border-radius: 4px; }
             .qr svg { width: 100%; height: 100%; display: block; }
             .code { position: absolute; top: ${pngPos('code_top')}%; left: ${pngPos('code_left')}%; transform: translate(-50%, -50%); font-family: 'Inter',monospace; font-size: 1.4vw; font-weight: 700; letter-spacing: .08em; color: #14213D; direction: ltr; text-align: center; white-space: nowrap; }
