@@ -343,7 +343,7 @@
             <span>${L("لوحة رئيس اللجنة", "Committee leader dashboard")}</span>
           </div>
           <h1 class="view-title">${L("لوحة رئيس اللجنة", "Committee leader dashboard")}</h1>
-          <p class="view-subtitle">${t("welcome_back")} ${escapeHtml(userName)} &bull; ${escapeHtml(committeeName)} &bull; ${now.toLocaleDateString(App.currentLang === "ar" ? "ar-SA" : "en-US")}</p>
+          <p class="view-subtitle">${t("welcome_back")} ${escapeHtml(userName)} &bull; ${escapeHtml(committeeName)} </p>
         </div>
         ${headerActions}
       </div>
