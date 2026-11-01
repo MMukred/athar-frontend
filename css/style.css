@@ -4588,4 +4588,52 @@ button.dup-mark:hover { background: var(--warning-light); }
   .spotlight-panel { max-width: 100%; border-radius: 0 0 16px 16px; }
   .spotlight-input { font-size: 16px; }
 }
+\n/* ===== Floating Action Button (speed-dial) ===== */
+.fab-wrap {
+  position: fixed; bottom: 24px; inset-inline-end: 24px; z-index: 9990;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+}
+.fab-main {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #1e40af) 100%);
+  color: #fff; border: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.35);
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease;
+}
+.fab-main:hover { transform: scale(1.06); box-shadow: 0 12px 32px rgba(30, 64, 175, 0.45); }
+.fab-main.is-open { transform: rotate(45deg); }
+.fab-main .fab-icon-plus { transition: transform .2s ease; }
+.fab-menu {
+  display: flex; flex-direction: column; gap: 8px;
+  align-items: flex-end;
+  animation: fabMenuIn .2s cubic-bezier(.2,.8,.2,1);
+}
+.fab-menu[hidden] { display: none; }
+@keyframes fabMenuIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fab-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px 10px 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--neutral-800, #1e293b);
+  white-space: nowrap;
+  transition: transform .15s ease, box-shadow .15s ease;
+  font-family: inherit;
+}
+.fab-item:hover { transform: translateX(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.16); }
+.fab-item-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary-light, rgba(30,64,175,0.1));
+  color: var(--primary, #1e40af);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+@media (max-width: 620px) {
+  .fab-wrap { bottom: 16px; inset-inline-end: 16px; }
+  .fab-main { width: 52px; height: 52px; }
+}
 "

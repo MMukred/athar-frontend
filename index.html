@@ -315,6 +315,52 @@
       });
     })();
   </script>
+  <!-- Floating Action Button (speed-dial) -->
+  <div id="fab-wrap" class="fab-wrap" style="display:none;">
+    <div class="fab-menu" id="fab-menu" hidden>
+      <button type="button" class="fab-item" data-action="volunteer"><span class="fab-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span><span class="fab-item-label">إضافة متطوع</span></button>
+      <button type="button" class="fab-item" data-action="hours"><span class="fab-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="fab-item-label">اقتراح ساعات</span></button>
+      <button type="button" class="fab-item" data-action="meeting"><span class="fab-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="fab-item-label">اجتماع جديد</span></button>
+      <button type="button" class="fab-item" data-action="evaluation"><span class="fab-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span class="fab-item-label">تقييم جديد</span></button>
+    </div>
+    <button type="button" class="fab-main" id="fab-main" aria-label="Quick actions" aria-expanded="false">
+      <svg class="fab-icon-plus" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+  <script>
+    (function () {
+      const wrap = document.getElementById('fab-wrap');
+      const main = document.getElementById('fab-main');
+      const menu = document.getElementById('fab-menu');
+      if (!wrap || !main || !menu) return;
+      function showFab() {
+        const authed = window.AtharAuth && window.AtharAuth.getCurrentUser && window.AtharAuth.getCurrentUser();
+        wrap.style.display = authed ? 'flex' : 'none';
+      }
+      main.addEventListener('click', function () {
+        const open = menu.hidden;
+        menu.hidden = !open;
+        main.classList.toggle('is-open', open);
+        main.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', function (e) {
+        if (!wrap.contains(e.target)) { menu.hidden = true; main.classList.remove('is-open'); main.setAttribute('aria-expanded', 'false'); }
+      });
+      menu.addEventListener('click', function (e) {
+        const btn = e.target.closest('.fab-item');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        menu.hidden = true; main.classList.remove('is-open'); main.setAttribute('aria-expanded', 'false');
+        if (action === 'volunteer' && window.AtharModals && window.AtharModals.openAddVolunteerModal) window.AtharModals.openAddVolunteerModal();
+        else if (action === 'hours' && window.AtharModals && window.AtharModals.openLogHoursSlideover) window.AtharModals.openLogHoursSlideover();
+        else if (action === 'meeting' && window.AtharApp && window.AtharApp.navigateTo) window.AtharApp.navigateTo('new-meeting');
+        else if (action === 'evaluation' && window.AtharApp && window.AtharApp.navigateTo) window.AtharApp.navigateTo('new-evaluation');
+      });
+      // Show after auth
+      setTimeout(showFab, 1200);
+      window.addEventListener('hashchange', function () { setTimeout(showFab, 200); });
+    })();
+  </script>
 </body>
 
 </html>
