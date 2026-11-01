@@ -4,13 +4,13 @@
    ========================================================================== */
 
 :root {
-  /* Color Palette */
-  --primary: #1F6FEB;
-  --primary-hover: #1757B8;
-  --primary-active: #11428F;
-  --primary-light: #EBF3FF;
-  --primary-subtle: rgba(31, 111, 235, 0.12);
-  --primary-border: #99C3FF;
+  /* Color Palette — refined modern indigo */
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-active: #3730A3;
+  --primary-light: #EEF2FF;
+  --primary-subtle: rgba(79, 70, 229, 0.12);
+  --primary-border: #C7D2FE;
 
   --event-color: #8A3FFC;
   --event-bg: #F1E8FF;
@@ -51,16 +51,16 @@
   --neutral-50: #FBFCFD;
   --white: #FFFFFF;
   --surface: #FFFFFF;
-  --app-bg: #F3F4F6;
+  --app-bg: #F1F5F9;
 
   color-scheme: light;
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(27, 31, 36, 0.04);
-  --shadow-sm: 0 1px 3px rgba(27, 31, 36, 0.08), 0 1px 2px rgba(27, 31, 36, 0.06);
-  --shadow-md: 0 4px 12px rgba(27, 31, 36, 0.08), 0 1px 3px rgba(27, 31, 36, 0.05);
-  --shadow-lg: 0 10px 24px rgba(27, 31, 36, 0.12), 0 3px 6px rgba(27, 31, 36, 0.06);
-  --shadow-xl: 0 20px 40px rgba(27, 31, 36, 0.16);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.06);
+  --shadow-xl: 0 24px 48px rgba(15, 23, 42, 0.18);
 
   /* Typography */
   --font-en: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -68,10 +68,10 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Structural */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   --topbar-height: 64px;
@@ -90,12 +90,12 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --primary: #4493F8;
-  --primary-hover: #58A6FF;
-  --primary-active: #79C0FF;
-  --primary-light: #0C2D48;
-  --primary-subtle: rgba(68, 147, 248, 0.16);
-  --primary-border: #1F4B7F;
+  --primary: #818CF8;
+  --primary-hover: #A5B4FC;
+  --primary-active: #C7D2FE;
+  --primary-light: #1E1B4B;
+  --primary-subtle: rgba(129, 140, 248, 0.18);
+  --primary-border: #3730A3;
 
   --event-color: #B388FF;
   --event-bg: #2A1F45;
@@ -714,12 +714,16 @@ textarea {
 /* Cards & Surface Containers */
 .card {
   background: var(--surface);
-  border: 1px solid var(--neutral-300);
+  border: 1px solid var(--neutral-200);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: 20px;
   position: relative;
-  transition: all var(--transition-speed) var(--ease-spring);
+  transition: box-shadow var(--transition-speed) var(--ease-entrance), transform var(--transition-speed) var(--ease-entrance), border-color var(--transition-speed) var(--ease-entrance);
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-border);
 }
 
 .card:hover {
