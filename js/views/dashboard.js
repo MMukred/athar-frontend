@@ -334,7 +334,17 @@
         </div>`;
     }).join("");
 
-    container.innerHTML = `
+     const _greet = new Date().getHours() < 12 ? L("\u0635\u0628\u0627\u062d \u0627\u0644\u062e\u064a\u0631", "Good morning") : new Date().getHours() < 17 ? L("\u0645\u0633\u0627\u0621 \u0627\u0644\u062e\u064a\u0631", "Good afternoon") : L("\u0645\u0633\u0627\u0621 \u0627\u0644\u062e\u064a\u0631", "Good evening");
+     container.innerHTML = `
+       <div class="dash-hero">
+         <div class="dash-hero-greet">${_greet}, ${escapeHtml(userName)}</div>
+         <div class="dash-hero-sub">${escapeHtml(committeeName)}</div>
+         <div class="dash-hero-chips">
+           <span class="dash-hero-chip">${members.length} ${L("\u0639\u0636\u0648", "members")}</span>
+           <span class="dash-hero-chip">${totalApproved.toLocaleString()} h</span>
+           <span class="dash-hero-chip">${pendingHours.length} ${L("\u0645\u0639\u0644\u0642", "pending")}</span>
+         </div>
+       </div>
       <div class="view-header">
         <div class="view-header-left">
           <div class="breadcrumb-trail">

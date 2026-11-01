@@ -4636,4 +4636,37 @@ button.dup-mark:hover { background: var(--warning-light); }
   .fab-wrap { bottom: 16px; inset-inline-end: 16px; }
   .fab-main { width: 52px; height: 52px; }
 }
+\n/* ===== Dashboard hero banner ===== */
+.dash-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #1e40af) 55%, #0f172a 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.18);
+}
+.dash-hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 15% 40%, rgba(255,255,255,0.14) 0%, transparent 55%),
+              radial-gradient(circle at 85% 60%, rgba(255,255,255,0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+.dash-hero-greet { position: relative; font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+.dash-hero-sub { position: relative; font-size: 13px; opacity: 0.85; margin-bottom: 12px; }
+.dash-hero-chips { position: relative; display: flex; flex-wrap: wrap; gap: 8px; }
+.dash-hero-chip {
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px; font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+@media (max-width: 620px) {
+  .dash-hero { padding: 16px 18px; }
+  .dash-hero-greet { font-size: 17px; }
+}
 "
