@@ -644,6 +644,16 @@
       };
       requestAnimationFrame(tick);
     }
+
+    // Delight: celebrate when everything is caught up.
+    try {
+      const _uid = (App.currentUser && App.currentUser.id) || "anon";
+      const _key = "athar_celebrated_" + _uid;
+      if (!sessionStorage.getItem(_key) && members.length > 0 && pendingHours.length === 0 && idleCount === 0 && unratedIds.length === 0) {
+        sessionStorage.setItem(_key, "1");
+        setTimeout(function () { if (window.AtharCore && window.AtharCore.celebrate) window.AtharCore.celebrate(2000); }, 600);
+      }
+    } catch (e) { /* ignore */ }
   }
 
   function renderDashboard(container) {
@@ -1252,6 +1262,16 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
       };
       requestAnimationFrame(tick);
     }
+
+    // Delight: celebrate when everything is caught up.
+    try {
+      const _uid = (App.currentUser && App.currentUser.id) || "anon";
+      const _key = "athar_celebrated_" + _uid;
+      if (!sessionStorage.getItem(_key) && pendingHours === 0 && draftCerts === 0 && totalVolunteers > 0) {
+        sessionStorage.setItem(_key, "1");
+        setTimeout(function () { if (window.AtharCore && window.AtharCore.celebrate) window.AtharCore.celebrate(2000); }, 600);
+      }
+    } catch (e) { /* ignore */ }
   }
 
   window.AtharViews.dashboard = (c, p) => renderDashboard(c);
