@@ -119,6 +119,10 @@
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="top-bar-left">
+        <div class="topbar-clock" id="topbar-clock" aria-live="polite">
+          <span class="topbar-clock-time" id="topbar-clock-time">--:--</span>
+          <span class="topbar-clock-date" id="topbar-clock-date"></span>
+        </div>
         <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="Toggle Sidebar" aria-label="Toggle Sidebar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -436,6 +440,21 @@
       setTimeout(tick, 1500);
       setInterval(tick, 30000);
       window.addEventListener('hashchange', function () { setTimeout(tick, 300); });
+    })();
+  </script>
+  <script>
+    (function () {
+      const timeEl = document.getElementById('topbar-clock-time');
+      const dateEl = document.getElementById('topbar-clock-date');
+      if (!timeEl) return;
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      function tick() {
+        const d = new Date();
+        timeEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+        if (dateEl) dateEl.textContent = d.toLocaleDateString(document.documentElement.lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+      }
+      tick();
+      setInterval(tick, 1000);
     })();
   </script>
 </body>

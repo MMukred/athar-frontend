@@ -4712,4 +4712,22 @@ html[dir="rtl"] .notif-panel { animation-name: notifSlideRtl; }
 @media (max-width: 480px) {
   .notif-panel { width: 100vw; }
 }
+\n/* ===== Topbar live clock ===== */
+.topbar-clock {
+  display: flex; flex-direction: column; align-items: flex-start;
+  margin-inline-end: 12px; line-height: 1.1;
+  padding-inline-end: 12px;
+  border-inline-end: 1px solid var(--border, rgba(0,0,0,0.08));
+}
+.topbar-clock-time {
+  font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: var(--neutral-900, #0f172a); letter-spacing: -0.02em;
+}
+.topbar-clock-date {
+  font-size: 10px; color: var(--neutral-500, #64748b); font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+@media (max-width: 760px) {
+  .topbar-clock { display: none; }
+}
 "
