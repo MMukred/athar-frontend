@@ -364,25 +364,7 @@ window.AtharSearch = (function () {
       if (p && !p.hidden) p.hidden = true;
     });
 
-    // Ctrl+K — focus desktop search, or open the mobile panel.
-    if (!window._atharSearchBound) {
-      window.addEventListener("keydown", function (e) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
-          e.preventDefault();
-          const si = document.getElementById("global-search-input");
-          const p = document.getElementById("mobile-search-panel");
-          const mi = document.getElementById("mobile-search-input");
-          if (window.matchMedia("(max-width: 620px)").matches && p && mi) {
-            p.hidden = false;
-            mi.focus();
-          } else if (si) {
-            si.focus();
-            if (si.select) si.select();
-          }
-        }
-      });
-      window._atharSearchBound = true;
-    }
+    // Ctrl+K is handled by the Spotlight command palette (js/spotlight.js).
   }
 
   return {
