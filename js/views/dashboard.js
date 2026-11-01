@@ -339,6 +339,7 @@
        <div class="dash-hero">
          <div class="dash-hero-greet">${_greet}, ${escapeHtml(userName)}</div>
          <div class="dash-hero-sub">${escapeHtml(committeeName)}</div>
+         <div class="dash-hero-focus">${pendingHours.length > 0 ? pendingHours + ' pending suggestions need review' : (upcomingMeetings.length > 0 ? 'Next: ' + (upcomingMeetings[0].title_en || upcomingMeetings[0].title_ar) : 'All caught up — great work!')}</div>
          <div class="dash-hero-chips">
            <span class="dash-hero-chip">${members.length} ${L("\u0639\u0636\u0648", "members")}</span>
            <span class="dash-hero-chip">${totalApproved.toLocaleString()} h</span>
@@ -858,7 +859,21 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
         </div>`;
     };
 
-    container.innerHTML = `
+     const _adminGreet = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
+     const _nextMtg = (upcomingMeetings && upcomingMeetings[0]) ? upcomingMeetings[0] : null;
+     const _focus = pendingHours > 0 ? `${pendingHours} pending hour suggestions need your review` : _nextMtg ? `Next meeting: ${_nextMtg.title_en || _nextMtg.title_ar || "a meeting"} ${_nextMtg.meeting_date ? "on " + String(_nextMtg.meeting_date).slice(0,10) : ""}` : (draftCerts > 0 ? `${draftCerts} draft certificates to issue` : "All caught up — great work!");
+     container.innerHTML = `
+       <div class="dash-hero">
+         <div class="dash-hero-greet">${_adminGreet}, ${escapeHtml((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "")}</div>
+         <div class="dash-hero-sub">${new Date().toLocaleDateString(App.currentLang === "ar" ? "ar-SA" : "en-US", { weekday: "long", day: "numeric", month: "long" })}</div>
+         <div class="dash-hero-focus">${_focus}</div>
+         <div class="dash-hero-chips">
+           <span class="dash-hero-chip">${totalVolunteers} volunteers</span>
+           <span class="dash-hero-chip">${totalHours.toLocaleString()} h</span>
+           <span class="dash-hero-chip">${pendingHours} pending</span>
+           <span class="dash-hero-chip">${upcomingMeetings.length} upcoming</span>
+         </div>
+       </div>
       <div class="view-header">
         <div class="view-header-left">
           <div class="breadcrumb-trail">

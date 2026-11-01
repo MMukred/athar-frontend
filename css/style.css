@@ -4669,4 +4669,4 @@ button.dup-mark:hover { background: var(--warning-light); }
   .dash-hero { padding: 16px 18px; }
   .dash-hero-greet { font-size: 17px; }
 }
-"
+\n.dash-hero-focus { position: relative; font-size: 13px; opacity: 0.9; margin-bottom: 10px; font-weight: 600; }
