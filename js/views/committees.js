@@ -269,7 +269,30 @@
     const state = window.AtharStore.getState();
     const comm = state.committees.find(c => c.id === committeeId);
     if (!comm) {
-      container.innerHTML = `<div class="empty-state"><p>Committee not found</p></div>`;
+      // Gender-split rendering helper
+     const _memberRowHtml = (m, pinned) => {
+       const ss = window.AtharStore.getVolunteerStats(m.id);
+       const rb = pinned ? (m.id === comm.leader?.id ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>` : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`) : '';
+       return `<tr>
+         <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)} ${rb}</td>
+         <td><span class="badge badge-success">${m.status}</span></td>
+         <td><span class="num-ltr" style="font-weight:700;">${ss ? ss.totalHours : 0} h</span></td>
+         <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
+         <td><div class="row-actions-cell"><button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button></div></td>
+       </tr>`;
+     };
+     const _memberTableHtml = (list, title) => `
+       <div class="comm-gender-col">
+         ${title ? `<div class="comm-gender-col-title">${title}</div>` : ''}
+         <div class="table-container">
+           <table class="data-table">
+             <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
+             <tbody>${list.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members.</td></tr>` : list.map(m => _memberRowHtml(m, pinnedMembers.some(p => p.volunteer.id === m.id))).join('')}</tbody>
+           </table>
+         </div>
+       </div>`;
+
+     container.innerHTML = `<div class="empty-state"><p>Committee not found</p></div>`;
       return;
     }
 
@@ -297,8 +320,18 @@
       }
     });
     const regularMembers = members.filter(v => !(comm.leader && v.id === comm.leader.id) && !coLeaderIdSet.has(v.id));
-     const hasFemaleLeader = !!(comm.leader && comm.leader.gender === 'female') || (comm.co_leaders || []).some(cl => cl && cl.gender === 'female');
-     const splitByGender = hasFemaleLeader;
+    const hasFemaleLeader = !!(comm.leader && comm.leader.gender === 'female') || (comm.co_leaders || []).some(cl => cl && cl.gender === 'female');
+    const splitByGender = hasFemaleLeader;
+    const isAdminView = !!(App.currentUser && (App.currentUser.role === 'super_admin' || App.currentUser.role === 'trusted_admin'));
+    const isLeaderView = !!(App.currentUser && App.currentUser.role === 'committee_leader');
+    const viewingGender = (() => {
+      if (!isLeaderView) return null;
+      const email = (App.currentUser.email || '').toLowerCase();
+      const vol = (comm.co_leaders || []).concat(comm.leader ? [comm.leader] : []).find(v => v && v.email && v.email.toLowerCase() === email);
+      if (vol && vol.gender === 'female') return 'female';
+      if (comm.leader && comm.leader.gender === 'female' && comm.leader.email && comm.leader.email.toLowerCase() === email) return 'female';
+      return 'male';
+    })();
 
     container.innerHTML = `
       <div class="view-header">
@@ -410,7 +443,17 @@
            ${hasFemaleLeader ? `<div class="comm-gender-banner">${App.currentLang === 'ar' ? 'هذه اللجنة منقسمة حسب الجنس (رجال / نساء)' : 'This committee is split by gender (men / women)'}</div>` : ``}
            ${splitByGender ? `
              <div class="comm-gender-split">
-               ${['male','female'].map(gender => {
+               ${((() => {
+                 const _a = !!(App.currentUser && (App.currentUser.role === 'super_admin' || App.currentUser.role === 'trusted_admin'));
+                 const _l = !!(App.currentUser && App.currentUser.role === 'committee_leader');
+                 if (!_a && _l) {
+                   const _em = (App.currentUser.email || '').toLowerCase();
+                   const _vol = (comm.co_leaders || []).concat(comm.leader ? [comm.leader] : []).find(v => v && v.email && v.email.toLowerCase() === _em);
+                   const _g = (_vol && _vol.gender === 'female') || (comm.leader && comm.leader.gender === 'female' && comm.leader.email && comm.leader.email.toLowerCase() === _em) ? 'female' : 'male';
+                   return [_g];
+                 }
+                 return ['male','female'];
+               })()).map(gender => {
                  const gMembers = members.filter(m => (m.gender || 'male') === gender);
                  const gPinned = pinnedMembers.filter(p => (p.volunteer.gender || 'male') === gender);
                  const gRegular = gMembers.filter(m => !(comm.leader && m.id === comm.leader.id) && !coLeaderIdSet.has(m.id));
