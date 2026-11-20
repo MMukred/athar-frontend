@@ -4763,4 +4763,19 @@ html[dir="rtl"] .notif-panel { animation-name: notifSlideRtl; }
 @media (prefers-reduced-motion: reduce) {
   .kpi-grid > *, .charts-grid > *, .dashboard-grid > * { animation: none; }
 }
-"
+\n/* ===== Gender-split committee members ===== */
+.comm-gender-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.comm-gender-col { min-width: 0; }
+.comm-gender-col-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--neutral-600); margin-bottom: 8px; padding: 6px 10px;
+  background: var(--neutral-100); border-radius: var(--radius-sm);
+  border-inline-start: 3px solid var(--primary);
+}
+.comm-gender-banner {
+  padding: 8px 12px; margin-bottom: 12px; border-radius: var(--radius-sm);
+  background: var(--primary-subtle); color: var(--primary); font-size: 12px; font-weight: 600;
+}
+@media (max-width: 760px) {
+  .comm-gender-split { grid-template-columns: 1fr; }
+}

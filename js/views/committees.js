@@ -297,6 +297,8 @@
       }
     });
     const regularMembers = members.filter(v => !(comm.leader && v.id === comm.leader.id) && !coLeaderIdSet.has(v.id));
+     const hasFemaleLeader = !!(comm.leader && comm.leader.gender === 'female') || (comm.co_leaders || []).some(cl => cl && cl.gender === 'female');
+     const splitByGender = hasFemaleLeader;
 
     container.innerHTML = `
       <div class="view-header">
@@ -405,59 +407,101 @@
               <input type="search" id="comm-member-search" class="form-control" placeholder="${App.currentLang === 'ar' ? 'بحث في الأعضاء…' : 'Search members…'}" style="min-width:180px;">
             </div>
           </div>
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr>
-              </thead>
-              <tbody id="comm-members-tbody">
-                ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : `
-                  ${pinnedMembers.map(({ volunteer: m, role }) => {
-      const s = window.AtharStore.getVolunteerStats(m.id);
-      const roleBadge = role === "leader"
-        ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>`
-        : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
-      return `
-                    <tr style="${role === "leader" ? "background:rgba(245,183,49,0.12);" : "background:rgba(74,144,226,0.08);"}">
-                      <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
-                        ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
-                        ${roleBadge}
-                      </td>
-                      <td><span class="badge badge-success">${m.status}</span></td>
-                      <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
-                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
-                      <td>
-                        <div class="row-actions-cell">
-                          <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
-                          ${hasPermission("volunteers", "transfer") ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openTransferModal('${m.id}')">${t("transfer_volunteer")}</button>` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-    }).join('')}
-                  ${regularMembers.map(m => {
-      const s = window.AtharStore.getVolunteerStats(m.id);
-      return `
-                    <tr>
-                      <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
-                        ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
-                      </td>
-                      <td><span class="badge badge-success">${m.status}</span></td>
-                      <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
-                      <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
-                      <td>
-                        <div class="row-actions-cell">
-                          <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
-                          ${hasPermission("volunteers", "transfer") ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openTransferModal('${m.id}')">${t("transfer_volunteer")}</button>` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-    }).join('')}
-                `}
-              </tbody>
-            </table>
-          </div>
+           ${hasFemaleLeader ? `<div class="comm-gender-banner">${App.currentLang === 'ar' ? 'هذه اللجنة منقسمة حسب الجنس (رجال / نساء)' : 'This committee is split by gender (men / women)'}</div>` : ``}
+           ${splitByGender ? `
+             <div class="comm-gender-split">
+               ${['male','female'].map(gender => {
+                 const gMembers = members.filter(m => (m.gender || 'male') === gender);
+                 const gPinned = pinnedMembers.filter(p => (p.volunteer.gender || 'male') === gender);
+                 const gRegular = gMembers.filter(m => !(comm.leader && m.id === comm.leader.id) && !coLeaderIdSet.has(m.id));
+                 return `
+                   <div class="comm-gender-col">
+                     <div class="comm-gender-col-title">${gender === 'male' ? (App.currentLang === 'ar' ? 'الرجال' : 'Men') : (App.currentLang === 'ar' ? 'النساء' : 'Women')}</div>
+                     <div class="table-container">
+                       <table class="data-table">
+                         <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
+                         <tbody>
+                           ${gMembers.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members.</td></tr>` : `
+                             ${gPinned.map(({ volunteer: m, role }) => {
+                               const s = window.AtharStore.getVolunteerStats(m.id);
+                               const roleBadge = role === "leader" ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>` : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
+                               return `<tr style="${role === "leader" ? "background:rgba(245,183,49,0.12);" : "background:rgba(74,144,226,0.08);"}">
+                                 <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)} ${roleBadge}</td>
+                                 <td><span class="badge badge-success">${m.status}</span></td>
+                                 <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
+                                 <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
+                                 <td><div class="row-actions-cell"><button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button></div></td>
+                               </tr>`;
+                             }).join('')}
+                             ${gRegular.map(m => {
+                               const s = window.AtharStore.getVolunteerStats(m.id);
+                               return `<tr>
+                                 <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}</td>
+                                 <td><span class="badge badge-success">${m.status}</span></td>
+                                 <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
+                                 <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
+                                 <td><div class="row-actions-cell"><button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button></div></td>
+                               </tr>`;
+                             }).join('')}
+                           `}
+                         </tbody>
+                       </table>
+                     </div>
+                   </div>
+                 `;
+               }).join('')}
+             </div>
+           ` : `
+             <div class="table-container">
+               <table class="data-table">
+                 <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
+                 <tbody id="comm-members-tbody">
+                   ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : `
+                     ${pinnedMembers.map(({ volunteer: m, role }) => {
+       const s = window.AtharStore.getVolunteerStats(m.id);
+       const roleBadge = role === "leader" ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>` : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
+       return `
+                     <tr style="${role === "leader" ? "background:rgba(245,183,49,0.12);" : "background:rgba(74,144,226,0.08);"}">
+                       <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
+                         ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
+                         ${roleBadge}
+                       </td>
+                       <td><span class="badge badge-success">${m.status}</span></td>
+                       <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
+                       <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
+                       <td>
+                         <div class="row-actions-cell">
+                           <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
+                           ${hasPermission("volunteers", "transfer") ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openTransferModal('${m.id}')">${t("transfer_volunteer")}</button>` : ''}
+                         </div>
+                       </td>
+                     </tr>
+                   `;
+     }).join('')}
+                     ${regularMembers.map(m => {
+       const s = window.AtharStore.getVolunteerStats(m.id);
+       return `
+                     <tr>
+                       <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">
+                         ${escapeHtml(App.currentLang === 'ar' ? (m.full_name_ar || m.full_name) : m.full_name)}
+                       </td>
+                       <td><span class="badge badge-success">${m.status}</span></td>
+                       <td><span class="num-ltr" style="font-weight:700;">${s ? s.totalHours : 0} h</span></td>
+                       <td>${(m.skills || []).map(sk => `<span class="tag-chip">#${escapeHtml(sk)}</span>`).join(' ')}</td>
+                       <td>
+                         <div class="row-actions-cell">
+                           <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${m.id}'})">${t("view")}</button>
+                           ${hasPermission("volunteers", "transfer") ? `<button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openTransferModal('${m.id}')">${t("transfer_volunteer")}</button>` : ''}
+                         </div>
+                       </td>
+                     </tr>
+                   `;
+     }).join('')}
+                   `}
+                 </tbody>
+               </table>
+             </div>
+           `}
         ` : activeTab === 'meetings' ? `
           <div class="table-container">
             <table class="data-table">
