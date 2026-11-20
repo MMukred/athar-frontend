@@ -184,6 +184,9 @@
     }
 
     // ---- First render ----
+    if (App.currentUser && App.currentUser.role === "volunteer") {
+      window.location.hash = "#portal";
+    }
     handleHashChange();
 
     // ---- Default-password hygiene ----

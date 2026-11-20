@@ -52,7 +52,9 @@ window.AtharCore = (function () {
     "whatsapp-templates": "whatsappTemplates",
     "users": "users",
     "audit-logs": "auditLogs",
-    "settings": "settings"
+    "settings": "settings",
+    "portal": "portal",
+    "volunteer-portal": "portal"
   };
 
   // ===========================================================
@@ -408,6 +410,10 @@ window.AtharCore = (function () {
     }
 
     const targetModule = VIEW_MODULE_MAP[view];
+    if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "public-verify") {
+      view = "portal";
+      params = {};
+    }
     // Public verification is open to everyone (mirrors the public API endpoint).
     if (view !== "public-verify" && targetModule && !hasPermission(targetModule, "view")) {
       showToast(t("permission_denied"), "error");
