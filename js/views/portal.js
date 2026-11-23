@@ -18,6 +18,7 @@
   let requestSeq = 0;
   let cachedData = null;
   let cachedAt = 0;
+  let cachedForUserId = null;
 
   const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
   const d10 = (s) => (s ? String(s).slice(0, 10) : null);
@@ -470,7 +471,9 @@
     if (!container || !container.isConnected) return;
     const seq = ++requestSeq;
 
-    if (!force && cachedData && Date.now() - cachedAt < 20000) {
+    const currentUserId = App.currentUser && App.currentUser.id;
+    const cacheValid = !force && cachedData && cachedForUserId === currentUserId && Date.now() - cachedAt < 20000;
+    if (cacheValid) {
       container.innerHTML = portalHtml(cachedData);
       bindActions(container);
       return;
@@ -490,6 +493,7 @@
 
       cachedData = data;
       cachedAt = Date.now();
+      cachedForUserId = currentUserId;
       container.innerHTML = portalHtml(data);
       bindActions(container);
     } catch (err) {
