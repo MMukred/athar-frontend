@@ -358,8 +358,15 @@ window.AtharCore = (function () {
   // ===========================================================
   function updateUserMenuBadge() {
     if (!App.currentUser) return;
-    const isSuper = (App.currentUser && App.currentUser.role === "super_admin");
-    const roleText = isSuper ? t("super_admin") : t("trusted_admin");
+    const role = App.currentUser && App.currentUser.role;
+    const isSuper = role === "super_admin";
+    const roleText = isSuper
+      ? t("super_admin")
+      : role === "committee_leader"
+        ? (App.currentLang === "ar" ? "رئيس لجنة" : "Committee leader")
+        : role === "volunteer"
+          ? (App.currentLang === "ar" ? "متطوع" : "Volunteer")
+          : t("trusted_admin");
 
     const roleEl = document.getElementById("current-user-role-label");
     const nameEl = document.getElementById("user-display-name");
@@ -463,6 +470,28 @@ window.AtharCore = (function () {
     if (!navContainer) return;
 
     const state = window.AtharStore.getState();
+
+    // ---- Volunteer portal: single scoped destination ----
+    // Volunteers never see committees/volunteers/admin modules; their account
+    // only has the portal endpoint, so keep the sidebar honest about that.
+    if (App.currentUser && App.currentUser.role === "volunteer") {
+      const portalActive = App.currentView === "portal";
+      navContainer.innerHTML = `
+        <div class="nav-group-title">${t("group_operations")}</div>
+        <a class="nav-item ${portalActive ? "active" : ""}" data-nav-target="portal">
+          <div class="nav-item-content">
+            <span class="nav-icon">${ic("user", 18, { strokeWidth: 2 })}</span>
+            <span class="nav-label">${t("nav_portal") || (App.currentLang === "ar" ? "بوابتي" : "My Portal")}</span>
+          </div>
+        </a>`;
+      navContainer.querySelectorAll(".nav-item").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          navigateTo(el.getAttribute("data-nav-target"));
+        });
+      });
+      return;
+    }
 
     // ---- Live counts ----
     const activeVolunteers = state.volunteers.filter(v => v.status !== "archived").length;

@@ -76,6 +76,7 @@ window.AtharStore = (function () {
       committee_id: v.committeeId,
       join_date: iso(v.joinDate),
       notes: v.notes,
+      user_id: v.userId || v.user_id || null,
       created_at: v.createdAt,
       archived_at: v.archivedAt,
       committee: v.committee || null,
@@ -277,6 +278,11 @@ window.AtharStore = (function () {
     // changes their password; the change-password modal is forced in boot().
     const me = window.AtharAuth && window.AtharAuth.getCurrentUser && window.AtharAuth.getCurrentUser();
     if (me && me.must_change_password) {
+      return state;
+    }
+    // Volunteers only have the scoped portal endpoint; skip admin data loads
+    // entirely instead of firing a dozen guaranteed 403s.
+    if (me && me.role === "volunteer") {
       return state;
     }
 

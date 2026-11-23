@@ -215,6 +215,10 @@ window.AtharAPI = (function () {
       },
     },
 
+    portal: {
+      me: () => get("/portal/me"),
+    },
+
     volunteers: {
       list: (params) => get(`/volunteers${qs(params)}`),
       get: async (id) => (await get(`/volunteers/${id}`)).volunteer,
@@ -244,6 +248,7 @@ window.AtharAPI = (function () {
       list: () => get("/users"),
       create: (p) => post("/users", p),
       resetPassword: (id, newPassword) => post(`/users/${id}/reset-password`, { newPassword }),
+      provisionVolunteerAccounts: () => post("/users/provision-volunteer-accounts"),
     },
 
     meetings: {

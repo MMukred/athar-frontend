@@ -40,6 +40,25 @@ window.Translations = {
     nav_users: "Users & Permissions",
     nav_audit_logs: "Audit Log",
     nav_settings: "Settings",
+    nav_portal: "My Portal",
+
+    // Volunteer portal accounts
+    provision_accounts_title: "Volunteer portal accounts",
+    provision_accounts_desc: "Generate self-service accounts for volunteers who have an email. Temporary password: {pw}.",
+    provision_ready: "ready",
+    provision_missing: "missing",
+    provision_no_email: "no email",
+    provision_generate: "Generate accounts",
+    provision_done: "All set",
+    provision_working: "Generating…",
+    provision_result: "Accounts created: {created} • already linked: {linked} • skipped: {skipped} • no email: {noEmail}",
+    provision_failed: "Could not generate accounts",
+    portal_no_email_flag: "No email",
+    portal_missing_flag: "No portal",
+    portal_ready_flag: "Portal",
+    portal_no_email_hint: "No email on file — a portal account cannot be created",
+    portal_missing_hint: "Has an email but no portal account yet",
+    portal_ready_hint: "Portal account is active",
 
     // Common Actions
     save: "Save",
@@ -534,6 +553,25 @@ window.Translations = {
     nav_users: "المستخدمون والصلاحيات",
     nav_audit_logs: "سجل العمليات (Audit Log)",
     nav_settings: "إعدادات النظام",
+    nav_portal: "بوابتي",
+
+    // Volunteer portal accounts
+    provision_accounts_title: "حسابات بوابة المتطوعين",
+    provision_accounts_desc: "أنشئ حسابات خدمة ذاتية للمتطوعين الذين لديهم بريد إلكتروني. كلمة المرور المؤقتة: {pw}.",
+    provision_ready: "جاهز",
+    provision_missing: "ناقص",
+    provision_no_email: "بلا بريد",
+    provision_generate: "إنشاء الحسابات",
+    provision_done: "مكتمل",
+    provision_working: "جارٍ الإنشاء…",
+    provision_result: "تم إنشاء: {created} • مرتبط مسبقاً: {linked} • متخطى: {skipped} • بلا بريد: {noEmail}",
+    provision_failed: "تعذّر إنشاء الحسابات",
+    portal_no_email_flag: "بلا بريد",
+    portal_missing_flag: "بلا بوابة",
+    portal_ready_flag: "البوابة",
+    portal_no_email_hint: "لا يوجد بريد إلكتروني — لا يمكن إنشاء حساب بوابة",
+    portal_missing_hint: "لديه بريد إلكتروني لكن لا يوجد حساب بوابة بعد",
+    portal_ready_hint: "حساب البوابة مفعّل",
 
     // Common Actions
     save: "حفظ",

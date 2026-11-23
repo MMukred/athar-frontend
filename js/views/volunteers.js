@@ -89,6 +89,18 @@
     });
   }
 
+  // Portal-account flags: volunteers without an email cannot get an account,
+  // and volunteers with an email but no linked user still need a backfill.
+  function portalFlagsHtml(v) {
+    if (!v.email) {
+      return `<span class="vol-flag vol-flag-no-email" title="${escAttr(t("portal_no_email_hint") || "No email on file — a portal account cannot be created")}">${ic("alert", 10)} ${t("portal_no_email_flag") || "No email"}</span>`;
+    }
+    if (!v.user_id) {
+      return `<span class="vol-flag vol-flag-no-email" title="${escAttr(t("portal_missing_hint") || "Has an email but no portal account yet")}">${ic("user_x", 10)} ${t("portal_missing_flag") || "No portal"}</span>`;
+    }
+    return `<span class="vol-flag vol-flag-portal" title="${escAttr(t("portal_ready_hint") || "Portal account is active")}">${ic("user_check", 10)} ${t("portal_ready_flag") || "Portal"}</span>`;
+  }
+
   function contactCellHtml(v) {
     const primary = v.whatsapp || v.phone || "";
     if (!primary) return '<span style="color:var(--neutral-400);">—</span>';
@@ -789,6 +801,7 @@
                             ${v.nationality ? `<span style="font-size:10px; color:var(--neutral-500);">${escapeHtml(v.nationality)}</span>` : ''}
                             ${(v.skills || []).slice(0, 2).map(s => `<span class="mini-chip">#${escapeHtml(s)}</span>`).join('')}
                             ${(v.skills || []).length > 2 ? `<span class="mini-chip" title="${escAttr((v.skills || []).join(', '))}">+${(v.skills || []).length - 2}</span>` : ''}
+                            ${portalFlagsHtml(v)}
                             ${dgr && dgr.length ? `<button type="button" class="dup-mark" title="${escAttr(t("dup_mark_title"))}" onclick="event.stopPropagation(); window.AtharVolunteers.openDuplicatesFinder()">${ic("alert", 11)}</button>` : ''}
                           </div>
                         </div>
@@ -1481,6 +1494,7 @@
               <span class="profile-name">${escapeHtml(volDisplayName(vol))}</span>
               <span class="badge ${vol.status === 'active' ? 'badge-success' : vol.status === 'pending' ? 'badge-purple' : 'badge-neutral'}">${t(vol.status)}</span>
               ${leadershipBadge}
+              ${portalFlagsHtml(vol)}
               ${genderChip(vol.gender)}
               ${ps.totalHours >= 100 ? `<span class="badge badge-warning" title="${App.currentLang === 'ar' ? '100+ ساعة تطوع' : '100+ volunteer hours'}">🏅 ${App.currentLang === 'ar' ? '100+ ساعة' : '100+ h'}</span>` : ps.totalHours >= 50 ? `<span class="badge badge-success" title="${App.currentLang === 'ar' ? '50+ ساعة تطوع' : '50+ volunteer hours'}">⭐ ${App.currentLang === 'ar' ? '50+ ساعة' : '50+ h'}</span>` : ''}
             </div>

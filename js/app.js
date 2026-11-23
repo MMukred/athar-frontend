@@ -45,6 +45,15 @@
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
       return;
     }
+    // ---- Role-scoped chrome (volunteers get a stripped-down shell) ----
+    document.body.classList.remove(
+      "role-volunteer",
+      "role-super_admin",
+      "role-trusted_admin",
+      "role-committee_leader"
+    );
+    if (App.currentUser.role) document.body.classList.add("role-" + App.currentUser.role);
+
     // ---- Boot skeleton (visible while data loads) ----
     const mainEl = document.getElementById("main-content");
     if (mainEl) window.AtharCore.renderSkeleton(mainEl, 6);
