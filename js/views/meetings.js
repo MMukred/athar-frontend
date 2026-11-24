@@ -303,23 +303,65 @@
           const res = await window.AtharAPI.meetings.getAttendanceQr(id);
           const modalContainer = document.getElementById("modal-container");
           if (!modalContainer) return;
-          const qrSvg = (window.generateQRCodeSVG) ? window.generateQRCodeSVG(res.scanUrl, 220, "#1F2328", "#FFFFFF") : "";
+          const qrSvg = (window.generateQRCodeSVG) ? window.generateQRCodeSVG(res.scanUrl, 200, "#1F2328", "#FFFFFF") : "";
           modalContainer.innerHTML = `
-            <div class="modal-backdrop" id="qr-backdrop" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:9999;">
-              <div class="modal-dialog" style="background:var(--surface,#fff); border-radius:12px; padding:24px; max-width:360px; width:90%; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-backdrop" id="qr-backdrop" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
+              <div class="modal-dialog" style="background:var(--surface,#fff); border-radius:12px; padding:20px; max-width:520px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                  <h3 style="margin:0; font-size:16px;">${App.currentLang === 'ar' ? 'رمز QR للحضور' : 'Attendance QR'}</h3>
+                  <h3 style="margin:0; font-size:16px;">Attendance QR</h3>
                   <button class="btn btn-icon" id="qr-close" style="border:none; background:none; font-size:20px; cursor:pointer;">×</button>
                 </div>
-                <div style="margin:0 auto 12px; display:inline-block;">${qrSvg}</div>
-                <p style="font-size:13px; color:var(--neutral-500); margin:0 0 8px;">${App.currentLang === 'ar' ? 'امسح هذا الرمز لتسجيل حضورك' : 'Scan this code to check in'}</p>
-                <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(res.scanUrl)}</div>
+                <div style="text-align:center; margin-bottom:12px;">
+                  <div style="display:inline-block;">${qrSvg}</div>
+                  <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">Scan this code to check in</p>
+                  <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(res.scanUrl)}</div>
+                </div>
+                <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:14px;">Checked-in attendees</strong>
+                    <button class="btn btn-secondary btn-sm" id="qr-refresh">Refresh</button>
+                  </div>
+                  <div id="qr-attendance-list" style="max-height:260px; overflow:auto; border:1px solid var(--neutral-200,#e5e7eb); border-radius:8px; padding:8px;">
+                    <div style="color:var(--neutral-500); font-size:13px;">Loading...</div>
+                  </div>
+                </div>
               </div>
             </div>
           `;
-          const close = () => { modalContainer.innerHTML = ""; };
+          const close = () => { if (window._qrPoll) { clearInterval(window._qrPoll); window._qrPoll = null; } modalContainer.innerHTML = ""; };
           document.getElementById("qr-close").onclick = close;
           document.getElementById("qr-backdrop").onclick = (e) => { if (e.target.id === "qr-backdrop") close(); };
+
+          async function loadAttendance() {
+            try {
+              const roster = await window.AtharAPI.meetings.getRoster(id);
+              const list = (roster.roster || []).filter(r => r.saved);
+              const el = document.getElementById("qr-attendance-list");
+              if (!el) return;
+              if (list.length === 0) {
+                el.innerHTML = '<div style="color:var(--neutral-500); font-size:13px; padding:8px;">No one has checked in yet</div>';
+                return;
+              }
+              el.innerHTML = list.map(r => {
+                const v = r.volunteer || {};
+                const name = (App.currentLang === 'ar') ? (v.fullNameAr || v.fullName) : (v.fullName || v.fullNameAr);
+                const comm = v.committee ? ((App.currentLang === 'ar') ? (v.committee.nameAr || v.committee.nameEn) : (v.committee.nameEn || v.committee.nameAr)) : 'No committee';
+                return '<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">' +
+                  '<div><div style="font-weight:600; font-size:13px;">' + escapeHtml(name || "") + '</div>' +
+                  '<div style="font-size:11px; color:var(--neutral-500);">' + escapeHtml(comm) + '</div></div>' +
+                  '<span class="badge ' + (r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning') + '" style="font-size:11px;">' + escapeHtml(r.status || "") + '</span>' +
+                  '</div>';
+              }).join("");
+            } catch (e) {
+              const el = document.getElementById("qr-attendance-list");
+              if (el) el.innerHTML = '<div style="color:var(--danger,#dc2626); font-size:13px;">' + escapeHtml((e && e.message) || "Failed") + '</div>';
+            }
+          }
+          document.getElementById("qr-refresh").onclick = loadAttendance;
+          loadAttendance();
+          if (window._qrPoll) clearInterval(window._qrPoll);
+          window._qrPoll = setInterval(() => { if (document.getElementById("qr-attendance-list")) loadAttendance(); else { clearInterval(window._qrPoll); window._qrPoll = null; } }, 5000);
+
         } catch (e) {
           if (window.AtharCore && window.AtharCore.showToast) window.AtharCore.showToast((e && e.message) || "Failed", "error");
         }
