@@ -44,14 +44,14 @@ window.Translations = {
 
     // Volunteer portal accounts
     provision_accounts_title: "Volunteer portal accounts",
-    provision_accounts_desc: "Generate self-service accounts for volunteers who have an email. Temporary password: {pw}.",
+    provision_accounts_desc: "Create accounts for volunteers who have an email. Leaders and co-leaders get committee-leader access; regular members get the self-service portal. Temporary password: {pw}.",
     provision_ready: "ready",
     provision_missing: "missing",
     provision_no_email: "no email",
     provision_generate: "Generate accounts",
     provision_done: "All set",
     provision_working: "Generating…",
-    provision_result: "Accounts created: {created} • already linked: {linked} • skipped: {skipped} • no email: {noEmail}",
+    provision_result: "Created: {created} • linked: {linked} • leaders: {leaders} • members: {members} • skipped: {skipped} • no email: {noEmail}",
     provision_failed: "Could not generate accounts",
     portal_no_email_flag: "No email",
     portal_missing_flag: "No portal",
@@ -557,14 +557,14 @@ window.Translations = {
 
     // Volunteer portal accounts
     provision_accounts_title: "حسابات بوابة المتطوعين",
-    provision_accounts_desc: "أنشئ حسابات خدمة ذاتية للمتطوعين الذين لديهم بريد إلكتروني. كلمة المرور المؤقتة: {pw}.",
+    provision_accounts_desc: "أنشئ حسابات للمتطوعين الذين لديهم بريد إلكتروني. رؤساء اللجان ونوابهم يحصلون على صلاحيات رئيس لجنة، والأعضاء العاديون على بوابة الخدمة الذاتية. كلمة المرور المؤقتة: {pw}.",
     provision_ready: "جاهز",
     provision_missing: "ناقص",
     provision_no_email: "بلا بريد",
     provision_generate: "إنشاء الحسابات",
     provision_done: "مكتمل",
     provision_working: "جارٍ الإنشاء…",
-    provision_result: "تم إنشاء: {created} • مرتبط مسبقاً: {linked} • متخطى: {skipped} • بلا بريد: {noEmail}",
+    provision_result: "تم إنشاء: {created} • مرتبط: {linked} • قادة: {leaders} • أعضاء: {members} • متخطى: {skipped} • بلا بريد: {noEmail}",
     provision_failed: "تعذّر إنشاء الحسابات",
     portal_no_email_flag: "بلا بريد",
     portal_missing_flag: "بلا بوابة",

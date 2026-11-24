@@ -132,14 +132,18 @@
           const linked = Number(result && result.linked) || 0;
           const skipped = Number(result && result.skipped) || 0;
           const noEmailCount = Number(result && result.noEmail) || 0;
+          const leaders = Number(result && result.leaders) || 0;
+          const members = Number(result && result.members) || 0;
           showToast(
-            (t("provision_result") || "Accounts created: {created} • already linked: {linked} • skipped: {skipped} • no email: {noEmail}")
+            (t("provision_result") || "Created: {created} • linked: {linked} • leaders: {leaders} • members: {members} • skipped: {skipped} • no email: {noEmail}")
               .replace("{created}", created)
               .replace("{linked}", linked)
+              .replace("{leaders}", leaders)
+              .replace("{members}", members)
               .replace("{skipped}", skipped)
               .replace("{noEmail}", noEmailCount),
             "success",
-            { duration: 7000 }
+            { duration: 8000 }
           );
           try { await window.AtharStore.loadAll(); } catch (e) { console.warn(e); }
           renderUsersList(container);
