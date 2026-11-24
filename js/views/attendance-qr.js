@@ -35,7 +35,7 @@
     const m = qrRes.meeting || {};
     const title = App.currentLang === "ar" ? (m.titleAr || m.titleEn) : (m.titleEn || m.titleAr);
     const dateStr = m.meetingDate ? formatDate(String(m.meetingDate).slice(0, 10)) : "";
-    const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(qrRes.scanUrl);
+    const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrRes.scanUrl);
 
     container.querySelector(".view-subtitle").textContent = title || "";
 
@@ -45,7 +45,6 @@
         <p style="color:var(--neutral-500); margin:0 0 12px;">${escapeHtml(dateStr)} ${m.startTime ? "• " + escapeHtml(m.startTime) : ""} ${m.location ? "• " + escapeHtml(m.location) : ""}</p>
         <img src="${qrImgUrl}" alt="QR" style="border-radius:8px; background:#fff; padding:8px;" />
         <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${L("امسح هذا الرمز لتسجيل حضورك", "Scan this code to check in")}</p>
-        <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(qrRes.scanUrl)}</div>
       </div>
       <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -139,7 +138,7 @@
       const m = qrRes.meeting || {};
       const title = App.currentLang === "ar" ? (m.titleAr || m.titleEn) : (m.titleEn || m.titleAr);
       const dateStr = m.meetingDate ? formatDate(String(m.meetingDate).slice(0, 10)) : "";
-      const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(qrRes.scanUrl);
+      const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrRes.scanUrl);
 
       body.innerHTML = `
         <div style="text-align:center; margin-bottom:16px;">
@@ -147,7 +146,6 @@
           <p style="color:var(--neutral-500); margin:0 0 12px;">${escapeHtml(dateStr)} ${m.startTime ? "• " + escapeHtml(m.startTime) : ""} ${m.location ? "• " + escapeHtml(m.location) : ""}</p>
           <img src="${qrImgUrl}" alt="QR" style="border-radius:8px; background:#fff; padding:8px;" />
           <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${L("امسح هذا الرمز لتسجيل حضورك", "Scan this code to check in")}</p>
-          <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(qrRes.scanUrl)}</div>
         </div>
         <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
