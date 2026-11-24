@@ -4771,7 +4771,7 @@ html[dir="rtl"] .notif-panel { animation-name: notifSlideRtl; }
 }
 
 /* ===== Gender-split committee members ===== */
-.comm-gender-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.comm-gender-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
 .comm-gender-col { min-width: 0; }
 .comm-gender-col-title {
   font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
