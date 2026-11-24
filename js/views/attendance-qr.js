@@ -74,7 +74,7 @@
           return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">
             <div>
               <div style="font-weight:600; font-size:13px;">${escapeHtml(name || "")}</div>
-              <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}</div>
+              <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(String(r.recordedAt).replace("T", " ").slice(0, 16)) : ""}</div>
             </div>
             <span class="badge ${r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning'}" style="font-size:11px;">${escapeHtml(r.status || "")}</span>
           </div>`;
@@ -175,7 +175,7 @@
             return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">
               <div>
                 <div style="font-weight:600; font-size:13px;">${escapeHtml(name || "")}</div>
-                <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}</div>
+                <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(String(r.recordedAt).replace("T", " ").slice(0, 16)) : ""}</div>
               </div>
               <span class="badge ${r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning'}" style="font-size:11px;">${escapeHtml(r.status || "")}</span>
             </div>`;

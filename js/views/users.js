@@ -96,7 +96,7 @@
                 <td>${roleBadge(u)}</td>
                 <td><span style="font-weight:600;">${u.role === 'volunteer' ? '—' : (u.preset ? u.preset.toUpperCase() : 'FULL / SUPER')}</span></td>
                 <td><span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">${u.is_active ? 'Active' : 'Deactivated'}</span></td>
-                <td class="num-ltr">${u.last_login_at ? String(u.last_login_at).replace("T", " ").slice(0, 16) : '—'}</td>
+                <td class="num-ltr">${u.lastLoginAt ? String(u.lastLoginAt).replace("T", " ").slice(0, 16) : '-'}</td>
                 <td>
                   <div class="row-actions-cell">
                     ${App.currentUser?.role === 'super_admin' ? `
