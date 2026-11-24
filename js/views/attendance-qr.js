@@ -157,7 +157,7 @@
             <strong style="font-size:14px;">${L("الحاضرون", "Checked-in attendees")}</strong>
             <button class="btn btn-secondary btn-sm" id="aqr-refresh">${ic("refresh", 13)} ${L("تحديث", "Refresh")}</button>
           </div>
-          <div id="aqr-list" style="max-height:320px; overflow:auto; border:1px solid var(--neutral-200,#e5e7eb); border-radius:8px; padding:8px;">
+          <div id="aqr-list" style="max-height:260px; overflow:auto; padding:4px 0;">
             <div style="color:var(--neutral-500); font-size:13px;">${L("جارٍ التحميل...", "Loading...")}</div>
           </div>
         </div>
