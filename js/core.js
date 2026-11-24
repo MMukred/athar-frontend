@@ -55,7 +55,8 @@ window.AtharCore = (function () {
     "settings": "settings",
     "portal": "portal",
     "volunteer-portal": "portal",
-    "attendance-scan": "attendanceScan"
+    "attendance-scan": "attendanceScan",
+    "attendance-qr": "attendanceQr"
   };
 
   // ===========================================================

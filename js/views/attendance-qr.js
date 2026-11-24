@@ -1,0 +1,99 @@
+(function () {
+  "use strict";
+
+  const { App, t, ic, escapeHtml, formatDate, showToast } = window.AtharCore;
+  const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
+
+  async function render(container, params) {
+    const meetingId = (params && params.id) || "";
+    container.innerHTML = `
+      <div class="view-header">
+        <div class="view-header-left">
+          <h1 class="view-title">${L("رمز QR للحضور", "Attendance QR")}</h1>
+          <p class="view-subtitle">${L("جارٍ التحميل...", "Loading...")}</p>
+        </div>
+      </div>
+      <div class="card" style="padding:24px; max-width:640px; margin:0 auto;">
+        <div id="attendance-qr-body"><div class="skeleton skeleton-text" style="width:60%;"></div></div>
+      </div>
+    `;
+
+    const body = document.getElementById("attendance-qr-body");
+    if (!meetingId) {
+      body.innerHTML = `<p style="color:var(--danger,#dc2626);">${L("اجتماع غير صالح", "Invalid meeting")}</p>`;
+      return;
+    }
+
+    let qrRes = null;
+    try {
+      qrRes = await window.AtharAPI.meetings.getAttendanceQr(meetingId);
+    } catch (e) {
+      body.innerHTML = `<p style="color:var(--danger,#dc2626);">${escapeHtml((e && e.message) || L("فشل تحميل QR", "Failed to load QR"))}</p>`;
+      return;
+    }
+
+    const m = qrRes.meeting || {};
+    const title = App.currentLang === "ar" ? (m.titleAr || m.titleEn) : (m.titleEn || m.titleAr);
+    const dateStr = m.meetingDate ? formatDate(String(m.meetingDate).slice(0, 10)) : "";
+    const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(qrRes.scanUrl);
+
+    container.querySelector(".view-subtitle").textContent = title || "";
+
+    body.innerHTML = `
+      <div style="text-align:center; margin-bottom:16px;">
+        <h2 style="margin:0 0 6px;">${escapeHtml(title || L("الاجتماع", "Meeting"))}</h2>
+        <p style="color:var(--neutral-500); margin:0 0 12px;">${escapeHtml(dateStr)} ${m.startTime ? "• " + escapeHtml(m.startTime) : ""} ${m.location ? "• " + escapeHtml(m.location) : ""}</p>
+        <img src="${qrImgUrl}" alt="QR" style="border-radius:8px; background:#fff; padding:8px;" />
+        <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${L("امسح هذا الرمز لتسجيل حضورك", "Scan this code to check in")}</p>
+        <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(qrRes.scanUrl)}</div>
+      </div>
+      <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:14px;">${L("الحاضرون", "Checked-in attendees")}</strong>
+          <button class="btn btn-secondary btn-sm" id="qr-refresh">${ic("refresh", 13)} ${L("تحديث", "Refresh")}</button>
+        </div>
+        <div id="qr-attendance-list" style="max-height:320px; overflow:auto; border:1px solid var(--neutral-200,#e5e7eb); border-radius:8px; padding:8px;">
+          <div style="color:var(--neutral-500); font-size:13px;">${L("جارٍ التحميل...", "Loading...")}</div>
+        </div>
+      </div>
+    `;
+
+    async function loadAttendance() {
+      try {
+        const roster = await window.AtharAPI.meetings.getRoster(meetingId);
+        const list = (roster.roster || []).filter(r => r.saved);
+        const el = document.getElementById("qr-attendance-list");
+        if (!el) return;
+        if (list.length === 0) {
+          el.innerHTML = `<div style="color:var(--neutral-500); font-size:13px; padding:8px;">${L("لم يسجل أحد حضوره بعد", "No one has checked in yet")}</div>`;
+          return;
+        }
+        el.innerHTML = list.map(r => {
+          const v = r.volunteer || {};
+          const name = App.currentLang === "ar" ? (v.fullNameAr || v.fullName) : (v.fullName || v.fullNameAr);
+          const comm = v.committee ? (App.currentLang === "ar" ? (v.committee.nameAr || v.committee.nameEn) : (v.committee.nameEn || v.committee.nameAr)) : L("بدون لجنة", "No committee");
+          return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">
+            <div>
+              <div style="font-weight:600; font-size:13px;">${escapeHtml(name || "")}</div>
+              <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}</div>
+            </div>
+            <span class="badge ${r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning'}" style="font-size:11px;">${escapeHtml(r.status || "")}</span>
+          </div>`;
+        }).join("");
+      } catch (e) {
+        const el = document.getElementById("qr-attendance-list");
+        if (el) el.innerHTML = `<div style="color:var(--danger,#dc2626); font-size:13px;">${escapeHtml((e && e.message) || L("فشل", "Failed"))}</div>`;
+      }
+    }
+
+    document.getElementById("qr-refresh").onclick = loadAttendance;
+    loadAttendance();
+    const poll = setInterval(() => {
+      if (document.getElementById("qr-attendance-list")) loadAttendance();
+      else clearInterval(poll);
+    }, 5000);
+  }
+
+  window.AtharViews = window.AtharViews || {};
+  window.AtharViews.attendanceQr = render;
+})();
