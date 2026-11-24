@@ -5330,3 +5330,17 @@ body.role-volunteer #fab-wrap {
 .provision-callout-body { flex: 1; min-width: 0; }
 .provision-callout-title { font-weight: 800; font-size: 13.5px; color: var(--neutral-900); }
 .provision-callout-desc { font-size: 12px; color: var(--neutral-500); margin-top: 2px; line-height: 1.6; }
+/* Mobile-first volunteer experience tweaks */
+@media (max-width: 640px) {
+  .portal-grid { grid-template-columns: 1fr !important; }
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+  .profile-stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .card { padding: 16px !important; }
+  .view-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .view-header-actions { width: 100%; }
+  .view-header-actions .btn { flex: 1; }
+  .modal-dialog { width: 95% !important; max-width: 95% !important; padding: 16px !important; }
+  .data-table { font-size: 12px; }
+  .form-control { font-size: 16px; } /* prevent zoom on iOS */
+  input, select, textarea { font-size: 16px; }
+}
