@@ -5344,3 +5344,9 @@ body.role-volunteer #fab-wrap {
   .form-control { font-size: 16px; } /* prevent zoom on iOS */
   input, select, textarea { font-size: 16px; }
 }
+
+/* Volunteers list: tighter rows & calmer filter/actions spacing */
+.vol-table tbody td { padding-top: 8px; padding-bottom: 8px; }
+.vol-table tbody tr { border-bottom: 1px solid var(--neutral-100, #f3f4f6); }
+.filter-bar { gap: 10px; }
+.vol-table-actions { margin-bottom: 10px; }
