@@ -114,8 +114,8 @@
           <span>${escapeHtml(t("app_name") || "Athar")}</span>
         </div>
       </header>
-      <main class="pv-main">
-        <div class="pv-card" style="max-width:520px;">
+      <main class="pv-main" style="padding:20px 10px 60px;">
+        <div style="width:min(94vw, 380px); background:var(--surface); border:1px solid var(--neutral-300); border-radius:var(--radius-xl); box-shadow:var(--shadow-md); padding:20px;">
           <div id="aqr-body">
             <div class="skeleton skeleton-text" style="width:60%;"></div>
           </div>
