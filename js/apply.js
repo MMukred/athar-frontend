@@ -174,6 +174,10 @@
 
       const skillsRaw = document.getElementById("f-skills").value.trim();
 
+      const consentEl = document.getElementById("f-consent");
+      const consentChecked = !!(consentEl && consentEl.checked);
+      if (!consentChecked) { showError(I18N[lang].consent_required || "You must accept the privacy consent."); return; }
+
       const payload = {
         fullName,
         fullNameAr: fullNameAr || null,
@@ -189,6 +193,7 @@
         skills: skillsRaw ? skillsRaw.split(/[,|،]/).map((s) => s.trim()).filter(Boolean).slice(0, 20) : [],
         notes: document.getElementById("f-notes").value.trim() || null,
         website: document.getElementById("f-website").value || null,
+        consent: consentChecked,
       };
 
       const submitBtn = document.getElementById("submit-btn");
