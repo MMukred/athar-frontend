@@ -13,7 +13,7 @@
 (function () {
   "use strict";
 
-  const { App, t, ic, escapeHtml, formatDate } = window.AtharCore;
+  const { App, t, ic, escapeHtml, formatDate, showToast } = window.AtharCore;
 
   let requestSeq = 0;
   let cachedData = null;
@@ -426,6 +426,47 @@
         </aside>
       </div>
 
+      <section class="card" style="margin-top:16px;">
+        <div class="card-header">
+          <div class="card-title">${ic("user", 18)} ${L("U,O�U�O�Oc", "My profile")}</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="portal-edit-profile">${ic("edit", 14)} ${L("O�O�USUSO�", "Edit")}</button>
+        </div>
+        <div style="display:grid; gap:8px; font-size:14px;">
+          <div><strong>${L("O�O�O_U,U^ U,U.O�O�O_U.Oc", "Volunteer ID")}:</strong> <span class="num-ltr">${escapeHtml(v.volunteerCode || "—")}</span></div>
+          <div><strong>${L("OU,O3OO1", "Name")}:</strong> ${escapeHtml(name)}</div>
+          <div><strong>${L("U.O�U,U.Oc OU,U.O�O�O_U.Oc", "Email")}:</strong> ${escapeHtml(v.email || "—")}</div>
+          <div><strong>${L("U.O1O�U.O_", "Phone")}:</strong> ${escapeHtml(v.phone || v.whatsapp || "—")}</div>
+          <div><strong>${L("O�O�O1OO�US", "Skills")}:</strong> ${(v.skills && v.skills.length) ? v.skills.map(s => `<span class="tag-chip">#${escapeHtml(s)}</span>`).join(" ") : "—"}</div>
+        </div>
+        <form id="portal-profile-form" hidden style="margin-top:14px; display:grid; gap:10px;">
+          <div class="form-group">
+            <label class="form-label">${L("OU,O3OO1 U.O�O�O_U.Oc (English)", "Full name (English)")}</label>
+            <input class="form-control" id="pf-fullName" value="${escapeHtml(v.fullName || "")}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L("OU,O3OO1 U.O�O�O_U.Oc (Arabic)", "Full name (Arabic)")}</label>
+            <input class="form-control" id="pf-fullNameAr" value="${escapeHtml(v.fullNameAr || "")}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L("U.O�U,U.Oc OU,U.O�O�O_U.Oc", "Email")}</label>
+            <input class="form-control" id="pf-email" type="email" value="${escapeHtml(v.email || "")}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L("U.O1O�U.O_", "Phone / WhatsApp")}</label>
+            <input class="form-control" id="pf-phone" value="${escapeHtml(v.phone || "")}" />
+            <input class="form-control" id="pf-whatsapp" value="${escapeHtml(v.whatsapp || "")}" placeholder="WhatsApp" style="margin-top:6px;" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L("O�O�O1OO�US", "Skills (comma separated)")}</label>
+            <input class="form-control" id="pf-skills" value="${escapeHtml((v.skills || []).join(", "))}" />
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-primary btn-sm" id="pf-save">${L("O�O�U,O�", "Save")}</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="pf-cancel">${L("O�O-U.OU,O�", "Cancel")}</button>
+          </div>
+        </form>
+      </section>
+
       <div class="portal-footer-note">
         ${ic("shield", 13)}
         ${L("بياناتك خاصة — تعرض هذه البوابة سجلك أنت فقط.", "Your data is private — this portal only shows your own record.")}
@@ -435,6 +476,36 @@
   function bindActions(container) {
     const refresh = container.querySelector("#portal-refresh");
     if (refresh) refresh.onclick = () => renderPortal(container, {}, true);
+
+    const editBtn = container.querySelector("#portal-edit-profile");
+    const form = container.querySelector("#portal-profile-form");
+    if (editBtn && form) {
+      editBtn.onclick = () => { form.hidden = !form.hidden; };
+    }
+    const cancelBtn = container.querySelector("#pf-cancel");
+    if (cancelBtn && form) cancelBtn.onclick = () => { form.hidden = true; };
+    const saveBtn = container.querySelector("#pf-save");
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        try {
+          const skillsRaw = (document.getElementById("pf-skills").value || "").split(/[,\u060C]/).map(s => s.trim()).filter(Boolean);
+          const payload = {
+            fullName: document.getElementById("pf-fullName").value.trim(),
+            fullNameAr: document.getElementById("pf-fullNameAr").value.trim() || null,
+            email: document.getElementById("pf-email").value.trim() || null,
+            phone: document.getElementById("pf-phone").value.trim() || null,
+            whatsapp: document.getElementById("pf-whatsapp").value.trim() || null,
+            skills: skillsRaw,
+          };
+          await window.AtharAPI.portal.updateMe(payload);
+          showToast(L("تم الحفظ", "Saved"), "success");
+          if (form) form.hidden = true;
+          renderPortal(container, {}, true);
+        } catch (e) {
+          showToast((e && e.message) || L("فشل الحفظ", "Save failed"), "error");
+        }
+      };
+    }
 
     const retry = container.querySelector("#portal-retry");
     if (retry) retry.onclick = () => renderPortal(container, {}, true);

@@ -54,7 +54,8 @@ window.AtharCore = (function () {
     "audit-logs": "auditLogs",
     "settings": "settings",
     "portal": "portal",
-    "volunteer-portal": "portal"
+    "volunteer-portal": "portal",
+    "attendance-scan": "attendanceScan"
   };
 
   // ===========================================================
@@ -417,7 +418,7 @@ window.AtharCore = (function () {
     }
 
     const targetModule = VIEW_MODULE_MAP[view];
-    if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "public-verify") {
+    if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "public-verify" && view !== "attendance-scan") {
       view = "portal";
       params = {};
     }

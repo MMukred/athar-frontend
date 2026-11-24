@@ -194,7 +194,10 @@
 
     // ---- First render ----
     if (App.currentUser && App.currentUser.role === "volunteer") {
-      window.location.hash = "#portal";
+      const currentHash = window.location.hash || "";
+      if (!currentHash.startsWith("#attendance-scan")) {
+        window.location.hash = "#portal";
+      }
     }
     handleHashChange();
 

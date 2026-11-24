@@ -1227,8 +1227,8 @@
     if (bulkExport) {
       bulkExport.onclick = () => {
         const selectedList = state.volunteers.filter(v => App.selectedVolunteerIds.has(v.id));
-        const headers = ["ID", "Name", "National ID", "Phone", "Email", "Age", "Gender", "Nationality", "Status"];
-        const rows = selectedList.map(v => [v.id, v.full_name, v.national_id || "", v.phone || "", v.email || "", age(v.dob) ?? "", v.gender || "", v.nationality || "", v.status]);
+        const headers = ["Volunteer Code", "ID", "Name", "National ID", "Phone", "Email", "Age", "Gender", "Nationality", "Status"];
+        const rows = selectedList.map(v => [v.volunteer_code || v.volunteerCode || "", v.id, v.full_name, v.national_id || "", v.phone || "", v.email || "", age(v.dob) ?? "", v.gender || "", v.nationality || "", v.status]);
         window.ExportUtil.downloadCSV("Selected_Volunteers.csv", headers, rows);
       };
     }
@@ -1236,7 +1236,7 @@
     const exportCsv = document.getElementById("btn-export-vols-csv");
     if (exportCsv) {
       exportCsv.onclick = () => {
-        const headers = ["ID", "Name (EN)", "Name (AR)", "National ID", "Phone", "WhatsApp", "Email", "Age", "DOB", "Gender", "Nationality", "Study Level", "Committee", "Status", "Join Date"];
+        const headers = ["Volunteer Code", "ID", "Name (EN)", "Name (AR)", "National ID", "Phone", "WhatsApp", "Email", "Age", "DOB", "Gender", "Nationality", "Study Level", "Committee", "Status", "Join Date"];
         const rows = filtered.map(v => {
           const c = state.committees.find(x => x.id === v.committee_id);
           return [

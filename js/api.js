@@ -217,6 +217,8 @@ window.AtharAPI = (function () {
 
     portal: {
       me: () => get("/portal/me"),
+      updateMe: (payload) => patch("/portal/me", payload),
+      checkInAttendance: (token) => post("/portal/attendance/check-in", { token }),
     },
 
     volunteers: {
@@ -258,6 +260,7 @@ window.AtharAPI = (function () {
       update: async (id, p) => (await patch(`/meetings/${id}`, p)).meeting,
       delete: (id) => del(`/meetings/${id}`),
       getRoster: (id) => get(`/meetings/${id}/roster`),
+      getAttendanceQr: (id) => get(`/meetings/${id}/attendance-qr`),
       saveRoster: (id, records, markCompleted = true) =>
         post(`/meetings/${id}/roster`, { records, markMeetingCompleted: markCompleted }),
       autoHours: (id, autoApprove = false) =>

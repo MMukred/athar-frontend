@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
   // =========================================================================
   // Has this volunteer received an evaluation AFTER the given meeting day?
@@ -213,6 +213,9 @@
                     ` : ''}
                     <td>
                       <div class="row-actions-cell">
+                        <button class="btn btn-secondary btn-sm" data-qr-meeting="${m.id}" title="Attendance QR">
+                          ${ic("qr_code", 13)} QR
+                        </button>
                         <button class="btn btn-primary btn-sm" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">
                           ${m.status === 'completed' ? t("view") : (App.currentLang === 'ar' ? 'التحضير' : 'Take Attendance')}
                         </button>
@@ -290,6 +293,36 @@
       btn.onclick = () => {
         const id = btn.getAttribute("data-attendance-meeting");
         window.AtharModals.openAttendanceModal(id);
+      };
+    });
+
+    container.querySelectorAll("[data-qr-meeting]").forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute("data-qr-meeting");
+        try {
+          const res = await window.AtharAPI.meetings.getAttendanceQr(id);
+          const modalContainer = document.getElementById("modal-container");
+          if (!modalContainer) return;
+          const qrSvg = (window.generateQRCodeSVG) ? window.generateQRCodeSVG(res.scanUrl, 220, "#1F2328", "#FFFFFF") : "";
+          modalContainer.innerHTML = `
+            <div class="modal-backdrop" id="qr-backdrop" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:9999;">
+              <div class="modal-dialog" style="background:var(--surface,#fff); border-radius:12px; padding:24px; max-width:360px; width:90%; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <h3 style="margin:0; font-size:16px;">${App.currentLang === 'ar' ? 'رمز QR للحضور' : 'Attendance QR'}</h3>
+                  <button class="btn btn-icon" id="qr-close" style="border:none; background:none; font-size:20px; cursor:pointer;">×</button>
+                </div>
+                <div style="margin:0 auto 12px; display:inline-block;">${qrSvg}</div>
+                <p style="font-size:13px; color:var(--neutral-500); margin:0 0 8px;">${App.currentLang === 'ar' ? 'امسح هذا الرمز لتسجيل حضورك' : 'Scan this code to check in'}</p>
+                <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(res.scanUrl)}</div>
+              </div>
+            </div>
+          `;
+          const close = () => { modalContainer.innerHTML = ""; };
+          document.getElementById("qr-close").onclick = close;
+          document.getElementById("qr-backdrop").onclick = (e) => { if (e.target.id === "qr-backdrop") close(); };
+        } catch (e) {
+          if (window.AtharCore && window.AtharCore.showToast) window.AtharCore.showToast((e && e.message) || "Failed", "error");
+        }
       };
     });
 
