@@ -42,7 +42,20 @@
         window.AtharViews.showPublicVerifyStandalone(hashParts[1] || "");
         return;
       }
+      if (hashParts[0] === "attendance-qr" && window.AtharViews && window.AtharViews.showAttendanceQrStandalone) {
+        document.body.classList.add("is-logged-out");
+        window.AtharViews.showAttendanceQrStandalone(hashParts[1] || "");
+        return;
+      }
       if (window.AtharAuth) window.AtharAuth.showLoginScreen();
+      return;
+    }
+
+    // Logged-in users opening the standalone QR page skip the full app shell.
+    const bootHashParts = (window.location.hash || "").replace(/^#/, "").split("/");
+    if (bootHashParts[0] === "attendance-qr" && window.AtharViews && window.AtharViews.showAttendanceQrStandalone) {
+      document.body.classList.add("is-logged-out");
+      window.AtharViews.showAttendanceQrStandalone(bootHashParts[1] || "");
       return;
     }
     // ---- Role-scoped chrome (volunteers get a stripped-down shell) ----

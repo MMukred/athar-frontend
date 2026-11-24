@@ -213,7 +213,7 @@
                     ` : ''}
                     <td>
                       <div class="row-actions-cell">
-                        <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('attendance-qr', {id:'${m.id}'})" title="Attendance QR">
+                        <button class="btn btn-secondary btn-sm" onclick="window.location.hash='#attendance-qr/${m.id}'" title="Attendance QR">
                           ${ic("qr_code", 13)} QR
                         </button>
                         <button class="btn btn-primary btn-sm" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">

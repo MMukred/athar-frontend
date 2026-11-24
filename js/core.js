@@ -455,6 +455,10 @@ window.AtharCore = (function () {
       }
       return;
     }
+    if (parts[0] === "attendance-qr" && window.AtharViews && window.AtharViews.showAttendanceQrStandalone) {
+      window.AtharViews.showAttendanceQrStandalone(parts[1] || "");
+      return;
+    }
     if (!hash) { navigateTo("dashboard", {}, false); return; }
     navigateTo(parts[0] || "dashboard", { id: parts[1], sub: parts[2] }, false);
   }
