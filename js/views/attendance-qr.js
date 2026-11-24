@@ -49,7 +49,10 @@
       <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <strong style="font-size:14px;">${L("الحاضرون", "Checked-in attendees")}</strong>
-          <button class="btn btn-secondary btn-sm" id="qr-refresh">${ic("refresh", 13)} ${L("تحديث", "Refresh")}</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" id="qr-refresh">${ic("refresh", 13)} ${L("تحديث", "Refresh")}</button>
+            <button class="btn btn-secondary btn-sm" id="qr-manual">${L("الحضور اليدوي", "Manual attendance")}</button>
+          </div>
         </div>
         <div id="qr-attendance-list" style="max-height:320px; overflow:auto; border:1px solid var(--neutral-200,#e5e7eb); border-radius:8px; padding:8px;">
           <div style="color:var(--neutral-500); font-size:13px;">${L("جارٍ التحميل...", "Loading...")}</div>
@@ -86,6 +89,8 @@
     }
 
     document.getElementById("qr-refresh").onclick = loadAttendance;
+    const qrManual = document.getElementById("qr-manual");
+    if (qrManual) qrManual.onclick = () => { window.AtharApp.navigateTo("meeting-detail", { id: meetingId }); };
     loadAttendance();
     const poll = setInterval(() => {
       if (document.getElementById("qr-attendance-list")) loadAttendance();
@@ -156,6 +161,9 @@
             <div style="color:var(--neutral-500); font-size:13px;">${L("جارٍ التحميل...", "Loading...")}</div>
           </div>
         </div>
+        <div style="text-align:center; margin-top:14px;">
+          <button class="btn btn-secondary btn-sm" id="aqr-manual">${L("الحضور اليدوي", "Manual attendance")}</button>
+        </div>
       `;
 
       async function loadAttendance() {
@@ -186,6 +194,13 @@
         }
       }
       document.getElementById("aqr-refresh").onclick = loadAttendance;
+      const manualBtn = document.getElementById("aqr-manual");
+      if (manualBtn) manualBtn.onclick = () => {
+        const s = document.getElementById("attendance-qr-screen");
+        if (s) s.remove();
+        window.location.href = window.location.origin + window.location.pathname + "#meeting-detail/" + encodeURIComponent(meetingId);
+        window.location.reload();
+      };
       loadAttendance();
       const poll = setInterval(() => {
         if (document.getElementById("aqr-list")) loadAttendance();
