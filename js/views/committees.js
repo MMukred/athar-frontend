@@ -75,7 +75,9 @@
         <div class="committees-grid">
           ${visible.map(comm => {
       const selfVolId = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
-      const memberCount = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId).length;
+      const selfEmail = (App.currentUser && App.currentUser.email) ? String(App.currentUser.email).toLowerCase() : null;
+      const isSelf = (v) => (selfVolId && v.id === selfVolId) || (selfEmail && v.email && String(v.email).toLowerCase() === selfEmail);
+      const memberCount = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && !isSelf(v)).length;
       const commHours = state.volunteer_hours
         .filter(h => h.committee_id === comm.id && h.status === "approved")
         .reduce((acc, h) => acc + Number(h.hours), 0);
@@ -144,7 +146,9 @@
             <tbody>
               ${visible.map(comm => {
       const selfVolId2 = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
-      const count = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId2).length;
+      const selfEmail2 = (App.currentUser && App.currentUser.email) ? String(App.currentUser.email).toLowerCase() : null;
+      const isSelf2 = (v) => (selfVolId2 && v.id === selfVolId2) || (selfEmail2 && v.email && String(v.email).toLowerCase() === selfEmail2);
+      const count = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && !isSelf2(v)).length;
       const hours = state.volunteer_hours.filter(h => h.committee_id === comm.id && h.status === "approved").reduce((a, b) => a + Number(b.hours), 0);
       const isArchived = comm.status === "archived";
       return `
@@ -303,7 +307,9 @@
     const isArchived = comm.status === "archived";
 
     const selfVolId3 = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
-    const members = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId3);
+    const selfEmail3 = (App.currentUser && App.currentUser.email) ? String(App.currentUser.email).toLowerCase() : null;
+    const isSelf3 = (v) => (selfVolId3 && v.id === selfVolId3) || (selfEmail3 && v.email && String(v.email).toLowerCase() === selfEmail3);
+    const members = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && !isSelf3(v));
     const commMeetings = state.meetings.filter(m => m.committee_id === comm.id || m.committee_id === null);
     const commHours = state.volunteer_hours.filter(h => h.committee_id === comm.id && h.status === "approved");
     const totalHours = commHours.reduce((a, b) => a + Number(b.hours), 0);
