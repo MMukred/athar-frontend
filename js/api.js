@@ -100,7 +100,7 @@ window.AtharAPI = (function () {
     try {
       response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
     } catch {
-      throw new ApiError(0, "NETWORK_ERROR", "Cannot reach server");
+      throw new ApiError(0, "SERVER_WAKING", "Server is waking up — please try again in a few seconds.");
     }
 
     if (response.status === 401 && retry && !skipAuth && refreshToken) {
