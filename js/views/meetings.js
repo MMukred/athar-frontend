@@ -601,7 +601,7 @@
                     <div style="font-size:11px; color:var(--neutral-500);">${vol.phone || '—'}</div>
                   </td>
                   <td>
-                    <select class="form-control att-status-select" style="font-weight:600;">
+                    <select class="form-control att-status-select" data-saved="${rec.saved ? '1' : '0'}" style="font-weight:600;">
                       <option value="present" ${rec.status === 'present' ? 'selected' : ''}>${t("present")}</option>
                       <option value="late" ${rec.status === 'late' ? 'selected' : ''}>${t("late")}</option>
                       <option value="absent" ${rec.status === 'absent' ? 'selected' : ''}>${t("absent")}</option>
@@ -679,14 +679,14 @@
 
     const bulkPresent = document.getElementById("btn-bulk-present");
     if (bulkPresent) bulkPresent.onclick = () => {
-      container.querySelectorAll(".att-status-select").forEach(s => s.value = "present");
+      container.querySelectorAll(".att-status-select").forEach(s => { if (s.dataset.saved !== "1") s.value = "present"; });
       recalcCounts();
       window.AtharDirty.mark("attendance-roster");
     };
 
     const bulkAbsent = document.getElementById("btn-bulk-absent");
     if (bulkAbsent) bulkAbsent.onclick = () => {
-      container.querySelectorAll(".att-status-select").forEach(s => s.value = "absent");
+      container.querySelectorAll(".att-status-select").forEach(s => { if (s.dataset.saved !== "1") s.value = "absent"; });
       recalcCounts();
       window.AtharDirty.mark("attendance-roster");
     };
