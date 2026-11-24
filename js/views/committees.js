@@ -74,7 +74,8 @@
       ` : isGridView ? `
         <div class="committees-grid">
           ${visible.map(comm => {
-      const memberCount = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived").length;
+      const selfVolId = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
+      const memberCount = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId).length;
       const commHours = state.volunteer_hours
         .filter(h => h.committee_id === comm.id && h.status === "approved")
         .reduce((acc, h) => acc + Number(h.hours), 0);
@@ -142,7 +143,8 @@
             </thead>
             <tbody>
               ${visible.map(comm => {
-      const count = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived").length;
+      const selfVolId2 = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
+      const count = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId2).length;
       const hours = state.volunteer_hours.filter(h => h.committee_id === comm.id && h.status === "approved").reduce((a, b) => a + Number(b.hours), 0);
       const isArchived = comm.status === "archived";
       return `
@@ -300,7 +302,8 @@
     const canEdit = hasPermission("committees", "edit");
     const isArchived = comm.status === "archived";
 
-    const members = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived");
+    const selfVolId3 = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
+    const members = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && v.id !== selfVolId3);
     const commMeetings = state.meetings.filter(m => m.committee_id === comm.id || m.committee_id === null);
     const commHours = state.volunteer_hours.filter(h => h.committee_id === comm.id && h.status === "approved");
     const totalHours = commHours.reduce((a, b) => a + Number(b.hours), 0);
