@@ -192,7 +192,7 @@ window.AtharCore = (function () {
   function showToast(message, type, options) {
     type = type || "success";
     options = options || {};
-    const container = document.getElementById("toast-container");
+    const container = document.getElementById("toast-container") || document.body;
     if (!container) return;
 
     const toast = document.createElement("div");

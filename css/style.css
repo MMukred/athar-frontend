@@ -2394,6 +2394,38 @@ body.is-logged-out .main-layout {
   display: none !important;
 }
 
+/* The admin app shell (top bar, sidebar, main, modals, FAB, notifications)
+   is never mounted for anonymous visitors — only after a verified session. */
+body.is-logged-out #app {
+  display: none !important;
+}
+body.is-logged-out #fab-wrap {
+  display: none !important;
+}
+body.is-logged-out #notif-panel {
+  display: none !important;
+}
+
+/* Logged-out visitors see the login screen by default (before JS runs) */
+body.is-logged-out #login-screen {
+  display: flex !important;
+}
+
+/* Landing hero stat skeleton while public stats load */
+.stat-skeleton {
+  display: inline-block;
+  width: 48px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--neutral-200, #e5e7eb);
+  vertical-align: middle;
+  animation: stat-skeleton-pulse 1.2s ease-in-out infinite;
+}
+@keyframes stat-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ==========================================================================
    WhatsApp Templates Editor (Task A3)
    ========================================================================== */

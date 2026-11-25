@@ -266,10 +266,27 @@
       window.AtharAuth.bindLoginUI();
     }
 
+    // Graceful cold-start feedback: the first request after idle on Render's
+    // free tier can hang for 15–60s before the instance wakes up.
+    try {
+      window.addEventListener("athar:server-waking", function () {
+        if (window.__atharColdStartToastShown) return;
+        window.__atharColdStartToastShown = true;
+        try {
+          window.AtharCore.showToast(
+            "Server is waking up — it can take 30–60 seconds on the free tier. Please try again in a moment.",
+            "warning"
+          );
+        } catch { }
+      });
+    } catch { }
+
     const authed = window.AtharAuth && await window.AtharAuth.checkSession();
     if (authed) {
       const user = window.AtharAuth.getCurrentUser();
       if (user) {
+        // Authenticated session: make sure the public login screen stays hidden.
+        if (window.AtharAuth.hideLoginScreen) window.AtharAuth.hideLoginScreen();
         await boot(user);
         window.AtharAuth.startSessionWatcher();
         return;

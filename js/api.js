@@ -100,6 +100,7 @@ window.AtharAPI = (function () {
     try {
       response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
     } catch {
+      try { window.dispatchEvent(new CustomEvent("athar:server-waking", { detail: { path } })); } catch { }
       throw new ApiError(0, "SERVER_WAKING", "Server is waking up — please try again in a few seconds.");
     }
 
@@ -319,6 +320,7 @@ window.AtharAPI = (function () {
     // =========================================================
     public: {
       committees: () => get("/public/committees", { skipAuth: true }),
+      stats: () => get("/public/stats", { skipAuth: true }),
       apply: (data) => post("/public/applications", data, { skipAuth: true }),
     },
 

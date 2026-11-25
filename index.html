@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="css/rtl.css">
 </head>
 
-<body>
+<body class="is-logged-out">
   <!-- Login Screen -->
   <div id="login-screen" class="login-screen" style="display:none;">
     <div class="login-card">
@@ -299,10 +299,23 @@
   <script src="js/criteria-modal.js"></script>
   <script>
     (function () {
-      function animateCounters() {
-        document.querySelectorAll('.login-hero-stat-value').forEach(function (el) {
-          var target = parseInt(el.getAttribute('data-count') || '0', 10);
-          if (!target) return;
+      var loginScreen = document.getElementById('login-screen');
+      var values = loginScreen ? Array.prototype.slice.call(document.querySelectorAll('.login-hero-stat-value')) : [];
+
+      function showSkeletons() {
+        values.forEach(function (el) {
+          el.textContent = '';
+          el.innerHTML = '<span class="stat-skeleton" aria-hidden="true"></span>';
+        });
+      }
+
+      function renderStats(data) {
+        if (!values.length) return;
+        var d = data || {};
+        var keys = ["volunteers", "hoursApproved", "committees"];
+        values.forEach(function (el, i) {
+          var target = d[keys[i]] != null ? Number(d[keys[i]]) : (parseInt(el.getAttribute('data-count') || '0', 10) || 0);
+          if (!target) { showSkeletons(); return; }
           var start = 0;
           var duration = 1400;
           var startTime = null;
@@ -317,17 +330,30 @@
           requestAnimationFrame(step);
         });
       }
+
+      function loadStats() {
+        if (loginScreen && loginScreen.style.display !== 'none') {
+          var api = window.AtharAPI;
+          if (api && api.public && typeof api.public.stats === 'function') {
+            api.public.stats()
+              .then(function (d) { if (loginScreen && loginScreen.style.display !== 'none') renderStats(d); })
+              .catch(function () { if (loginScreen && loginScreen.style.display !== 'none') showSkeletons(); });
+          } else if (loginScreen && loginScreen.style.display !== 'none') {
+            showSkeletons();
+          }
+        }
+      }
+
       // Run when login screen becomes visible
-      var loginScreen = document.getElementById('login-screen');
       if (loginScreen) {
         var obs = new MutationObserver(function () {
-          if (loginScreen.style.display !== 'none') animateCounters();
+          if (loginScreen.style.display !== 'none') loadStats();
         });
         obs.observe(loginScreen, { attributes: true, attributeFilter: ['style'] });
       }
       // Also try on load
       window.addEventListener('load', function () {
-        if (loginScreen && loginScreen.style.display !== 'none') animateCounters();
+        if (loginScreen && loginScreen.style.display !== 'none') loadStats();
       });
     })();
   </script>
