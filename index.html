@@ -333,13 +333,12 @@
 
       function loadStats() {
         if (loginScreen && loginScreen.style.display !== 'none') {
+          showSkeletons();
           var api = window.AtharAPI;
           if (api && api.public && typeof api.public.stats === 'function') {
             api.public.stats()
               .then(function (d) { if (loginScreen && loginScreen.style.display !== 'none') renderStats(d); })
               .catch(function () { if (loginScreen && loginScreen.style.display !== 'none') showSkeletons(); });
-          } else if (loginScreen && loginScreen.style.display !== 'none') {
-            showSkeletons();
           }
         }
       }
