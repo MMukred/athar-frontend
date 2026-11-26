@@ -244,6 +244,22 @@ textarea {
   object-fit: contain;
 }
 
+/* Horizontal wordmark logo (replaces mark + text) */
+.brand-logo-horizontal {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.login-logo-horizontal {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;
