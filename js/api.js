@@ -250,6 +250,7 @@ window.AtharAPI = (function () {
     users: {
       list: () => get("/users"),
       create: (p) => post("/users", p),
+      delete: (id) => del(`/users/${id}`),
       resetPassword: (id, newPassword) => post(`/users/${id}/reset-password`, { newPassword }),
       provisionVolunteerAccounts: () => post("/users/provision-volunteer-accounts"),
     },

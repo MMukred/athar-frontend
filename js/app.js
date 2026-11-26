@@ -359,6 +359,28 @@ window.AtharViews.showAttendanceScanStandalone) {
     openRoleSimulatorModal: (...a) => window.AtharModals.openRoleSimulatorModal(...a),
     openRevokeCertModal: (...a) => window.AtharModals.openRevokeCertModal(...a),
     openUserMenuModal: (...a) => window.AtharModals.openUserMenuModal(...a),
+    deleteUser: async (id) => {
+      if (!window.AtharCore.showConfirmModal) { try { await window.AtharAPI.users.delete(id); } catch (e) { window.AtharCore.showToast(e.message || "Delete failed", "error"); } return; }
+      window.AtharCore.showConfirmModal({
+        title: "Delete user",
+        message: "Delete this user account? This cannot be undone.",
+        confirmText: "Delete",
+        onConfirm: async () => {
+          try {
+            await window.AtharAPI.users.delete(id);
+            try {
+              const res = await window.AtharAPI.users.list();
+              const state = window.AtharStore.getState();
+              if (state && res && res.items) state.users = res.items;
+            } catch (e) { }
+            window.AtharCore.showToast("User deleted", "warning");
+            window.AtharApp.renderCurrentView();
+          } catch (e) {
+            window.AtharCore.showToast(e.message || "Delete failed", "error");
+          }
+        },
+      });
+    },
     openEditWhatsAppTemplate: (...a) => window.AtharModals.openEditWhatsAppTemplate(...a),
     duplicateWhatsAppTemplate: (...a) => window.AtharModals.duplicateWhatsAppTemplate(...a),
     deleteWhatsAppTemplate: (...a) => window.AtharModals.deleteWhatsAppTemplate(...a),

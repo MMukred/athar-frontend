@@ -103,7 +103,8 @@
                       <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openResetPasswordModal('${u.id}')">${ic("lock", 14)} ${t("reset_password")}</button>
                     ` : ''}
                     ${u.role !== 'super_admin' ? `
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openPermissionsEditor('${u.id}')">${ic("sliders", 14)} Permissions</button>
+                      <button class="btn btn-secondary btn-sm" disabled title="Coming soon">${ic("sliders", 14)} Permissions (coming soon)</button>
+                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteUser && window.AtharApp.deleteUser('${u.id}')">${ic("trash", 14)} Delete</button>
                       <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.toggleUserActive && window.AtharApp.toggleUserActive('${u.id}')">${u.is_active ? 'Deactivate' : 'Activate'}</button>
                     ` : (App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>` : '')}
                   </div>
