@@ -91,7 +91,7 @@
       const isArchived = comm.status === "archived";
 
       return `
-              <div class="committee-card" style="${isArchived ? 'opacity:0.7;border-style:dashed;' : ''}">
+              <div class="committee-card" style="${isArchived ? 'opacity:0.7;border-style:dashed;' : 'cursor:pointer;'}" onclick="window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
                 <div>
                   <div class="committee-card-header">
                     <div>
@@ -125,7 +125,7 @@
           : `<span style="color:var(--neutral-400);">${t("none_option")}</span>`}
                   </div>
                   <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" style="flex:1;" onclick="window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="event.stopPropagation(); window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
                       ${t("view")} ${t("details")}
                     </button>
                     ${isArchived
