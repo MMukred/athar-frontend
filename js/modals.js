@@ -48,6 +48,9 @@ window.AtharModals = (function () {
     const existing = volunteerId ? state.volunteers.find(v => v.id === volunteerId) : null;
     const isEdit = !!existing;
 
+    const isHoc = !!(App.currentUser && App.currentUser.role === "committee_leader");
+    const hocCid = isHoc ? (App.currentUser.committee_id || (App.currentUser.committee && App.currentUser.committee.id) || null) : null;
+
     const STUDY_LEVELS = [
       { value: "primary", en: "Primary", ar: "ابتدائي" },
       { value: "secondary", en: "Secondary", ar: "متوسط" },
@@ -140,7 +143,7 @@ window.AtharModals = (function () {
                   <label class="field-label">${t("committee")}</label>
                   <select id="vol-comm" class="form-control">
                     <option value="">—</option>
-                    ${state.committees.filter(c => c.status !== 'archived').map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                    ${state.committees.filter(c => c.status !== 'archived' && (!isHoc || c.id === hocCid)).map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-field">
