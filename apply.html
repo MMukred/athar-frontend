@@ -1,223 +1,41 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>التطوع مع أثر | Volunteer with Athar</title>
-  <meta name="description" content="قدّم طلبك للتطوع مع أكاديمية أثر — Athar Foundation volunteer application">
+  <title>أكاديمية أثر — طلب تطوع</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/rtl.css">
   <style>
-    :root {
-      --primary: #0F766E;
-      --primary-dark: #115E59;
-      --primary-light: #CCFBF1;
-      --neutral-50: #F8FAFC;
-      --neutral-100: #F1F5F9;
-      --neutral-200: #E2E8F0;
-      --neutral-300: #CBD5E1;
-      --neutral-500: #64748B;
-      --neutral-700: #334155;
-      --neutral-900: #0F172A;
-      --danger: #DC2626;
-      --success: #059669;
-      --radius: 12px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: "Cairo", "Inter", system-ui, sans-serif;
-      background: linear-gradient(160deg, #0F766E 0%, #0B4F4A 55%, #08312E 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 32px 16px;
-      color: var(--neutral-900);
-    }
-
-    .apply-shell { width: 100%; max-width: 720px; }
-
-    .apply-hero {
-      text-align: center;
-      color: #fff;
-      margin-bottom: 22px;
-    }
-    .apply-hero img { width: 64px; height: 64px; margin-bottom: 10px; }
-    .apply-hero h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .apply-hero p { font-size: 14px; opacity: 0.85; margin-top: 6px; line-height: 1.8; }
-
-    .apply-card {
-      background: #fff;
-      border-radius: 18px;
-      padding: 26px 24px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-    }
-
-    .lang-toggle {
-      position: fixed;
-      top: 16px;
-      inset-inline-end: 16px;
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 999px;
-      padding: 7px 16px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      backdrop-filter: blur(6px);
-      transition: background 0.2s;
-    }
-    .lang-toggle:hover { background: rgba(255, 255, 255, 0.28); }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px 16px;
-    }
-    .form-grid .full { grid-column: 1 / -1; }
-
-    .field label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--neutral-700);
-      margin-bottom: 6px;
-    }
-    .field label .req { color: var(--danger); margin-inline-start: 2px; }
-    .field input,
-    .field select,
-    .field textarea {
-      width: 100%;
-      border: 1.5px solid var(--neutral-200);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 14px;
-      color: var(--neutral-900);
-      background: var(--neutral-50);
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: #fff;
-    }
-    .field input[dir="ltr"] { direction: ltr; text-align: left; }
-
-    .hint { font-size: 11.5px; color: var(--neutral-500); margin-top: 5px; line-height: 1.6; }
-
-    .hp-field {
-      position: absolute !important;
-      width: 1px; height: 1px;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .submit-btn {
-      width: 100%;
-      margin-top: 20px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 13px;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .submit-btn:hover:not(:disabled) { background: var(--primary-dark); }
-    .submit-btn:active:not(:disabled) { transform: translateY(1px); }
-    .submit-btn:disabled { opacity: 0.6; cursor: wait; }
-
-    .form-error {
-      display: none;
-      margin-top: 14px;
-      padding: 11px 14px;
-      border-radius: 10px;
-      background: #FEF2F2;
-      color: var(--danger);
-      font-size: 13.5px;
-      font-weight: 700;
-      line-height: 1.7;
-    }
-
-    .success-view { text-align: center; padding: 26px 8px; }
-    .success-view .check {
-      width: 74px; height: 74px;
-      margin: 0 auto 18px;
-      border-radius: 50%;
-      background: #ECFDF5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-    }
-    .success-view h2 { font-size: 22px; font-weight: 800; color: var(--success); }
-    .success-view p { margin-top: 10px; color: var(--neutral-700); font-size: 14.5px; line-height: 1.9; }
-    .success-view .ref {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: var(--neutral-100);
-      font-size: 12px;
-      color: var(--neutral-500);
-      font-family: monospace;
-      direction: ltr;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2.5px solid rgba(255, 255, 255, 0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: -3px;
-      margin-inline-end: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .page-footer {
-      text-align: center;
-      margin-top: 18px;
-      color: rgba(255, 255, 255, 0.65);
-      font-size: 12px;
-    }
-    .page-footer a { color: rgba(255, 255, 255, 0.9); }
-
-    @media (max-width: 560px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .apply-card { padding: 20px 16px; }
-    }
+    body { background: var(--app-bg); font-family: var(--font-ar); }
+    .apply-shell { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+    .apply-card { background: var(--surface); border: 1px solid var(--neutral-300); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 13px; font-weight: 600; color: var(--neutral-800); }
+    .req { color: var(--danger); margin-inline-start: 2px; }
+    .form-control { padding: 8px 12px; border: 1px solid var(--neutral-300); border-radius: var(--radius-md); background: var(--neutral-50); color: var(--neutral-900); font-size: 13px; width: 100%; }
+    .form-control:focus { outline: none; background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-subtle); }
+    .radio-group, .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .radio-group label, .checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
+    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .form-error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+    .hp-field { position: absolute !important; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .consent-label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--neutral-700); cursor: pointer; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
-
 <body>
-  <button type="button" class="lang-toggle" id="lang-toggle">English</button>
-
   <div class="apply-shell">
-    <div class="apply-hero">
-      <img src="assets/logo.svg" alt="Athar">
-      <h1 id="page-title">التطوع مع أكاديمية أثر</h1>
-      <p id="page-subtitle">املأ النموذج التالي وسيتواصل معك فريقنا قريباً بإذن الله.</p>
-    </div>
-
-    <div class="apply-card" id="apply-card">
+    <div class="apply-card">
+      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">أكاديمية أثر</h1>
+      <p style="color:var(--neutral-500); margin-bottom:16px;">طلب تطوع — Volunteer Application</p>
       <form id="apply-form" class="form-grid" novalidate>
         <!-- Honeypot -->
         <div class="hp-field" aria-hidden="true">
@@ -225,104 +43,202 @@
           <input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off">
         </div>
 
-        <div class="field">
-          <label for="f-fullName"><span data-i18n="full_name_en">Full Name (English)</span><span class="req">*</span></label>
-          <input type="text" id="f-fullName" dir="ltr" autocomplete="name" required>
-        </div>
-        <div class="field">
-          <label for="f-fullNameAr"><span data-i18n="full_name_ar">الاسم الكامل (بالعربية)</span></label>
-          <input type="text" id="f-fullNameAr" autocomplete="name">
-        </div>
-
-        <div class="field">
-          <label for="f-nationalId"><span data-i18n="national_id">رقم الهوية / الإقامة</span></label>
-          <input type="text" id="f-nationalId" dir="ltr" inputmode="numeric" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="f-dob"><span data-i18n="dob">تاريخ الميلاد</span></label>
-          <input type="date" id="f-dob">
-        </div>
-
-        <div class="field">
-          <label for="f-phone"><span data-i18n="phone">رقم الجوال</span></label>
-          <input type="tel" id="f-phone" dir="ltr" placeholder="+9665xxxxxxxx" autocomplete="tel">
-        </div>
-        <div class="field">
-          <label for="f-whatsapp"><span data-i18n="whatsapp">رقم الواتساب</span><span class="req">*</span></label>
-          <input type="tel" id="f-whatsapp" dir="ltr" placeholder="+9665xxxxxxxx" autocomplete="tel">
-        </div>
-
         <div class="field full">
-          <label for="f-email"><span data-i18n="email">البريد الإلكتروني</span></label>
-          <input type="email" id="f-email" dir="ltr" placeholder="name@example.com" autocomplete="email">
-          <div class="hint" id="contact-hint">يجب توفير رقم واتساب أو بريد إلكتروني على الأقل.</div>
+          <label>1. الاسم الرباعي / FULL NAME <span class="req">*</span></label>
+          <input type="text" id="f-fullName" class="form-control" required>
         </div>
-
         <div class="field">
-          <label for="f-gender"><span data-i18n="gender">الجنس</span></label>
-          <select id="f-gender">
-            <option value="">—</option>
-            <option value="male" data-i18n="male">ذكر</option>
-            <option value="female" data-i18n="female">أنثى</option>
+          <label>2. العمر / AGE <span class="req">*</span></label>
+          <input type="number" id="f-age" class="form-control" min="10" max="100" required>
+        </div>
+        <div class="field">
+          <label>3. الجنس / GENDER <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="gender" value="male" required> ذكر / MALE</label>
+            <label><input type="radio" name="gender" value="female"> أنثى / FEMALE</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>4. رقم الهاتف (واتساب) / Phone (WhatsApp) <span class="req">*</span></label>
+          <input type="tel" id="f-phone" class="form-control" required>
+        </div>
+        <div class="field">
+          <label>5. البريد الإلكتروني / E-MAIL <span class="req">*</span></label>
+          <input type="email" id="f-email" class="form-control" required>
+        </div>
+        <div class="field">
+          <label>6. الجنسية / Nationality <span class="req">*</span></label>
+          <input type="text" id="f-nationality" class="form-control" required>
+        </div>
+        <div class="field full">
+          <label>7. مكان الإقامة / Place of Residence <span class="req">*</span></label>
+          <input type="text" id="f-residence" class="form-control" required>
+        </div>
+        <div class="field">
+          <label>8. المستوى التعليمي / Educational Level <span class="req">*</span></label>
+          <select id="f-eduLevel" class="form-control" required>
+            <option value="">--</option>
+            <option value="highschool">ثانوي / HIGHSCHOOL</option>
+            <option value="diploma">دبلوم / DIPLOMA</option>
+            <option value="bachelor">بكالوريوس / BACHELOR</option>
+            <option value="master">ماجستير / MASTER</option>
+            <option value="other">Other:</option>
           </select>
+          <input type="text" id="f-eduLevelOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
         </div>
         <div class="field">
-          <label for="f-nationality"><span data-i18n="nationality">الجنسية</span></label>
-          <input type="text" id="f-nationality">
+          <label>9. التخصص الدراسي / Field of Study <span class="req">*</span></label>
+          <input type="text" id="f-fieldOfStudy" class="form-control" required>
         </div>
-
+        <div class="field full">
+          <label>10. اسم الجامعة / المدرسة / المعهد / Educational Institution <span class="req">*</span></label>
+          <input type="text" id="f-institution" class="form-control" required>
+        </div>
         <div class="field">
-          <label for="f-studyLevel"><span data-i18n="study_level">المستوى الدراسي</span></label>
-          <select id="f-studyLevel">
-            <option value="">—</option>
-            <option value="secondary" data-i18n="lvl_secondary">ثانوي</option>
-            <option value="diploma" data-i18n="lvl_diploma">دبلوم</option>
-            <option value="bachelor" data-i18n="lvl_bachelor">بكالوريوس</option>
-            <option value="master" data-i18n="lvl_master">ماجستير</option>
-            <option value="phd" data-i18n="lvl_phd">دكتوراه</option>
-            <option value="other" data-i18n="lvl_other">أخرى</option>
+          <label>11. هل سبق لك التطوع؟ / Have you volunteered before? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="volBefore" value="yes" required> نعم / YES</label>
+            <label><input type="radio" name="volBefore" value="no"> لا / NO</label>
+          </div>
+        </div>
+        <div class="field full" id="volOrgsWrap" style="display:none;">
+          <label>12. الجهات/البرامج (إذا نعم) / Organizations (IF YES)</label>
+          <textarea id="f-volOrgs" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="field full">
+          <label>13. المهارات / What skills do you have? <span class="req">*</span></label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="org"> التنظيم وإدارة الفعاليات / Organization and Event Management</label>
+            <label><input type="checkbox" value="media"> الإعلام والتصوير / Media and Photography</label>
+            <label><input type="checkbox" value="design"> التصميم / Design</label>
+            <label><input type="checkbox" value="social"> إدارة وسائل التواصل / Social Media Management</label>
+            <label><input type="checkbox" value="coordination"> التنسق واستقبال الضيوف / Coordination and Guest Reception</label>
+            <label><input type="checkbox" value="teaching"> التدريس أو الإشراف التربوي / Teaching or Educational Supervision</label>
+            <label><input type="checkbox" value="tech"> الدعم التقني / Technical Support</label>
+            <label><input type="checkbox" value="translation"> الترجمة / Translation</label>
+            <label><input type="checkbox" value="content"> كتابة المحتوى / Content Writing</label>
+            <label><input type="checkbox" value="eventcoord"> تنسيق الفعاليات والبرامج / Event and Program Coordination</label>
+            <label><input type="checkbox" value="other"> Other:</label>
+          </div>
+          <input type="text" id="f-skillsOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+        </div>
+        <div class="field full">
+          <label>14. مجال التطوع المفضل / Preferred area <span class="req">*</span></label>
+          <select id="f-preferredArea" class="form-control" required>
+            <option value="">--</option>
+            <option value="events">تنظيم الفعاليات والبرامج / Event and Program Organization</option>
+            <option value="media">الإعلام والتوثيق / Media and Documentation</option>
+            <option value="design">تصميم جرافيكي أو تحرير الفيديو / Graphic Design or Video Editing</option>
+            <option value="tech">الدعم التقني / Technical Support</option>
+            <option value="supervision">الإشراف على الطلاب / Student Supervision</option>
+            <option value="educational">تنظيم الأنشطة التعليمية أو القرآنية / Educational or Qur'anic Activity Organizing</option>
+            <option value="hospitality">الضيافة والخدمات اللوجستية / Hospitality and Logistics</option>
+            <option value="pr">العلاقات العامة / Public Relations</option>
+            <option value="any">أي مجال حسب الحاجة / Any Area as Needed</option>
+            <option value="other">Other:</option>
           </select>
+          <input type="text" id="f-preferredAreaOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
         </div>
         <div class="field">
-          <label for="f-committee"><span data-i18n="committee">اللجنة المفضلة</span></label>
-          <select id="f-committee">
-            <option value="" data-i18n="no_pref">بدون تفضيل</option>
-          </select>
+          <label>15. الالتزام بفترة الإعداد؟ / Commit to preparation period? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="commitPrep" value="yes" required> نعم / YES</label>
+            <label><input type="radio" name="commitPrep" value="no"> لا / NO</label>
+            <label><input type="radio" name="commitPrep" value="other"> Other:</label>
+          </div>
+          <input type="text" id="f-commitPrepOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
         </div>
-
-        <div class="field full">
-          <label for="f-skills"><span data-i18n="skills">المهارات</span></label>
-          <input type="text" id="f-skills" placeholder="تصوير، تصميم، إلقاء...">
-          <div class="hint" data-i18n="skills_hint">افصل بين المهارات بفاصلة أو |</div>
+        <div class="field">
+          <label>16. قيود/التزامات تؤثر على الحضور؟ / Restrictions affecting attendance? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="restrictions" value="yes" required> نعم / YES</label>
+            <label><input type="radio" name="restrictions" value="no"> لا / NO</label>
+            <label><input type="radio" name="restrictions" value="other"> Other:</label>
+          </div>
+          <textarea id="f-restrictionsDetail" class="form-control" rows="2" placeholder="Details..." style="margin-top:6px; display:none;"></textarea>
         </div>
-
-        <div class="field full">
-          <label for="f-notes"><span data-i18n="notes">ملاحظات إضافية</span></label>
-          <textarea id="f-notes" rows="3" placeholder=""></textarea>
+        <div class="field">
+          <label>17. وسيلة مواصلات؟ / Do you have transportation? <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="transport" value="yes" required> نعم / YES</label>
+            <label><input type="radio" name="transport" value="no"> لا / NO</label>
+            <label><input type="radio" name="transport" value="other"> Other:</label>
+          </div>
+          <input type="text" id="f-transportOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
         </div>
-
         <div class="field full">
-          <label class="consent-label" style="display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--neutral-700); cursor:pointer;">
-            <input type="checkbox" id="f-consent" required style="margin-top:3px; width:16px; height:16px; accent-color:var(--primary);" />
-            <span>I consent to the processing of my full name, national ID, date of birth and contact details for volunteer registration and administration.<br />أنا أوافق على معالجة الاسم الكامل ورقم الهوية وتاريخ الميلاد وتفاصيل التواصل لتسجيل المتطوع.</span>
+          <label>18. اقتراحات أو ملاحظات / Any suggestions or comments? <span class="req">*</span></label>
+          <textarea id="f-suggestions" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="field full">
+          <label>19. إقرار / Pledge <span class="req">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="pledge" value="agree" required> أوافق / I Agree</label>
+            <label><input type="radio" name="pledge" value="other"> Other:</label>
+          </div>
+        </div>
+        <div class="field full">
+          <label class="consent-label">
+            <input type="checkbox" id="f-consent" required>
+            <span>أتعهد بصحة المعلومات المدخلة والالتزام بأنظمة وتعليمات أكاديمية أثر في حال قبولي كمتطوع. / I pledge the information is accurate and agree to comply with Athar Academy rules if accepted.</span>
           </label>
-          <div class="hint">بياناتك تُستخدم فقط لتسجيل المتطوع وإدارة ملفه داخل المؤسسة.</div>
         </div>
-
         <div class="form-error full" id="form-error"></div>
-
         <div class="full">
-          <button type="submit" class="submit-btn" id="submit-btn" data-i18n="submit">إرسال الطلب</button>
+          <button type="submit" class="submit-btn" id="submit-btn">إرسال الطلب / Submit</button>
         </div>
       </form>
     </div>
-
-    <div class="page-footer">
-      <span id="footer-text">نظام إدارة المتطوعين — أكاديمية أثر</span>
-    </div>
   </div>
-
   <script src="js/apply.js"></script>
+  <script>
+    // Toggle "Other:" free-text inputs
+    function toggleOther(radioName, inputId, showWhen) {
+      document.querySelectorAll('input[name="' + radioName + '"]').forEach(r => {
+        r.addEventListener('change', () => {
+          const sel = document.querySelector('input[name="' + radioName + '"]:checked');
+          const inp = document.getElementById(inputId);
+          if (inp) inp.style.display = (sel && sel.value === showWhen) ? '' : 'none';
+        });
+      });
+    }
+    toggleOther('commitPrep', 'f-commitPrepOther', 'other');
+    toggleOther('transport', 'f-transportOther', 'other');
+    // volunteered before -> show orgs
+    document.querySelectorAll('input[name="volBefore"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const sel = document.querySelector('input[name="volBefore"]:checked');
+        const w = document.getElementById('volOrgsWrap');
+        if (w) w.style.display = (sel && sel.value === 'yes') ? '' : 'none';
+      });
+    });
+    // edu level other
+    const eduSel = document.getElementById('f-eduLevel');
+    if (eduSel) eduSel.addEventListener('change', () => {
+      const o = document.getElementById('f-eduLevelOther');
+      if (o) o.style.display = (eduSel.value === 'other') ? '' : 'none';
+    });
+    // preferred area other
+    const paSel = document.getElementById('f-preferredArea');
+    if (paSel) paSel.addEventListener('change', () => {
+      const o = document.getElementById('f-preferredAreaOther');
+      if (o) o.style.display = (paSel.value === 'other') ? '' : 'none';
+    });
+    // skills other
+    document.querySelectorAll('#f-skillsOther').forEach(() => {});
+    const skillsOtherCb = document.querySelector('input[type="checkbox"][value="other"]');
+    if (skillsOtherCb) skillsOtherCb.addEventListener('change', () => {
+      const o = document.getElementById('f-skillsOther');
+      if (o) o.style.display = skillsOtherCb.checked ? '' : 'none';
+    });
+    // restrictions detail
+    document.querySelectorAll('input[name="restrictions"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const sel = document.querySelector('input[name="restrictions"]:checked');
+        const t = document.getElementById('f-restrictionsDetail');
+        if (t) t.style.display = (sel && sel.value === 'yes') ? '' : 'none';
+      });
+    });
+  </script>
 </body>
-
 </html>

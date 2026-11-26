@@ -1,11 +1,9 @@
 /**
- * Athar — Public volunteer application page (no authentication).
- * Talks to POST /api/public/applications and GET /api/public/committees.
+ * Athar public volunteer application form handler
  */
 (function () {
   "use strict";
 
-  // ---- API base (same detection rules as the main app) ----
   const BASE_URL = (function () {
     if (window._ATHAR_API_URL__) return String(window._ATHAR_API_URL__).replace(/\/$/, "");
     const host = window.location.hostname;
@@ -13,252 +11,178 @@
     return "https://athar-api-l8fn.onrender.com/api";
   })();
 
-  const I18N = {
-    ar: {
-      title: "التطوع مع أكاديمية أثر",
-      subtitle: "املأ النموذج التالي وسيتواصل معك فريقنا قريباً بإذن الله.",
-      full_name_en: "الاسم الكامل (بالإنجليزية)",
-      full_name_ar: "الاسم الكامل (بالعربية)",
-      national_id: "رقم الهوية / الإقامة",
-      dob: "تاريخ الميلاد",
-      phone: "رقم الجوال",
-      whatsapp: "رقم الواتساب",
-      email: "البريد الإلكتروني",
-      gender: "الجنس",
-      male: "ذكر",
-      female: "أنثى",
-      nationality: "الجنسية",
-      study_level: "المستوى الدراسي",
-      lvl_secondary: "ثانوي",
-      lvl_diploma: "دبلوم",
-      lvl_bachelor: "بكالوريوس",
-      lvl_master: "ماجستير",
-      lvl_phd: "دكتوراه",
-      lvl_other: "أخرى",
-      committee: "اللجنة المفضلة",
-      no_pref: "بدون تفضيل",
-      skills: "المهارات",
-      skills_hint: "افصل بين المهارات بفاصلة أو |",
-      notes: "ملاحظات إضافية",
-      contact_hint: "يجب توفير رقم واتساب أو بريد إلكتروني على الأقل.",
-      submit: "إرسال الطلب",
-      sending: "جارٍ الإرسال…",
-      success_title: "تم استلام طلبك بنجاح ✓",
-      success_body: "شكراً لتطوعك مع أكاديمية أثر. سيقوم فريقنا بمراجعة طلبك والتواصل معك عبر الواتساب أو البريد الإلكتروني.",
-      success_ref: "رقم الطلب",
-      err_name: "يرجى كتابة الاسم الكامل.",
-      err_contact: "يرجى إدخال رقم واتساب أو بريد إلكتروني.",
-      err_duplicate: "يبدو أن هذا الطلب مسجل مسبقاً. تواصل معنا إن كنت تعتقد أن هناك خطأ.",
-      err_rate: "تم إرسال عدد كبير من الطلبات من هذا الجهاز. حاول لاحقاً.",
-      err_generic: "تعذّر إرسال الطلب. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
-      footer: "نظام إدارة المتطوعين — أكاديمية أثر",
-      toggle: "English",
-    },
-    en: {
-      title: "Volunteer with Athar Foundation",
-      subtitle: "Fill in the form below and our team will contact you soon.",
-      full_name_en: "Full Name (English)",
-      full_name_ar: "الاسم الكامل (بالعربية)",
-      national_id: "National ID / Iqama",
-      dob: "Date of Birth",
-      phone: "Phone Number",
-      whatsapp: "WhatsApp Number",
-      email: "Email Address",
-      gender: "Gender",
-      male: "Male",
-      female: "Female",
-      nationality: "Nationality",
-      study_level: "Study Level",
-      lvl_secondary: "Secondary",
-      lvl_diploma: "Diploma",
-      lvl_bachelor: "Bachelor",
-      lvl_master: "Master",
-      lvl_phd: "PhD",
-      lvl_other: "Other",
-      committee: "Preferred Committee",
-      no_pref: "No preference",
-      skills: "Skills",
-      skills_hint: "Separate skills with a comma or |",
-      notes: "Additional Notes",
-      contact_hint: "A WhatsApp number or an email address is required.",
-      submit: "Submit Application",
-      sending: "Sending…",
-      success_title: "Application received ✓",
-      success_body: "Thank you for volunteering with Athar Foundation. Our team will review your application and contact you via WhatsApp or email.",
-      success_ref: "Reference",
-      err_name: "Please enter your full name.",
-      err_contact: "Please provide a WhatsApp number or an email address.",
-      err_duplicate: "It looks like this application was already submitted. Contact us if you think this is a mistake.",
-      err_rate: "Too many submissions from this device. Please try again later.",
-      err_generic: "Could not submit the application. Check your connection and try again.",
-      footer: "Volunteer Management System — Athar Foundation",
-      toggle: "العربية",
-    },
-  };
-
-  let lang = (new URLSearchParams(window.location.search).get("lang") || "ar") === "en" ? "en" : "ar";
-
-  function applyLang() {
-    const dict = I18N[lang];
-    document.documentElement.setAttribute("lang", lang);
-    document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
-
-    document.querySelectorAll("[data-i18n]").forEach((el) => {
-      const key = el.getAttribute("data-i18n");
-      if (dict[key] != null) el.textContent = dict[key];
-    });
-
-    document.getElementById("page-title").textContent = dict.title;
-    document.getElementById("page-subtitle").textContent = dict.subtitle;
-    document.getElementById("contact-hint").textContent = dict.contact_hint;
-    document.getElementById("footer-text").textContent = dict.footer;
-    document.getElementById("lang-toggle").textContent = dict.toggle;
-    document.getElementById("f-skills").placeholder = lang === "ar" ? "تصوير، تصميم، إلقاء..." : "Photography, design, public speaking...";
-    document.getElementById("f-notes").placeholder = lang === "ar" ? "أخبرنا عن دوافعك للتطوع..." : "Tell us why you'd like to volunteer...";
-
-    const submitBtn = document.getElementById("submit-btn");
-    if (submitBtn && !submitBtn.disabled) submitBtn.textContent = dict.submit;
-  }
-
-  function showError(msg) {
-    const box = document.getElementById("form-error");
-    box.textContent = msg;
-    box.style.display = "block";
-    box.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+  const lang = (document.documentElement.lang === "en") ? "en" : "ar";
 
   function clearError() {
-    const box = document.getElementById("form-error");
-    box.style.display = "none";
+    const el = document.getElementById("form-error");
+    if (el) { el.textContent = ""; el.style.display = "none"; }
+  }
+  function showError(msg) {
+    const el = document.getElementById("form-error");
+    if (el) { el.textContent = msg; el.style.display = "block"; }
   }
 
-  // ---- Load committees (best effort) ----
-  async function loadCommittees() {
-    try {
-      const res = await fetch(`${BASE_URL}/public/committees`, { headers: { Accept: "application/json" } });
-      if (!res.ok) return;
-      const data = await res.json();
-      const select = document.getElementById("f-committee");
-      (data.items || []).forEach((c) => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = lang === "ar" ? (c.nameAr || c.nameEn) : (c.nameEn || c.nameAr);
-        select.appendChild(opt);
+  function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ""; }
+  function checked(name) { const el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+  function checkedBoxes(sel) { return Array.from(document.querySelectorAll(sel + " input[type='checkbox']:checked")).map(cb => cb.value); }
+
+  const form = document.getElementById("apply-form");
+  if (!form) return;
+
+  // Toggle "Other:" free-text inputs
+  function toggleOther(radioName, inputId, showWhen) {
+    document.querySelectorAll('input[name="' + radioName + '"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const sel = document.querySelector('input[name="' + radioName + '"]:checked');
+        const inp = document.getElementById(inputId);
+        if (inp) inp.style.display = (sel && sel.value === showWhen) ? '' : 'none';
       });
-    } catch {
-      // Offline or API unavailable — the form still works without a committee.
-    }
-  }
-
-  function wireForm() {
-    const form = document.getElementById("apply-form");
-    const dobInput = document.getElementById("f-dob");
-    dobInput.max = new Date().toISOString().slice(0, 10);
-
-    ["f-whatsapp", "f-email"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", clearError);
-    });
-    document.getElementById("f-fullName").addEventListener("input", clearError);
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearError();
-
-      const fullName = document.getElementById("f-fullName").value.trim();
-      const fullNameAr = document.getElementById("f-fullNameAr").value.trim();
-      const whatsapp = document.getElementById("f-whatsapp").value.trim();
-      const email = document.getElementById("f-email").value.trim();
-
-      if (fullName.length < 2) { showError(I18N[lang].err_name); return; }
-      if (!whatsapp && !email) { showError(I18N[lang].err_contact); return; }
-
-      const skillsRaw = document.getElementById("f-skills").value.trim();
-
-      const consentEl = document.getElementById("f-consent");
-      const consentChecked = !!(consentEl && consentEl.checked);
-      if (!consentChecked) { showError(I18N[lang].consent_required || "You must accept the privacy consent."); return; }
-
-      const payload = {
-        fullName,
-        fullNameAr: fullNameAr || null,
-        nationalId: document.getElementById("f-nationalId").value.trim() || null,
-        phone: document.getElementById("f-phone").value.trim() || null,
-        whatsapp: whatsapp || null,
-        email: email || null,
-        dob: dobInput.value || null,
-        gender: document.getElementById("f-gender").value || null,
-        nationality: document.getElementById("f-nationality").value.trim() || null,
-        studyLevel: document.getElementById("f-studyLevel").value || null,
-        committeeId: document.getElementById("f-committee").value || null,
-        skills: skillsRaw ? skillsRaw.split(/[,|،]/).map((s) => s.trim()).filter(Boolean).slice(0, 20) : [],
-        notes: document.getElementById("f-notes").value.trim() || null,
-        website: document.getElementById("f-website").value || null,
-        consent: consentChecked,
-      };
-
-      const submitBtn = document.getElementById("submit-btn");
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span class="spinner"></span>${I18N[lang].sending}`;
-
-      try {
-        const res = await fetch(`${BASE_URL}/public/applications`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (res.status === 201) {
-          const data = await res.json().catch(() => ({}));
-          showSuccess(data.applicationId);
-          return;
-        }
-
-        const body = await res.json().catch(() => null);
-        const code = body && body.error && body.error.code;
-        if (res.status === 429) showError(I18N[lang].err_rate);
-        else if (res.status === 409 || code === "ALREADY_APPLIED") showError(I18N[lang].err_duplicate);
-        else if (res.status === 422 && body && body.error && body.error.details) {
-          const first = Array.isArray(body.error.details) ? body.error.details[0] : null;
-          showError(first && first.message ? first.message : I18N[lang].err_generic);
-        } else {
-          showError(I18N[lang].err_generic);
-        }
-      } catch {
-        showError(I18N[lang].err_generic);
-      }
-
-      submitBtn.disabled = false;
-      submitBtn.textContent = I18N[lang].submit;
     });
   }
+  toggleOther('commitPrep', 'f-commitPrepOther', 'other');
+  toggleOther('transport', 'f-transportOther', 'other');
 
-  function showSuccess(applicationId) {
-    const dict = I18N[lang];
-    document.getElementById("apply-card").innerHTML = `
-      <div class="success-view">
-        <div class="check">🎉</div>
-        <h2>${dict.success_title}</h2>
-        <p>${dict.success_body}</p>
-        ${applicationId ? `<div class="ref">${dict.success_ref}: ${String(applicationId).slice(0, 8).toUpperCase()}</div>` : ""}
-      </div>
-    `;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const volBeforeRadios = document.querySelectorAll('input[name="volBefore"]');
+  volBeforeRadios.forEach(r => r.addEventListener('change', () => {
+    const sel = document.querySelector('input[name="volBefore"]:checked');
+    const w = document.getElementById('volOrgsWrap');
+    if (w) w.style.display = (sel && sel.value === 'yes') ? '' : 'none';
+  }));
 
-  document.getElementById("lang-toggle").addEventListener("click", () => {
-    lang = lang === "ar" ? "en" : "ar";
-    applyLang();
-    // Refresh committee option labels for the new language.
-    const select = document.getElementById("f-committee");
-    Array.from(select.options).forEach((opt) => opt.remove());
-    const none = document.createElement("option");
-    none.value = "";
-    none.textContent = I18N[lang].no_pref;
-    select.appendChild(none);
-    loadCommittees();
+  const eduSel = document.getElementById('f-eduLevel');
+  if (eduSel) eduSel.addEventListener('change', () => {
+    const o = document.getElementById('f-eduLevelOther');
+    if (o) o.style.display = (eduSel.value === 'other') ? '' : 'none';
   });
 
-  applyLang();
-  wireForm();
-  loadCommittees();
+  const paSel = document.getElementById('f-preferredArea');
+  if (paSel) paSel.addEventListener('change', () => {
+    const o = document.getElementById('f-preferredAreaOther');
+    if (o) o.style.display = (paSel.value === 'other') ? '' : 'none';
+  });
+
+  const skillsOtherCb = document.querySelector('.checkbox-group input[type="checkbox"][value="other"]');
+  if (skillsOtherCb) skillsOtherCb.addEventListener('change', () => {
+    const o = document.getElementById('f-skillsOther');
+    if (o) o.style.display = skillsOtherCb.checked ? '' : 'none';
+  });
+
+  document.querySelectorAll('input[name="restrictions"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const sel = document.querySelector('input[name="restrictions"]:checked');
+      const t = document.getElementById('f-restrictionsDetail');
+      if (t) t.style.display = (sel && sel.value === 'yes') ? '' : 'none';
+    });
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const fullName = val("f-fullName");
+    const age = val("f-age");
+    const gender = checked("gender");
+    const phone = val("f-phone");
+    const email = val("f-email");
+    const nationality = val("f-nationality");
+    const residence = val("f-residence");
+    const eduLevel = val("f-eduLevel");
+    const eduLevelOther = val("f-eduLevelOther");
+    const fieldOfStudy = val("f-fieldOfStudy");
+    const institution = val("f-institution");
+    const volunteeredBefore = checked("volBefore");
+    const volOrgs = val("f-volOrgs");
+    const skillsChecked = checkedBoxes(".checkbox-group");
+    const skillsOther = val("f-skillsOther");
+    const preferredArea = val("f-preferredArea");
+    const preferredAreaOther = val("f-preferredAreaOther");
+    const commitPreparation = checked("commitPrep");
+    const commitPrepOther = val("f-commitPrepOther");
+    const restrictions = checked("restrictions");
+    const restrictionsDetail = val("f-restrictionsDetail");
+    const transportation = checked("transport");
+    const transportOther = val("f-transportOther");
+    const suggestions = val("f-suggestions");
+    const pledge = checked("pledge");
+
+    if (fullName.length < 2) { showError("Please enter your full name."); return; }
+    if (!age || isNaN(Number(age))) { showError("Please enter your age."); return; }
+    if (!gender) { showError("Please select your gender."); return; }
+    if (!phone) { showError("Please enter your phone number."); return; }
+    if (!email) { showError("Please enter your email."); return; }
+    if (!nationality) { showError("Please enter your nationality."); return; }
+    if (!residence) { showError("Please enter your place of residence."); return; }
+    if (!eduLevel) { showError("Please select your educational level."); return; }
+    if (!fieldOfStudy) { showError("Please enter your field of study."); return; }
+    if (!institution) { showError("Please enter your educational institution."); return; }
+    if (!volunteeredBefore) { showError("Please answer the volunteering question."); return; }
+    if (skillsChecked.length === 0) { showError("Please select at least one skill."); return; }
+    if (!preferredArea) { showError("Please select a preferred area."); return; }
+    if (!commitPreparation) { showError("Please answer the commitment question."); return; }
+    if (!restrictions) { showError("Please answer the restrictions question."); return; }
+    if (!transportation) { showError("Please answer the transportation question."); return; }
+    if (!suggestions) { showError("Please enter your suggestions or comments."); return; }
+    if (!pledge) { showError("Please accept the pledge."); return; }
+
+    const consentEl = document.getElementById("f-consent");
+    const consentChecked = !!(consentEl && consentEl.checked);
+    if (!consentChecked) { showError("You must accept the privacy consent."); return; }
+
+    const skills = skillsChecked.filter(v => v !== "other");
+    if (skillsChecked.includes("other") && skillsOther) skills.push(skillsOther);
+
+    const payload = {
+      fullName,
+      age: Number(age),
+      gender,
+      phone,
+      email,
+      nationality,
+      placeOfResidence: residence,
+      educationalLevel: eduLevel,
+      educationalLevelOther: eduLevel === "other" ? (eduLevelOther || null) : null,
+      fieldOfStudy,
+      educationalInstitution: institution,
+      volunteeredBefore,
+      volunteeredOrgs: volunteeredBefore === "yes" ? (volOrgs || null) : null,
+      skills,
+      skillsOther: skillsChecked.includes("other") ? (skillsOther || null) : null,
+      preferredArea,
+      preferredAreaOther: preferredArea === "other" ? (preferredAreaOther || null) : null,
+      commitPreparation,
+      commitPreparationOther: commitPreparation === "other" ? (commitPrepOther || null) : null,
+      restrictions,
+      restrictionsDetail: restrictions === "yes" ? (restrictionsDetail || null) : null,
+      transportation,
+      transportationOther: transportation === "other" ? (transportOther || null) : null,
+      suggestions,
+      pledge,
+      website: document.getElementById("f-website").value || null,
+      consent: consentChecked,
+    };
+
+    const submitBtn = document.getElementById("submit-btn");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>Sending...';
+
+    try {
+      const res = await fetch(BASE_URL + "/public/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.status === 201) {
+        document.getElementById("apply-form").innerHTML = '<div style="text-align:center; padding:24px;"><h3>Thank you! Your application has been submitted.</h3></div>';
+      } else {
+        const body = await res.json().catch(() => null);
+        const msg = (body && body.error && body.error.message) || "Submission failed. Please try again.";
+        showError(msg);
+      }
+    } catch (e) {
+      showError("Cannot reach the server. Check your connection.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = "Submit";
+    }
+  });
 })();
