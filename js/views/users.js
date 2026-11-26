@@ -99,14 +99,17 @@
                 <td class="num-ltr">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '-'}</td>
                 <td>
                   <div class="row-actions-cell">
-                    ${App.currentUser?.role === 'super_admin' ? `
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openResetPasswordModal('${u.id}')">${ic("lock", 14)} ${t("reset_password")}</button>
-                    ` : ''}
+                    ${u.role === 'super_admin' && App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>` : ''}
                     ${u.role !== 'super_admin' ? `
-                      <button class="btn btn-secondary btn-sm" disabled title="Coming soon">${ic("sliders", 14)} Permissions (coming soon)</button>
-                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.deleteUser && window.AtharApp.deleteUser('${u.id}')">${ic("trash", 14)} Delete</button>
-                      <button class="btn btn-danger-outline btn-sm" onclick="window.AtharApp.toggleUserActive && window.AtharApp.toggleUserActive('${u.id}')">${u.is_active ? 'Deactivate' : 'Activate'}</button>
-                    ` : (App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>` : '')}
+                      <div class="action-menu-wrap">
+                        <button type="button" class="btn btn-secondary btn-sm action-menu-trigger" data-action-menu="${u.id}" title="${App.currentLang === 'ar' ? 'المزيد' : 'More'}">${ic("more_vertical", 14)}</button>
+                        <div class="action-menu-dropdown" data-action-dropdown="${u.id}" hidden>
+                          ${App.currentUser?.role === 'super_admin' ? `<button type="button" class="action-menu-item" onclick="window.AtharModals.openResetPasswordModal('${u.id}')">${ic("lock", 14)} ${t("reset_password")}</button>` : ''}
+                          <button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharApp.deleteUser && window.AtharApp.deleteUser('${u.id}')">${ic("trash", 14)} ${App.currentLang === 'ar' ? 'حذف' : 'Delete'}</button>
+                          <button type="button" class="action-menu-item" onclick="window.AtharApp.toggleUserActive && window.AtharApp.toggleUserActive('${u.id}')">${ic(u.is_active ? 'x_circle' : 'check_circle', 14)} ${u.is_active ? 'Deactivate' : 'Activate'}</button>
+                        </div>
+                      </div>
+                    ` : ''}
                   </div>
                 </td>
               </tr>
@@ -120,6 +123,22 @@
       if (window.AtharModals.openAddUserModal) window.AtharModals.openAddUserModal();
       else showToast("User creation form not yet implemented", "info");
     };
+
+    // ---- Kebab action menu toggle ----
+    container.querySelectorAll("[data-action-menu]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-action-menu");
+        const dd = container.querySelector(`[data-action-dropdown="${id}"]`);
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => { if (d !== dd) d.hidden = true; });
+        if (dd) dd.hidden = !dd.hidden;
+      };
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest || !e.target.closest(".action-menu-wrap")) {
+        container.querySelectorAll(".action-menu-dropdown").forEach(d => d.hidden = true);
+      }
+    });
 
     const provisionBtn = document.getElementById("btn-provision-volunteers");
     if (provisionBtn) {
