@@ -20,11 +20,13 @@
 
     let isGridView = App.committeesView !== "list";
     let filterStatus = App.committeesFilterStatus || "active";
+    let filterGender = App.committeesFilterGender || "all";
     let searchQuery = App.committeesSearch || "";
 
     const allCommittees = state.committees || [];
     const visible = allCommittees.filter(c => {
       if (filterStatus === "all") { /* ok */ } else if (filterStatus === "active") { if (c.status !== "active") return false; } else if (filterStatus === "archived") { if (c.status !== "archived") return false; }
+      if (filterGender !== "all" && c.gender !== filterGender) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const hay = ((App.currentLang === 'ar' ? c.name_ar : c.name_en) + " " + (App.currentLang === 'ar' ? c.name_en : c.name_ar) + " " + (c.description_ar || "") + " " + (c.description_en || "")).toLowerCase();
@@ -53,6 +55,11 @@
             <option value="active" ${filterStatus === 'active' ? 'selected' : ''}>${t("active")}</option>
             <option value="archived" ${filterStatus === 'archived' ? 'selected' : ''}>${t("archived")}</option>
             <option value="all" ${filterStatus === 'all' ? 'selected' : ''}>${t("all_statuses")}</option>
+          </select>
+          <select id="comm-filter-gender" class="form-control" style="width:120px;">
+            <option value="all" ${filterGender === 'all' ? 'selected' : ''}>${App.currentLang === 'ar' ? 'الكل' : 'All genders'}</option>
+            <option value="female" ${filterGender === 'female' ? 'selected' : ''}>${App.currentLang === 'ar' ? 'نساء' : 'Women'}</option>
+            <option value="male" ${filterGender === 'male' ? 'selected' : ''}>${App.currentLang === 'ar' ? 'رجال' : 'Men'}</option>
           </select>
           <button class="btn btn-secondary btn-sm" id="btn-toggle-comm-view">
             ${isGridView ? t("list_view") : t("grid_view")}
@@ -189,6 +196,13 @@
     if (filterSel) {
       filterSel.onchange = (e) => {
         App.committeesFilterStatus = e.target.value;
+        renderCommitteesList(container);
+      };
+    }
+    const genderSel = document.getElementById("comm-filter-gender");
+    if (genderSel) {
+      genderSel.onchange = (e) => {
+        App.committeesFilterGender = e.target.value;
         renderCommitteesList(container);
       };
     }
