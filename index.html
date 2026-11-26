@@ -426,7 +426,14 @@
         if (!state) return;
         const pending = (state.volunteer_hours || []).filter(function (h) { return h.status === 'pending'; }).length;
         const draftCerts = (state.certificates || []).filter(function (c) { return c.status === 'draft'; }).length;
-        const count = pending + draftCerts;
+        const now = new Date();
+        const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcoming = (state.meetings || []).filter(function (m) {
+          if (!m.meeting_date) return false;
+          const d = new Date(m.meeting_date);
+          return d >= now && d <= soon && m.status !== 'cancelled' && m.status !== 'completed';
+        }).length;
+        const count = pending + draftCerts + upcoming;
         if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = 'flex'; }
         else badge.style.display = 'none';
       }
@@ -437,7 +444,21 @@
         const logs = (state.audit_logs || []).slice(0, 12);
         const pending = (state.volunteer_hours || []).filter(function (h) { return h.status === 'pending'; }).length;
         const draftCerts = (state.certificates || []).filter(function (c) { return c.status === 'draft'; }).length;
+        const now = new Date();
+        const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcoming = (state.meetings || []).filter(function (m) {
+          if (!m.meeting_date) return false;
+          const d = new Date(m.meeting_date);
+          return d >= now && d <= soon && m.status !== 'cancelled' && m.status !== 'completed';
+        }).slice(0, 5);
         let html = '';
+        if (upcoming.length) {
+          html += '<div class="notif-section">Upcoming events</div>';
+          upcoming.forEach(function (m) {
+            const title = (App.currentLang === 'ar') ? (m.title_ar || m.title_en) : (m.title_en || m.title_ar);
+            html += `<div class="notif-item notif-item-info"><div class="notif-item-title">${escapeHtml(title)}</div><div class="notif-item-sub">${escapeHtml(m.meeting_date || '')} ${m.start_time ? '• ' + escapeHtml(m.start_time) : ''}</div></div>`;
+          });
+        }
         if (pending > 0) html += `<div class="notif-item notif-item-warn"><div class="notif-item-title">${pending} pending hour suggestion${pending > 1 ? 's' : ''}</div><div class="notif-item-sub">Awaiting admin approval</div></div>`;
         if (draftCerts > 0) html += `<div class="notif-item notif-item-info"><div class="notif-item-title">${draftCerts} draft certificate${draftCerts > 1 ? 's' : ''}</div><div class="notif-item-sub">Ready to issue</div></div>`;
         if (logs.length) {

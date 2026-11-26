@@ -523,6 +523,10 @@ window.AtharModals = (function () {
                 <label class="field-label">${t("location")}</label>
                 <input type="text" id="mt-loc" class="form-control" value="${escapeHtml(pfLoc)}">
               </div>
+              <div class="form-field">
+                <label class="field-label">Banner image</label>
+                <input type="file" id="mt-banner" class="form-control" accept="image/*">
+              </div>
               <div class="drawer-footer">
                 <button type="button" class="btn btn-secondary" id="mt-cancel">${t("cancel")}</button>
                 <button type="submit" class="btn btn-primary">${t("save")}</button>
@@ -551,8 +555,18 @@ window.AtharModals = (function () {
       const start = document.getElementById("mt-start").value;
       const end = document.getElementById("mt-end").value;
       const loc = document.getElementById("mt-loc").value;
+      const bannerInput = document.getElementById("mt-banner");
+      let bannerUrl = null;
+      if (bannerInput && bannerInput.files && bannerInput.files[0]) {
+        bannerUrl = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = () => resolve(null);
+          r.readAsDataURL(bannerInput.files[0]);
+        });
+      }
       try {
-        const created = await window.AtharAPI.meetings.create({ kind, titleEn, titleAr, meetingDate: date, startTime: start, endTime: end || undefined, location: loc || undefined, committeeId: commId });
+        const created = await window.AtharAPI.meetings.create({ kind, titleEn, titleAr, meetingDate: date, startTime: start, endTime: end || undefined, location: loc || undefined, committeeId: commId, bannerUrl: bannerUrl || undefined });
         await window.AtharStore.refreshMeetings();
         showToast(t("saved_successfully"), "success");
         close();

@@ -485,6 +485,10 @@
               ${ic("star", 14)} ${App.currentLang === 'ar' ? `تقييم ${pendingEvalCount} حاضر` : `Evaluate ${pendingEvalCount} Attendee${pendingEvalCount > 1 ? 's' : ''}`}
             </button>
           ` : ''}
+          ${ (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) ? `
+            <button class="btn btn-secondary btn-sm" id="btn-rsvp-coming">Coming</button>
+            <button class="btn btn-secondary btn-sm" id="btn-rsvp-notcoming">Not coming</button>
+          ` : ''}
           <button class="btn btn-secondary btn-sm" id="btn-bulk-present">${ic("check", 14)} ${t("mark_all_present")}</button>
           <button class="btn btn-secondary btn-sm" id="btn-bulk-absent">${ic("x", 14)} ${t("mark_all_absent")}</button>
           <button class="btn btn-success" id="btn-save-attendance">${ic("check_circle", 14)} ${t("save")}</button>
@@ -707,6 +711,12 @@
         window.AtharModals.openBulkRatingModal([volId]);
       };
     });
+
+    // RSVP (volunteers only)
+    const rsvpComing = document.getElementById("btn-rsvp-coming");
+    const rsvpNot = document.getElementById("btn-rsvp-notcoming");
+    if (rsvpComing) rsvpComing.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "coming"); showToast("RSVP: coming", "success"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
+    if (rsvpNot) rsvpNot.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "not_coming"); showToast("RSVP: not coming", "warning"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
 
     // Save attendance
     const saveBtn = document.getElementById("btn-save-attendance");
