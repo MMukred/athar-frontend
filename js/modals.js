@@ -460,6 +460,8 @@ window.AtharModals = (function () {
     const pfTitleEn = pf.title_en || "";
     const pfTitleAr = pf.title_ar || "";
     const pfCommittee = pf.committee_id || committeeId;
+    const isHoc = !!(App.currentUser && App.currentUser.role === "committee_leader");
+    const hocCid = isHoc ? (App.currentUser.committee_id || (App.currentUser.committee && App.currentUser.committee.id) || null) : null;
     const pfStart = pf.start_time || "18:00";
     const pfEnd = pf.end_time || "19:30";
     const pfLoc = pf.location || "Room 3";
@@ -491,10 +493,12 @@ window.AtharModals = (function () {
               </div>
               <div class="form-field">
                 <label class="field-label">${t("committee")}</label>
-                <select id="mt-comm" class="form-control">
-                  <option value="">${t("all_committees")}</option>
-                  ${state.committees.map(c => `<option value="${c.id}" ${pfCommittee === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                <select id="mt-comm" class="form-control" ${isHoc ? 'disabled' : ''}>
+                  ${isHoc
+                    ? (state.committees.filter(c => c.id === hocCid && c.status === 'active').map(c => `<option value="${c.id}" selected>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join(''))
+                    : (`<option value="">${t("all_committees")}</option>` + state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${pfCommittee === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join(''))}
                 </select>
+                ${isHoc ? `<input type="hidden" id="mt-comm-hoc" value="${hocCid || ''}" />` : ''}
               </div>
               <div class="form-field">
                 <label class="field-label">${t("meeting_date")} <span class="required-asterisk">*</span></label>
@@ -540,7 +544,9 @@ window.AtharModals = (function () {
       e.preventDefault();
       const titleEn = document.getElementById("mt-title-en").value.trim();
       const titleAr = document.getElementById("mt-title-ar").value.trim();
-      const commId = document.getElementById("mt-comm").value || null;
+      const commEl = document.getElementById("mt-comm");
+      const hocEl = document.getElementById("mt-comm-hoc");
+      const commId = (hocEl && hocEl.value) || (commEl && commEl.value) || null;
       const date = document.getElementById("mt-date").value;
       const start = document.getElementById("mt-start").value;
       const end = document.getElementById("mt-end").value;

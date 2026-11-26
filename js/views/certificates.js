@@ -341,6 +341,7 @@
                 <div class="badge badge-success" style="justify-content:center; padding:8px;">
                   Issued: ${existingCert.certificate_no}
                 </div>
+                ${isSuper ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-cert" style="margin-top:8px;">${ic("trash", 14)} ${t("delete")}</button>` : ''}
               ` : `
                 <div class="badge badge-danger" style="justify-content:center; padding:8px;">
                   Revoked
@@ -559,7 +560,27 @@
         };
       }
 
-      // ---- Delete Draft ----
+      // ---- Delete Certificate (admin) ----
+      const deleteCertBtn = document.getElementById("btn-delete-cert");
+      if (deleteCertBtn) {
+        deleteCertBtn.onclick = () => {
+          window.AtharCore.showConfirmModal({
+            title: t("confirm_destructive"),
+            message: "Delete this certificate? This cannot be undone.",
+            confirmText: t("delete"),
+            onConfirm: async () => {
+              try {
+                await window.AtharAPI.certificates.delete(existingCert.id);
+                await window.AtharStore.refreshCertificates();
+                showToast("Certificate deleted", "warning");
+                navigateTo("certificates");
+              } catch (err) {
+                showToast(err.message || "Delete failed", "error");
+              }
+            },
+          });
+        };
+      }
       const deleteBtn = document.getElementById("btn-delete-draft");
       if (deleteBtn) {
         deleteBtn.onclick = () => {
