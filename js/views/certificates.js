@@ -409,7 +409,7 @@
                 <h2 class="cert-title">${certLang === 'ar' ? 'شهادة شكر وتقدير للعمل التطوعي' : 'Certificate of Volunteer Service'}</h2>
               </div>
               <div class="cert-body">
-                <p>${certLang === 'ar' ? 'تشهد مؤسسة أثر للعمل المجتمعي بأن المتطوع المتميز:' : 'This is to officially certify that:'}</p>
+                <p>${certLang === 'ar' ? 'تشهد أكاديمية أثر للعمل المجتمعي بأن المتطوع المتميز:' : 'This is to officially certify that:'}</p>
                 <div class="cert-volunteer-name" id="cert-preview-name">
                   ${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}
                 </div>

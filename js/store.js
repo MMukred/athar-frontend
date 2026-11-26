@@ -25,7 +25,7 @@ window.AtharStore = (function () {
     audit_logs: [],
     settings: {
       org_name_en: "Athar Foundation for Community Empowerment",
-      org_name_ar: "مؤسسة أثر للتمكين والعمل المجتمعي",
+      org_name_ar: "أكاديمية أثر للتمكين والعمل المجتمعي",
       org_logo_url: "assets/logo.svg",
       cert_prefix: "ATHAR-2026-",
       cert_sequence: 0,

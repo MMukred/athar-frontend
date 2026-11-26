@@ -1,6 +1,6 @@
 # Athar — Volunteer, Committees, Meetings & Attendance Management
 
-Athar is a bilingual (English / Arabic) volunteer management platform built for **مؤسسة أثر** (Athar Organization).
+Athar is a bilingual (English / Arabic) volunteer management platform built for **أكاديمية أثر** (Athar Organization).
 
 It helps volunteer committees manage:
 - volunteer profiles and unique volunteer IDs (e.g. `ATH-00001`),

@@ -927,7 +927,7 @@
     return `
       <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color:#111;" dir="rtl">
         <div style="text-align:center; margin-bottom:14px;">
-          <div style="font-size:17px; font-weight:800;">${escHtml(settings.org_name_ar || "مؤسسة أثر")}</div>
+          <div style="font-size:17px; font-weight:800;">${escHtml(settings.org_name_ar || "أكاديمية أثر")}</div>
           <div style="font-size:12px; color:#555;">${escHtml(settings.org_name_en || "")}</div>
           <div style="font-size:15px; font-weight:700; margin-top:10px;">كشف الحضور — ${isEvent ? "فعالية" : "اجتماع"} / Attendance Sheet</div>
           <div style="font-size:13px; margin-top:4px;">${escHtml(titleAr)}${titleEn && titleEn !== titleAr ? " — " + escHtml(titleEn) : ""}</div>
