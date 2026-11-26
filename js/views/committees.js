@@ -9,6 +9,25 @@
   // Display name for a member/volunteer row (respects the current language).
   const memberName = (m) => (App.currentLang === "ar" ? (m.full_name_ar || m.full_name) : (m.full_name || m.full_name_ar));
 
+  // Strip a trailing gender suffix (EN/AR) from a committee name to get its base/function name.
+  const baseCommitteeName = (name) => (name || "").replace(/\s*[—\-]\s*(Women|Men|نساء|رجال)\s*$/i, "").trim();
+
+  // Group paired committees (Women + Men) that share the same base name into one card.
+  function groupCommittees(list) {
+    const groups = new Map();
+    for (const c of list) {
+      const baseEn = baseCommitteeName(c.name_en);
+      const baseAr = baseCommitteeName(c.name_ar || c.name_en || "");
+      const key = (baseEn + "|" + baseAr).toLowerCase();
+      if (!groups.has(key)) groups.set(key, { key, baseEn, baseAr, female: null, male: null, items: [] });
+      const g = groups.get(key);
+      g.items.push(c);
+      if (c.gender === "female") g.female = c;
+      else if (c.gender === "male") g.male = c;
+    }
+    return Array.from(groups.values());
+  }
+
   // =========================================================================
   // Committees List
   // =========================================================================
@@ -24,16 +43,21 @@
     let searchQuery = App.committeesSearch || "";
 
     const allCommittees = state.committees || [];
-    const visible = allCommittees.filter(c => {
+    const passesFilters = (c) => {
       if (filterStatus === "all") { /* ok */ } else if (filterStatus === "active") { if (c.status !== "active") return false; } else if (filterStatus === "archived") { if (c.status !== "archived") return false; }
-      if (filterGender !== "all" && c.gender !== filterGender) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
-        const hay = ((App.currentLang === 'ar' ? c.name_ar : c.name_en) + " " + (App.currentLang === 'ar' ? c.name_en : c.name_ar) + " " + (c.description_ar || "") + " " + (c.description_en || "")).toLowerCase();
+        const hay = ((App.currentLang === 'ar' ? c.name_ar : c.name_en) + " " + (App.currentLang === 'ar' ? c.name_en : c.name_ar) + " " + (c.description_ar || "") + " " + (c.description_en || "") + " " + baseCommitteeName(c.name_en) + " " + baseCommitteeName(c.name_ar || "")).toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
-    });
+    };
+    // Grouped card view groups paired Women/Men committees; keep gender filter for the flat list.
+    const grouped = groupCommittees(allCommittees.filter(passesFilters));
+    const visible = grouped.flatMap(g => g.items).filter(c => filterGender === "all" || c.gender === filterGender);
+    const groupedGrid = filterGender === "all"
+      ? grouped
+      : grouped.filter(g => (filterGender === "female" ? !!g.female : !!g.male));
 
     container.innerHTML = `
       <div class="view-header">
@@ -80,28 +104,41 @@
         </div>
       ` : isGridView ? `
         <div class="committees-grid">
-          ${visible.map(comm => {
+          ${groupedGrid.map(g => {
       const selfVolId = (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) || null;
       const selfEmail = (App.currentUser && App.currentUser.email) ? String(App.currentUser.email).toLowerCase() : null;
       const isSelf = (v) => (selfVolId && v.id === selfVolId) || (selfEmail && v.email && String(v.email).toLowerCase() === selfEmail);
-      const memberCount = state.volunteers.filter(v => v.committee_id === comm.id && v.status !== "archived" && !isSelf(v)).length;
-      const commHours = state.volunteer_hours
-        .filter(h => h.committee_id === comm.id && h.status === "approved")
-        .reduce((acc, h) => acc + Number(h.hours), 0);
-      const isArchived = comm.status === "archived";
+      const groupMembers = g.items;
+      const countIn = (c) => c ? state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived" && !isSelf(v)).length : 0;
+      const hoursIn = (c) => c ? state.volunteer_hours.filter(h => h.committee_id === c.id && h.status === "approved").reduce((acc, h) => acc + Number(h.hours), 0) : 0;
+      const memberCount = groupMembers.reduce((n, c) => n + countIn(c), 0);
+      const commHours = groupMembers.reduce((n, c) => n + hoursIn(c), 0);
+      const isArchived = !groupMembers.some(c => c.status === 'active');
+      const sample = g.items[0];
+      const titleEn = g.baseEn || (sample ? sample.name_en : '');
+      const titleAr = g.baseAr || (sample ? (sample.name_ar || sample.name_en) : '');
+      const desc = sample ? (App.currentLang === 'ar' ? (sample.description_ar || '') : (sample.description_en || '')) : '';
+      const femaleId = g.female ? g.female.id : '';
+      const maleId = g.male ? g.male.id : '';
+      const femaleLabel = App.currentLang === 'ar' ? 'أنثى' : 'Female';
+      const maleLabel = App.currentLang === 'ar' ? 'ذكر' : 'Male';
 
       return `
-              <div class="committee-card" style="${isArchived ? 'opacity:0.7;border-style:dashed;' : 'cursor:pointer;'}" onclick="window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
+              <div class="committee-card" style="${isArchived ? 'opacity:0.7;border-style:dashed;' : 'cursor:pointer;'}">
                 <div>
                   <div class="committee-card-header">
-                    <div>
-                      <div class="committee-card-title">${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</div>
-                      <div style="font-size:12px; color:var(--neutral-500);">${escapeHtml(App.currentLang === 'ar' ? comm.name_en : comm.name_ar)}</div>
-                    </div>
-                    <span class="badge ${comm.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t(comm.status)}</span>
-                    ${comm.gender ? `<span class="badge badge-primary">${comm.gender === 'female' ? (App.currentLang === 'ar' ? 'نساء' : 'Women') : (App.currentLang === 'ar' ? 'رجال' : 'Men')}</span>` : ''}
+                    <div class="committee-card-title">${escapeHtml(App.currentLang === 'ar' ? titleAr : titleEn)}</div>
+                    <span class="badge ${isArchived ? 'badge-neutral' : 'badge-success'}">${t(isArchived ? 'archived' : 'active')}</span>
                   </div>
-                  <p class="committee-card-desc">${App.currentLang === 'ar' ? (comm.description_ar || '') : (comm.description_en || '')}</p>
+                  <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm" ${femaleId ? '' : 'disabled'} onclick="event.stopPropagation(); if('${femaleId}') window.AtharApp.navigateTo('committee-detail', {id:'${femaleId}'})">
+                      ${femaleLabel}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" ${maleId ? '' : 'disabled'} onclick="event.stopPropagation(); if('${maleId}') window.AtharApp.navigateTo('committee-detail', {id:'${maleId}'})">
+                      ${maleLabel}
+                    </button>
+                  </div>
+                  <p class="committee-card-desc">${escapeHtml(desc)}</p>
                 </div>
                 <div>
                   <div class="committee-stats-row">
@@ -113,25 +150,6 @@
                       <span class="committee-stat-val num-ltr">${commHours} h</span>
                       <span class="committee-stat-lbl">${t("hours")}</span>
                     </div>
-                    <div class="committee-stat-item">
-                      <span class="committee-stat-val" style="font-size:13px; font-weight:600;">${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}</span>
-                      <span class="committee-stat-lbl">${t("leader")}</span>
-                    </div>
-                  </div>
-                  <div style="font-size:12px; color:var(--neutral-600); margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                    <span style="font-weight:700; color:var(--neutral-500);">${t("co_leaders")}:</span>
-                    ${comm.co_leaders && comm.co_leaders.length
-          ? comm.co_leaders.map(v => `<span class="tag-chip" style="font-size:11px;">${escapeHtml(memberName(v))}</span>`).join('')
-          : `<span style="color:var(--neutral-400);">${t("none_option")}</span>`}
-                  </div>
-                  <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" style="flex:1;" onclick="event.stopPropagation(); window.AtharApp.navigateTo('committee-detail', {id:'${comm.id}'})">
-                      ${t("view")} ${t("details")}
-                    </button>
-                    ${isArchived
-          ? (canEdit ? `<button class="btn btn-success btn-sm" data-comm-action="restore" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("restore")}</button>` : '')
-          : (canDelete ? `<button class="btn btn-danger-outline btn-sm" data-comm-action="archive" data-comm-id="${comm.id}" data-comm-name="${escapeHtml(comm.name_en)}">${t("delete")}</button>` : '')
-        }
                   </div>
                 </div>
               </div>
