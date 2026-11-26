@@ -368,6 +368,7 @@
           <h1 class="view-title">${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</h1>
           <p class="view-subtitle">
             ${escapeHtml(comm.name_en)} &bull; ${t("leader")}: ${comm.leader ? escapeHtml(memberName(comm.leader)) : '—'}
+            ${comm.gender ? ` &bull; <span class="badge ${comm.gender === 'female' ? 'badge-info' : 'badge-neutral'}">${comm.gender === 'female' ? (App.currentLang === 'ar' ? 'نساء' : 'Women') : (App.currentLang === 'ar' ? 'رجال' : 'Men')}</span>` : ''}
             ${isArchived ? '&bull; <span class="badge badge-neutral">' + t("archived") + '</span>' : ''}
           </p>
         </div>
@@ -406,7 +407,7 @@
             <label class="field-label">${ic("star", 13)} ${t("leader")}</label>
             <select id="leadership-leader-select" class="form-control">
               <option value="">${t("none_option")}</option>
-              ${members.map(m => `<option value="${m.id}" ${comm.leader && comm.leader.id === m.id ? 'selected' : ''}>${escapeHtml(memberName(m))}</option>`).join('')}
+              ${members.map(m => `<option value="${m.id}" ${comm.leader && comm.leader.id === m.id ? 'selected' : ''}>${escapeHtml(memberName(m))} — ${m.gender === 'female' ? (App.currentLang === 'ar' ? 'أنثى' : 'Female') : m.gender === 'male' ? (App.currentLang === 'ar' ? 'ذكر' : 'Male') : (App.currentLang === 'ar' ? 'غير محدد' : 'Unspecified')}</option>`).join('')}
             </select>
           </div>
           <div class="form-field" style="margin-bottom:12px;">

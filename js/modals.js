@@ -590,6 +590,19 @@ window.AtharModals = (function () {
     const state = window.AtharStore.getState();
     const existing = committeeId ? state.committees.find(c => c.id === committeeId) : null;
     const isEdit = !!existing;
+    const committeeMembers = isEdit
+      ? state.volunteers.filter(v => v.committee_id === existing.id && v.status !== "archived")
+      : [];
+    const currentLeaderId = existing && existing.leader ? existing.leader.id : "";
+    const memberLabel = (v) => {
+      const name = (App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : (v.full_name || v.full_name_ar)) || "";
+      const g = v.gender === 'female'
+        ? (App.currentLang === 'ar' ? 'أنثى' : 'Female')
+        : v.gender === 'male'
+          ? (App.currentLang === 'ar' ? 'ذكر' : 'Male')
+          : (App.currentLang === 'ar' ? 'غير محدد' : 'Unspecified');
+      return `${name} — ${g}`;
+    };
     const modal = document.getElementById("modal-container");
 
     modal.innerHTML = `
@@ -618,13 +631,26 @@ window.AtharModals = (function () {
                 <textarea id="cm-desc-ar" class="form-control" rows="2">${existing ? escapeHtml(existing.description_ar || '') : ''}</textarea>
               </div>
               <div class="form-field">
-                <label class="field-label">Gender</label>
+                <label class="field-label">${App.currentLang === 'ar' ? 'الجنس' : 'Gender'}</label>
                 <select id="cm-gender" class="form-control">
-                  <option value="">Unspecified</option>
-                  <option value="male" ${existing && existing.gender === 'male' ? 'selected' : ''}>Men</option>
-                  <option value="female" ${existing && existing.gender === 'female' ? 'selected' : ''}>Women</option>
+                  <option value="">${App.currentLang === 'ar' ? 'غير محدد' : 'Unspecified'}</option>
+                  <option value="male" ${existing && existing.gender === 'male' ? 'selected' : ''}>${App.currentLang === 'ar' ? 'رجال' : 'Men'}</option>
+                  <option value="female" ${existing && existing.gender === 'female' ? 'selected' : ''}>${App.currentLang === 'ar' ? 'نساء' : 'Women'}</option>
                 </select>
               </div>
+              ${isEdit ? `
+              <div class="form-field">
+                <label class="field-label">${ic("star", 13)} ${App.currentLang === 'ar' ? 'قائدة / قائد اللجنة' : 'Committee head (member)'}</label>
+                <select id="cm-leader" class="form-control">
+                  <option value="">${t("none_option")}</option>
+                  ${committeeMembers.map(m => `<option value="${m.id}" ${currentLeaderId === m.id ? 'selected' : ''}>${escapeHtml(memberLabel(m))}</option>`).join('')}
+                </select>
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">
+                  ${App.currentLang === 'ar'
+                    ? 'تُختار القيادة من أعضاء اللجنة الحاليين (يمكن اختيار قائدة نساء).'
+                    : 'Leadership is chosen from current committee members (female leaders supported).'}
+                </div>
+              </div>` : ''}
               ${isEdit ? `
               <div style="font-size:12px; color:var(--neutral-500); display:flex; align-items:flex-start; gap:6px; background:var(--neutral-50); border:1px solid var(--neutral-200); border-radius:var(--radius-md); padding:10px;">
                 ${ic("shield", 14)}<span>${t("leadership_edit_hint")}</span>
@@ -651,15 +677,31 @@ window.AtharModals = (function () {
       const descEn = document.getElementById("cm-desc-en").value;
       const descAr = document.getElementById("cm-desc-ar").value;
       const gender = document.getElementById("cm-gender").value || null;
+      const leaderEl = document.getElementById("cm-leader");
+      const leaderId = leaderEl ? (leaderEl.value || null) : undefined;
       if (!nameEn || !nameAr) { showToast("Both names required", "error"); return; }
+      if (isEdit && leaderId != null && gender) {
+        const leadVol = committeeMembers.find(m => m.id === leaderId);
+        if (leadVol && leadVol.gender && leadVol.gender !== gender) {
+          showToast(
+            App.currentLang === 'ar'
+              ? 'جنس القائد لا يطابق جنس اللجنة. اختر قائداً من نفس الجنس أو غيّر جنس اللجنة.'
+              : 'The leader gender does not match the committee gender. Pick a leader of the same gender or change the committee gender.',
+            "error",
+          );
+          return;
+        }
+      }
       try {
         if (isEdit) {
-          await window.AtharAPI.committees.update(existing.id, {
+          const payload = {
             nameEn, nameAr,
             descriptionEn: descEn || undefined,
             descriptionAr: descAr || undefined,
-            gender: gender || undefined,
-          });
+            gender: gender || null,
+          };
+          if (leaderId !== undefined) payload.leaderId = leaderId;
+          await window.AtharAPI.committees.update(existing.id, payload);
           showToast(t("updated_successfully"), "success");
         } else {
           await window.AtharAPI.committees.create({
@@ -2345,15 +2387,18 @@ window.AtharModals = (function () {
                   ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
                 </select>
               </div>
-                            <div class="form-field" id="au-gender-field" style="display:none;">
-                <label class="field-label">Gender <span class="required-asterisk">*</span></label>
+              <div class="form-field" id="au-gender-field" style="display:none;">
+                <label class="field-label">${App.currentLang === 'ar' ? 'الجنس' : 'Gender'} <span class="required-asterisk">*</span></label>
                 <select id="au-gender" class="form-control">
-                  <option value="">—</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
+                  <option value="">${App.currentLang === 'ar' ? 'غير محدد' : 'Unspecified'}</option>
+                  <option value="male">${App.currentLang === 'ar' ? 'ذكر' : 'Male'}</option>
+                  <option value="female">${App.currentLang === 'ar' ? 'أنثى' : 'Female'}</option>
                 </select>
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:4px;">
+                  ${App.currentLang === 'ar' ? 'يجب أن يطابق جنس اللجنة لتفعيل عزل البيانات.' : 'Must match the committee gender for data isolation.'}
+                </div>
               </div>
-<div class="form-field">
+              <div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'اللغة' : 'Language'}</label>
                 <select id="au-lang" class="form-control">
                   <option value="ar">العربية</option>
