@@ -2345,7 +2345,15 @@ window.AtharModals = (function () {
                   ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
                 </select>
               </div>
-              <div class="form-field">
+                            <div class="form-field" id="au-gender-field" style="display:none;">
+                <label class="field-label">Gender <span class="required-asterisk">*</span></label>
+                <select id="au-gender" class="form-control">
+                  <option value="">—</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+<div class="form-field">
                 <label class="field-label">${App.currentLang === 'ar' ? 'اللغة' : 'Language'}</label>
                 <select id="au-lang" class="form-control">
                   <option value="ar">العربية</option>
@@ -2370,6 +2378,8 @@ window.AtharModals = (function () {
     const commField = document.getElementById("au-comm-field");
     const toggleComm = () => {
       if (commField) commField.style.display = roleSel.value === "committee_leader" ? "" : "none";
+      const genderField = document.getElementById("au-gender-field");
+      if (genderField) genderField.style.display = roleSel.value === "committee_leader" ? "" : "none";
     };
     if (roleSel) { roleSel.onchange = toggleComm; toggleComm(); }
 
@@ -2380,10 +2390,12 @@ window.AtharModals = (function () {
       const password = document.getElementById("au-password").value;
       const role = document.getElementById("au-role").value;
       const commId = document.getElementById("au-comm").value || null;
+      const genderEl = document.getElementById("au-gender");
+      const gender = genderEl ? genderEl.value || null : null;
       const lang = document.getElementById("au-lang").value;
       if (role === "committee_leader" && !commId) { showToast(App.currentLang === 'ar' ? 'اختر لجنة' : 'Pick a committee', "error"); return; }
       try {
-        await window.AtharAPI.users.create({ fullName: name, email, password, role, committeeId: commId, preferredLanguage: lang, mustChangePassword: true });
+        await window.AtharAPI.users.create({ fullName: name, email, password, role, gender: gender || undefined, committeeId: commId, preferredLanguage: lang, mustChangePassword: true });
         await window.AtharStore.loadAll();
         showToast(App.currentLang === 'ar' ? 'تم إنشاء المستخدم' : 'User created', "success");
         close();
