@@ -72,6 +72,7 @@ window.AtharAuth = (function () {
       role: apiUser.role,
       committee_id: apiUser.committeeId || apiUser.committee_id || (apiUser.committee && apiUser.committee.id) || null,
       volunteer_id: apiUser.volunteerId || apiUser.volunteer_id || null,
+      gender: apiUser.gender || null,
       committee: apiUser.committee || null,
       is_active: apiUser.isActive !== false,
       must_change_password: apiUser.mustChangePassword || apiUser.must_change_password || false,

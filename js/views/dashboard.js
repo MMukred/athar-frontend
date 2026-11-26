@@ -89,7 +89,8 @@
 
     // Defensive client-side scoping — the API already scopes leaders.
     const members = state.volunteers.filter(v =>
-      v.status !== "archived" && v.committee_id === committeeId
+      v.status !== "archived" && v.committee_id === committeeId &&
+      (!App.currentUser.gender || !v.gender || v.gender === App.currentUser.gender)
     );
     const memberIds = new Set(members.map(v => v.id));
     const hours = state.volunteer_hours.filter(h => memberIds.has(h.volunteer_id));
