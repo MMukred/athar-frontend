@@ -92,6 +92,7 @@
                       <div style="font-size:12px; color:var(--neutral-500);">${escapeHtml(App.currentLang === 'ar' ? comm.name_en : comm.name_ar)}</div>
                     </div>
                     <span class="badge ${comm.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t(comm.status)}</span>
+                    ${comm.gender ? `<span class="badge badge-primary">${comm.gender === 'female' ? (App.currentLang === 'ar' ? 'نساء' : 'Women') : (App.currentLang === 'ar' ? 'رجال' : 'Men')}</span>` : ''}
                   </div>
                   <p class="committee-card-desc">${App.currentLang === 'ar' ? (comm.description_ar || '') : (comm.description_en || '')}</p>
                 </div>

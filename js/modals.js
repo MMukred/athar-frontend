@@ -617,6 +617,14 @@ window.AtharModals = (function () {
                 <label class="field-label">${t("committee_desc_ar")}</label>
                 <textarea id="cm-desc-ar" class="form-control" rows="2">${existing ? escapeHtml(existing.description_ar || '') : ''}</textarea>
               </div>
+              <div class="form-field">
+                <label class="field-label">Gender</label>
+                <select id="cm-gender" class="form-control">
+                  <option value="">Unspecified</option>
+                  <option value="male" ${existing && existing.gender === 'male' ? 'selected' : ''}>Men</option>
+                  <option value="female" ${existing && existing.gender === 'female' ? 'selected' : ''}>Women</option>
+                </select>
+              </div>
               ${isEdit ? `
               <div style="font-size:12px; color:var(--neutral-500); display:flex; align-items:flex-start; gap:6px; background:var(--neutral-50); border:1px solid var(--neutral-200); border-radius:var(--radius-md); padding:10px;">
                 ${ic("shield", 14)}<span>${t("leadership_edit_hint")}</span>
@@ -642,6 +650,7 @@ window.AtharModals = (function () {
       const nameAr = document.getElementById("cm-name-ar").value.trim();
       const descEn = document.getElementById("cm-desc-en").value;
       const descAr = document.getElementById("cm-desc-ar").value;
+      const gender = document.getElementById("cm-gender").value || null;
       if (!nameEn || !nameAr) { showToast("Both names required", "error"); return; }
       try {
         if (isEdit) {
@@ -649,6 +658,7 @@ window.AtharModals = (function () {
             nameEn, nameAr,
             descriptionEn: descEn || undefined,
             descriptionAr: descAr || undefined,
+            gender: gender || undefined,
           });
           showToast(t("updated_successfully"), "success");
         } else {
@@ -656,6 +666,7 @@ window.AtharModals = (function () {
             nameEn, nameAr,
             descriptionEn: descEn || undefined,
             descriptionAr: descAr || undefined,
+            gender: gender || undefined,
           });
           showToast(t("saved_successfully"), "success");
         }

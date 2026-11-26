@@ -114,6 +114,7 @@ window.AtharStore = (function () {
         email: v.email || null,
       })),
       status: c.status,
+      gender: c.gender || null,
       member_count: c.memberCount ?? 0,
       created_at: c.createdAt,
     };
