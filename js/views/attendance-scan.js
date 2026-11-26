@@ -73,6 +73,18 @@
     };
   }
 
-  window.AtharViews = window.AtharViews || {};
+  // Standalone shell for anonymous visitors arriving from a QR scan link.
+  function showAttendanceScanStandalone(meetingId) {
+    let screen = document.getElementById("attendance-scan-screen");
+    if (!screen) {
+      screen = document.createElement("div");
+      screen.id = "attendance-scan-screen";
+      screen.className = "attendance-scan-screen";
+      document.body.appendChild(screen);
+    }
+    render(screen, { id: meetingId || "" });
+  }
+
   window.AtharViews.attendanceScan = render;
+  window.AtharViews.showAttendanceScanStandalone = showAttendanceScanStandalone;
 })();

@@ -453,6 +453,10 @@ window.AtharCore = (function () {
       if (parts[0] === "public-verify" && window.AtharViews && window.AtharViews.showPublicVerifyStandalone) {
         window.AtharViews.showPublicVerifyStandalone(parts[1] || "");
       }
+      if (parts[0] === "attendance-scan" && window.AtharViews &&
+window.AtharViews.showAttendanceScanStandalone) {
+        window.AtharViews.showAttendanceScanStandalone(parts[1] || "");
+      }
       return;
     }
     if (parts[0] === "attendance-qr" && window.AtharViews && window.AtharViews.showAttendanceQrStandalone) {

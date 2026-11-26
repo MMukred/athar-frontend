@@ -42,6 +42,12 @@
         window.AtharViews.showPublicVerifyStandalone(hashParts[1] || "");
         return;
       }
+      if (hashParts[0] === "attendance-scan" && window.AtharViews &&
+window.AtharViews.showAttendanceScanStandalone) {
+        document.body.classList.add("is-logged-out");
+        window.AtharViews.showAttendanceScanStandalone(hashParts[1] || "");
+        return;
+      }
       if (hashParts[0] === "attendance-qr" && window.AtharViews && window.AtharViews.showAttendanceQrStandalone) {
         document.body.classList.add("is-logged-out");
         window.AtharViews.showAttendanceQrStandalone(hashParts[1] || "");
@@ -299,6 +305,13 @@
     if (hashParts[0] === "public-verify" && window.AtharViews && window.AtharViews.showPublicVerifyStandalone) {
       document.body.classList.add("is-logged-out");
       window.AtharViews.showPublicVerifyStandalone(hashParts[1] || "");
+      return;
+    }
+
+    if (hashParts[0] === "attendance-scan" && window.AtharViews &&
+window.AtharViews.showAttendanceScanStandalone) {
+      document.body.classList.add("is-logged-out");
+      window.AtharViews.showAttendanceScanStandalone(hashParts[1] || "");
       return;
     }
 
