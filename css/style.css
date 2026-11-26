@@ -260,6 +260,17 @@ textarea {
   margin: 0 auto 8px;
 }
 
+/* Dark-mode logo swap: navy wordmark is invisible on dark, use white variant */
+.logo-dark { display: none; }
+[data-theme="dark"] .logo-light { display: none; }
+[data-theme="dark"] .logo-dark { display: block; }
+
+/* Dark mode: primary buttons use light-gold fill with dark text for contrast */
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+  color: var(--neutral-900);
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;
