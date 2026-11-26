@@ -87,6 +87,8 @@
                             ${isIssued && vol && vol.whatsapp ? `<button type="button" class="action-menu-item" onclick="window.AtharApp.sendCertWhatsApp('${cert.id}')">${ic("whatsapp", 14)} ${App.currentLang === 'ar' ? 'إرسال' : 'Send'}</button>` : ''}
                             ${isSuper && isIssued ? `<button type="button" class="action-menu-item action-menu-danger" onclick="window.AtharModals.openRevokeCertModal('${cert.id}')">${ic("x_circle", 14)} ${t("revoke_certificate")}</button>` : ''}
                             ${isDraft && isSuper ? `<button type="button" class="action-menu-item" data-cert-action="approve" data-cert-id="${cert.id}">${ic("award", 14)} ${t("approve_and_issue")}</button>` : ''}
+                            ${isSuper && isRevoked ? `<button type="button" class="action-menu-item" data-cert-action="reinstate" data-cert-id="${cert.id}">${ic("refresh", 14)} ${App.currentLang === 'ar' ? 'إعادة الشهادة' : 'Reinstate'}</button>` : ''}
+                            ${isSuper ? `<button type="button" class="action-menu-item action-menu-danger" data-cert-action="delete" data-cert-id="${cert.id}">${ic("trash", 14)} ${t("delete")}</button>` : ''}
                           </div>
                         </div>
                       </div>
@@ -162,6 +164,44 @@
             btn.disabled = false;
             btn.innerHTML = orig;
           }
+          return;
+        }
+
+        if (action === "reinstate") {
+          btn.disabled = true;
+          const orig = btn.innerHTML;
+          try {
+            await window.AtharAPI.certificates.reinstate(id);
+            await window.AtharStore.refreshCertificates();
+            showToast(App.currentLang === 'ar' ? 'تمت إعادة الشهادة' : 'Certificate reinstated', "success");
+            renderCertificatesList(container);
+          } catch (err) {
+            showToast(err.message || "Reinstate failed", "error");
+            btn.disabled = false;
+            btn.innerHTML = orig;
+          }
+          return;
+        }
+
+        if (action === "delete") {
+          window.AtharCore.showConfirmModal({
+            title: App.currentLang === 'ar' ? 'حذف الشهادة' : 'Delete certificate',
+            message: App.currentLang === 'ar'
+              ? 'حذف هذه الشهادة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'
+              : 'Delete this certificate permanently? This cannot be undone.',
+            confirmText: t("delete"),
+            isDanger: true,
+            onConfirm: async () => {
+              try {
+                await window.AtharAPI.certificates.delete(id);
+                await window.AtharStore.refreshCertificates();
+                showToast(App.currentLang === 'ar' ? 'تم حذف الشهادة' : 'Certificate deleted', "warning");
+                renderCertificatesList(container);
+              } catch (err) {
+                showToast(err.message || "Delete failed", "error");
+              }
+            },
+          });
           return;
         }
       };

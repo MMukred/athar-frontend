@@ -300,6 +300,7 @@ window.AtharAPI = (function () {
       create: async (p) => (await post("/certificates", p)).certificate,
       approve: async (id) => (await post(`/certificates/${id}/approve`)).certificate,
       revoke: async (id, reason) => (await post(`/certificates/${id}/revoke`, { reason })).certificate,
+      reinstate: async (id) => (await post(`/certificates/${id}/reinstate`)).certificate,
       delete: (id) => del(`/certificates/${id}`),
       verify: async (certificateNo) => (await get(`/certificates/verify/${encodeURIComponent(certificateNo)}`, { skipAuth: true })).certificate,
       downloadPdfBlob: (id) => rawFetch(`/certificates/${id}/pdf`, { method: "GET" }),
