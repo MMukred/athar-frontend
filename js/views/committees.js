@@ -161,12 +161,12 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Committee Name</th>
+                <th>${window.AtharTx("Committee Name")}</th>
                 <th>${t("leader")}</th>
-                <th>Active Members</th>
-                <th>Total Hours</th>
-                <th>Status</th>
-                <th style="text-align:right;">Actions</th>
+                <th>${window.AtharTx("Active Members")}</th>
+                <th>${window.AtharTx("Total Hours")}</th>
+                <th>${window.AtharTx("Status")}</th>
+                <th style="text-align:right;">${window.AtharTx("Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -325,13 +325,13 @@
          ${title ? `<div class="comm-gender-col-title">${title}</div>` : ''}
          <div class="table-container">
            <table class="data-table">
-             <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
-             <tbody>${list.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members.</td></tr>` : list.map(m => _memberRowHtml(m, pinnedMembers.some(p => p.volunteer.id === m.id))).join('')}</tbody>
+             <thead><tr><th>${window.AtharTx("Volunteer")}</th><th>${window.AtharTx("Status")}</th><th>${window.AtharTx("Hours")}</th><th>${window.AtharTx("Skills")}</th><th style="text-align:right;">${window.AtharTx("Actions")}</th></tr></thead>
+             <tbody>${list.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">${window.AtharTx("No members.")}</td></tr>` : list.map(m => _memberRowHtml(m, pinnedMembers.some(p => p.volunteer.id === m.id))).join('')}</tbody>
            </table>
          </div>
        </div>`;
 
-     container.innerHTML = `<div class="empty-state"><p>Committee not found</p></div>`;
+     container.innerHTML = `<div class="empty-state"><p>${window.AtharTx("Committee not found")}</p></div>`;
       return;
     }
 
@@ -461,7 +461,7 @@
           <span class="stat-box-value num-ltr" style="color:var(--success);">${totalHours} h</span>
         </div>
         <div class="stat-box">
-          <span class="stat-box-label">Meetings</span>
+          <span class="stat-box-label">${window.AtharTx("Meetings")}</span>
           <span class="stat-box-value num-ltr">${commMeetings.length}</span>
         </div>
         <div class="stat-box">
@@ -505,9 +505,9 @@
                      <div class="comm-gender-col-title">${gender === 'male' ? (App.currentLang === 'ar' ? 'الرجال' : 'Men') : (App.currentLang === 'ar' ? 'النساء' : 'Women')}</div>
                      <div class="table-container">
                        <table class="data-table">
-                         <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
+                         <thead><tr><th>${window.AtharTx("Volunteer")}</th><th>${window.AtharTx("Status")}</th><th>${window.AtharTx("Hours")}</th><th>${window.AtharTx("Skills")}</th><th style="text-align:right;">${window.AtharTx("Actions")}</th></tr></thead>
                          <tbody>
-                           ${gMembers.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members.</td></tr>` : `
+                           ${gMembers.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">${window.AtharTx("No members.")}</td></tr>` : `
                              ${gPinned.map(({ volunteer: m, role }) => {
                                const s = window.AtharStore.getVolunteerStats(m.id);
                                const roleBadge = role === "leader" ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>` : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
@@ -540,9 +540,9 @@
            ` : `
              <div class="table-container">
                <table class="data-table">
-                 <thead><tr><th>Volunteer</th><th>Status</th><th>Hours</th><th>Skills</th><th style="text-align:right;">Actions</th></tr></thead>
+                 <thead><tr><th>${window.AtharTx("Volunteer")}</th><th>${window.AtharTx("Status")}</th><th>${window.AtharTx("Hours")}</th><th>${window.AtharTx("Skills")}</th><th style="text-align:right;">${window.AtharTx("Actions")}</th></tr></thead>
                  <tbody id="comm-members-tbody">
-                   ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">No members assigned yet.</td></tr>` : `
+                   ${members.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">${window.AtharTx("No members assigned yet.")}</td></tr>` : `
                      ${pinnedMembers.map(({ volunteer: m, role }) => {
        const s = window.AtharStore.getVolunteerStats(m.id);
        const roleBadge = role === "leader" ? `<span class="badge badge-warning" style="margin-inline-start:6px;">${ic("star", 11)} ${t("leader")}</span>` : `<span class="badge badge-primary" style="margin-inline-start:6px;">${t("co_leader")}</span>`;
@@ -592,12 +592,12 @@
           <div class="table-container">
             <table class="data-table">
               <thead>
-                <tr><th>Title</th><th>Date</th><th>Time</th><th>Status</th><th>Action</th></tr>
+                <tr><th>${window.AtharTx("Title")}</th><th>${window.AtharTx("Date")}</th><th>${window.AtharTx("Time")}</th><th>${window.AtharTx("Status")}</th><th>${window.AtharTx("Action")}</th></tr>
               </thead>
               <tbody>
                 ${commMeetings.map(mt => `
                   <tr>
-                    <td style="font-weight:700;">${App.currentLang === 'ar' ? mt.title_ar : mt.title_en}</td>
+                    <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? mt.title_ar : mt.title_en)}</td>
                     <td>${formatDate(mt.meeting_date)}</td>
                     <td class="num-ltr">${mt.start_time} - ${mt.end_time}</td>
                     <td><span class="badge ${mt.status === 'completed' ? 'badge-success' : 'badge-primary'}">${t(mt.status)}</span></td>
@@ -611,8 +611,8 @@
           </div>
         ` : `
           <div class="card">
-            <h3 style="margin-bottom:12px;">Hours Breakdown</h3>
-            <p>Total recorded approved volunteer service: <strong>${totalHours} hours</strong></p>
+            <h3 style="margin-bottom:12px;">${window.AtharTx("Hours Breakdown")}</h3>
+            <p>${window.AtharTx("Total recorded approved volunteer service:")} <strong>${totalHours} hours</strong></p>
           </div>
         `}
       </div>
@@ -651,7 +651,7 @@
           const s = window.AtharStore.getVolunteerStats(m.id);
           return `<tr><td>${escapeHtml(memberName(m))}</td><td>${m.status}</td><td>${s ? s.totalHours : 0} h</td><td>${(m.skills || []).join(", ") || '—'}</td></tr>`;
         }).join("");
-        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Committee Report</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:4px;} .meta{color:#555;font-size:13px;margin-bottom:12px;}</style></head><body><h1>${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</h1><div class="meta">${escapeHtml(comm.name_en)} • ${App.currentLang === 'ar' ? 'الأعضاء' : 'Members'}: ${members.length} • ${App.currentLang === 'ar' ? 'الساعات' : 'Hours'}: ${totalHours} h • ${comm.leader ? (App.currentLang === 'ar' ? 'الرئيس' : 'Leader') + ': ' + escapeHtml(memberName(comm.leader)) : ''}</div><table><thead><tr><th>${App.currentLang === 'ar' ? 'العضو' : 'Member'}</th><th>${t("status")}</th><th>${t("hours")}</th><th>${App.currentLang === 'ar' ? 'المهارات' : 'Skills'}</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No members</td></tr>'}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
+        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${window.AtharTx("Committee Report")}</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:4px;} .meta{color:#555;font-size:13px;margin-bottom:12px;}</style></head><body><h1>${escapeHtml(App.currentLang === 'ar' ? comm.name_ar : comm.name_en)}</h1><div class="meta">${escapeHtml(comm.name_en)} • ${App.currentLang === 'ar' ? 'الأعضاء' : 'Members'}: ${members.length} • ${App.currentLang === 'ar' ? 'الساعات' : 'Hours'}: ${totalHours} h • ${comm.leader ? (App.currentLang === 'ar' ? 'الرئيس' : 'Leader') + ': ' + escapeHtml(memberName(comm.leader)) : ''}</div><table><thead><tr><th>${App.currentLang === 'ar' ? 'العضو' : 'Member'}</th><th>${t("status")}</th><th>${t("hours")}</th><th>${App.currentLang === 'ar' ? 'المهارات' : 'Skills'}</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;">No members</td></tr>'}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
         w.document.close();
       };
     }

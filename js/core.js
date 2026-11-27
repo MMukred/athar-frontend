@@ -148,6 +148,137 @@ window.AtharCore = (function () {
       .filter(Boolean);
   }
 
+
+  // ===========================================================
+  // Inline UI strings: English source -> Arabic when the UI is Arabic
+  // ===========================================================
+  const UI_AR = {
+"Action": "الإجراء",
+"Action:": "الإجراء:",
+"Actions": "الإجراءات",
+"Actions will appear here as they happen.": "ستظهر العمليات هنا عند حدوثها.",
+"Active": "نشط",
+"Active Members": "الأعضاء النشطون",
+"Add criteria to enable volunteer evaluations.": "أضف معايير لتفعيل تقييم المتطوعين.",
+"Approved Hours": "الساعات المعتمدة",
+"Banner image": "صورة البانر",
+"Branding & Organization": "الهوية والمنظمة",
+"Certificate": "الشهادة",
+"Certificate Language": "لغة الشهادة",
+"Certificate No.": "رقم الشهادة",
+"Certificate:": "الشهادة:",
+"Checked-in attendees": "الحاضرون المسجَّلون",
+"Coming": "سيحضر",
+"Committee Name": "اسم اللجنة",
+"Committee Report": "تقرير اللجنة",
+"Committee not found": "اللجنة غير موجودة",
+"Completion": "الاكتمال",
+"Configuration": "الإعدادات",
+"Contact the Super Admin to add criteria.": "تواصل مع المدير العام لإضافة المعايير.",
+"Create your first evaluation to start tracking volunteer performance.": "أنشئ أول تقييم لتبدأ متابعة أداء المتطوعين.",
+"Create your first template to start sending WhatsApp invites.": "أنشئ أول قالب لتبدأ إرسال الدعوات عبر واتساب.",
+"Criterion Name (AR)": "اسم المعيار (عربي)",
+"Criterion Name (EN)": "اسم المعيار (إنجليزي)",
+"Date": "التاريخ",
+"Define scoring criteria and their weights": "حدّد معايير التقييم وأوزانها",
+"Delete Draft": "حذف المسودة",
+"Details:": "التفاصيل:",
+"Diff": "الفرق",
+"Email": "البريد الإلكتروني",
+"Enter": "دخول",
+"Entity": "العنصر",
+"Entity:": "العنصر:",
+"Evaluator": "المقيِّم",
+"Failed to load audit log": "تعذّر تحميل سجل العمليات",
+"Generate your first certificate for a volunteer with approved hours.": "أصدر أول شهادة لمتطوع لديه ساعات معتمدة.",
+"Go to Volunteers": "الذهاب إلى المتطوعين",
+"Hours": "الساعات",
+"Hours Breakdown": "تفصيل الساعات",
+"IP / Device": "العنوان / الجهاز",
+"Issue Date": "تاريخ الإصدار",
+"Language": "اللغة",
+"Last Login": "آخر دخول",
+"Loading...": "جارٍ التحميل...",
+"Manage administrative privileges and preset role bundles": "إدارة صلاحيات المسؤولين والأدوار الجاهزة",
+"Meetings": "الاجتماعات",
+"New Evaluation": "تقييم جديد",
+"No active volunteers": "لا يوجد متطوعون نشطون",
+"No activity recorded yet.": "لا يوجد نشاط مسجّل بعد.",
+"No approved hours yet": "لا توجد ساعات معتمدة بعد",
+"No audit entries yet": "لا توجد عمليات مسجّلة بعد",
+"No certificates yet": "لا توجد شهادات بعد",
+"No committees yet": "لا توجد لجان بعد",
+"No criteria yet": "لا توجد معايير بعد",
+"No evaluation criteria defined": "لم تُحدَّد معايير تقييم",
+"No evaluations yet": "لا توجد تقييمات بعد",
+"No members": "لا يوجد أعضاء",
+"No members assigned yet.": "لم يُضَف أعضاء بعد.",
+"No members.": "لا يوجد أعضاء.",
+"No message templates yet": "لا توجد قوالب رسائل بعد",
+"No one has checked in yet": "لم يسجّل أحد حضوره بعد",
+"Not coming": "لن يحضر",
+"Official verifiable credentials with QR codes and tamper verification": "شهادات رسمية قابلة للتحقق برمز QR",
+"Order": "الترتيب",
+"Organization branding and system preferences": "هوية المنظمة وتفضيلات النظام",
+"Overall Score": "الدرجة الكلية",
+"Period": "الفترة",
+"Period Range": "نطاق الفترة",
+"Preset Bundle": "حزمة الصلاحيات",
+"Refresh": "تحديث",
+"Retry": "إعادة المحاولة",
+"Role": "الدور",
+"Scan this code to check in": "امسح الرمز لتسجيل حضورك",
+"Search unavailable": "البحث غير متاح",
+"Session not found": "الجلسة غير موجودة",
+"Set to 0": "تصفير",
+"Settings": "الإعدادات",
+"Settings are view-only for Trusted Admins.": "الإعدادات للعرض فقط للمدير الموثوق.",
+"Skills": "المهارات",
+"Star-based evaluations across dynamic weighted criteria": "تقييمات بالنجوم وفق معايير موزونة",
+"Status": "الحالة",
+"Summary": "الملخص",
+"Super Admin (Permanent)": "المدير العام (دائم)",
+"Time": "الوقت",
+"Timestamp": "التوقيت",
+"Tip: a volunteer needs ≥ the configured approved hours (Settings) and no active certificate.": "تلميح: يحتاج المتطوع إلى عدد الساعات المعتمدة المحدد في الإعدادات أو أكثر، وألا تكون لديه شهادة سارية.",
+"Title": "العنوان",
+"To switch users, log out and log in as another user.": "لتبديل المستخدم، سجّل الخروج ثم ادخل بحساب آخر.",
+"Total Hours": "إجمالي الساعات",
+"Total recorded approved volunteer service:": "إجمالي الخدمة التطوعية المعتمدة:",
+"User": "المستخدم",
+"User Name": "اسم المستخدم",
+"Volunteer": "المتطوع",
+"Volunteer Directory": "دليل المتطوعين",
+"Volunteer not found.": "المتطوع غير موجود.",
+"Volunteer:": "المتطوع:",
+"Weight": "الوزن",
+"Weighted average — pick all stars to see the score": "متوسط موزون — قيّم كل المعايير لتظهر الدرجة",
+"You do not have permission to view this roster.": "ليس لديك صلاحية لعرض كشف الحضور هذا.",
+"You need to add at least one criterion before creating evaluations.": "أضف معياراً واحداً على الأقل قبل إنشاء التقييمات.",
+"Delete": "حذف",
+"Download": "تنزيل",
+"Duplicate": "تكرار",
+"Print Preview": "معاينة الطباعة",
+"Public Verification": "صفحة التحقق العامة",
+"English": "الإنجليزية"
+};
+  function tx(en) {
+    return App.currentLang === "ar" && UI_AR[en] ? UI_AR[en] : en;
+  }
+  window.AtharTx = tx;
+
+  const AUDIT_AR = {
+    actions: { create: "إنشاء", update: "تعديل", edit: "تعديل", delete: "حذف", archive: "أرشفة", restore: "استعادة", approve: "اعتماد", reject: "رفض", issue: "إصدار", revoke: "إلغاء", reinstate: "إعادة تفعيل", login: "تسجيل دخول", logout: "تسجيل خروج", generate_qr: "إنشاء رمز QR", check_in: "تسجيل حضور", transfer: "نقل", import: "استيراد", export: "تصدير", reset_password: "إعادة تعيين كلمة المرور", change_password: "تغيير كلمة المرور" },
+    entities: { volunteer: "متطوع", volunteers: "المتطوعون", committee: "لجنة", committees: "اللجان", meeting: "اجتماع", meetings: "الاجتماعات", volunteer_hours: "الساعات التطوعية", hours: "الساعات", evaluation: "تقييم", evaluations: "التقييمات", evaluation_criteria: "معايير التقييم", certificate: "شهادة", certificates: "الشهادات", user: "مستخدم", users: "المستخدمون", auth: "الدخول", settings: "الإعدادات", attendance: "الحضور", whatsapp_template: "قالب واتساب" }
+  };
+  function auditLabel(kind, value) {
+    if (!value) return value;
+    if (App.currentLang !== "ar") return value;
+    const key = String(value).toLowerCase();
+    return (AUDIT_AR[kind] && AUDIT_AR[kind][key]) || value;
+  }
+  window.AtharAuditLabel = auditLabel;
+
   // ===========================================================
   // HTML escaping
   // ===========================================================
@@ -209,7 +340,7 @@ window.AtharCore = (function () {
     toast.innerHTML = `
       <span style="color:${iconColor}; display:flex; align-items:center;">${ic(iconName, 18)}</span>
       <span style="flex:1;">${message}</span>
-      ${action ? `<button type="button" class="toast-action-btn" id="toast-action-btn">${action.label}</button>` : ""}
+      ${action ? `<button type="button" class="toast-action-btn" id="toast-action-btn">${escapeHtml(action.label)}</button>` : ""}
     `;
 
     container.appendChild(toast);
@@ -375,7 +506,7 @@ window.AtharCore = (function () {
     const avEl = document.getElementById("user-avatar-badge");
 
     if (roleEl) roleEl.textContent = roleText;
-    if (nameEl) nameEl.textContent = (App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "";
+    if (nameEl) nameEl.textContent = (App.currentUser && ((App.currentLang === "ar" && (App.currentUser.full_name_ar || App.currentUser.fullNameAr)) || App.currentUser.full_name || App.currentUser.fullName)) || "";
     if (avEl) avEl.textContent = ((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0);
   }
 
@@ -418,11 +549,13 @@ window.AtharCore = (function () {
       return;
     }
 
-    const targetModule = VIEW_MODULE_MAP[view];
     if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "public-verify" && view !== "attendance-scan") {
       view = "portal";
       params = {};
     }
+    // Resolve the module after any role redirect so the permission check
+    // applies to the view that will actually render.
+    const targetModule = VIEW_MODULE_MAP[view];
     // Public verification is open to everyone (mirrors the public API endpoint).
     if (view !== "public-verify" && targetModule && !hasPermission(targetModule, "view")) {
       showToast(t("permission_denied"), "error");
@@ -530,9 +663,7 @@ window.AtharViews.showAttendanceScanStandalone) {
           { id: "dashboard", label: t("nav_dashboard"), icon: "dashboard", module: "dashboard" },
           { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers", badgeHtml: badge(activeVolunteers, "info") },
           { id: "committees", label: t("nav_committees"), icon: "building", module: "committees", badgeHtml: badge(activeCommittees, "info") },
-          { id: "meetings", label: t("nav_meetings"), icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings, "info") },
-          { id: "events", label: t("nav_events") || (App.currentLang === "ar" ? "الفعاليات" : "Events"), icon: "sparkles", module: "meetings", badgeHtml: badge(upcomingEvents, "info") },
-          { id: "attendance", label: t("nav_attendance"), icon: "clipboard_check", module: "attendance", targetView: "meetings" }
+          { id: "meetings", label: App.currentLang === "ar" ? "الاجتماعات والفعاليات" : "Meetings & Events", icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings + upcomingEvents, "info") }
         ]
       },
       {
@@ -554,7 +685,6 @@ window.AtharViews.showAttendanceScanStandalone) {
         items: [
           { id: "users", label: t("nav_users"), icon: "shield", module: "users" },
           { id: "whatsapp-templates", label: t("nav_whatsapp_templates"), icon: "message_circle", module: "whatsapp_templates" },
-          { id: "evaluation-criteria", label: t("nav_evaluation_criteria"), icon: "sliders", module: "evaluation_criteria" },
           { id: "audit-logs", label: t("nav_audit_logs"), icon: "file_text", module: "audit_logs", badgeHtml: badge(totalAudit, "info") },
           { id: "settings", label: t("nav_settings"), icon: "settings", module: "settings" }
         ]
@@ -578,8 +708,8 @@ window.AtharViews.showAttendanceScanStandalone) {
         const isActive = (App.currentView === item.id) ||
           (item.id === "volunteers" && App.currentView === "volunteer-profile") ||
           (item.id === "committees" && App.currentView === "committee-detail") ||
-          (item.id === "meetings" && App.currentView === "meeting-detail" && currentDetailKind !== "event") ||
-          (item.id === "events" && App.currentView === "meeting-detail" && currentDetailKind === "event") ||
+          (item.id === "meetings" && (App.currentView === "meeting-detail" || App.currentView === "events")) ||
+          (item.id === "evaluations" && App.currentView === "evaluation-criteria") ||
           (item.id === "certificates" && (App.currentView === "generate-certificate" || App.currentView === "public-verify"));
 
         html += `

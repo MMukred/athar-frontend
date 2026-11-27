@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, showConfirmModal, hasPermission, escapeHtml } = window.AtharCore;
 
   function renderVolunteerHours(container) {
     const state = window.AtharStore.getState();
@@ -87,7 +87,7 @@
           </select>
           <select id="hours-filter-comm" class="form-control">
             <option value="all">${t("all_committees")}</option>
-            ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+            ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
           </select>
           <input type="date" id="hours-date-from" class="form-control" value="${dateFrom}" title="${t("hours_filter_from")}">
           <input type="date" id="hours-date-to" class="form-control" value="${dateTo}" title="${t("hours_filter_to")}">
@@ -121,7 +121,7 @@
               const name = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : (App.currentLang === 'ar' ? 'بدون لجنة' : 'Unassigned');
               const d = byComm[k];
               return `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:var(--surface); border:1px solid var(--neutral-300); border-radius:var(--radius-full); font-weight:600;">
-                ${name}: <span class="num-ltr">${d.hours}</span> h (${d.count})
+                ${escapeHtml(name)}: <span class="num-ltr">${d.hours}</span> h (${d.count})
               </span>`;
             });
             return items.join("") || `<span style="color:var(--neutral-500);">—</span>`;
@@ -175,18 +175,18 @@
                   <td>${formatDate(h.date)}</td>
                   <td>
                     <div style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${h.volunteer_id}', sub:'hours'})">
-                      ${volName}
+                      ${escapeHtml(volName)}
                     </div>
                   </td>
                   <td>
-                    <div style="font-weight:600;">${h.activity}</div>
-                    <div style="font-size:11px; color:var(--neutral-500);">${h.description || ''}</div>
+                    <div style="font-weight:600;">${escapeHtml(h.activity)}</div>
+                    <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(h.description || '')}</div>
                   </td>
                   <td><span class="num-ltr" style="font-weight:800; font-size:14px;">${h.hours} h</span></td>
-                  <td>${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—'}</td>
+                  <td>${escapeHtml(comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—')}</td>
                   <td>
                     <span class="badge ${h.status === 'approved' ? 'badge-success' : h.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${t(h.status)}</span>
-                    ${h.rejection_reason ? `<div style="font-size:10px; color:var(--danger); max-width:180px;">${h.rejection_reason}</div>` : ''}
+                    ${h.rejection_reason ? `<div style="font-size:10px; color:var(--danger); max-width:180px;">${escapeHtml(h.rejection_reason)}</div>` : ''}
                   </td>
                   <td>
                     <div class="row-actions-cell">

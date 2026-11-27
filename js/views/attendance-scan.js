@@ -37,7 +37,7 @@
       const email = (document.getElementById("scan-email").value || "").trim();
       const password = document.getElementById("scan-password").value || "";
       if (!email || !password) {
-        resultEl.innerHTML = `<p style="color:var(--danger,#dc2626);">${L("أدخل البريد وكلمة المرور", "Enter email and password")}</p>`;
+        resultEl.innerHTML = `<p style="color:var(--danger,#dc2626);">${escapeHtml(L("أدخل البريد وكلمة المرور", "Enter email and password"))}</p>`;
         return;
       }
       btn.disabled = true;

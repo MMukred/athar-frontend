@@ -3,10 +3,18 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>أثر | نظام إدارة المتطوعين واللجان - Athar Management System</title>
   <meta name="description"
     content="نظام مركزي لإدارة المتطوعين، اللجان، الاجتماعات، التقييمات، الساعات التطوعية، والشهادات التقديرية ثنائي اللغة">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1D2B46">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="أثر">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 
   <!-- Apply saved theme before first paint (prevents flash) -->
@@ -33,6 +41,8 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/rtl.css">
   <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/pwa.css">
   <link rel="stylesheet" href="css/login.css">
 </head>
 
@@ -53,12 +63,6 @@
         <span class="login-divider" aria-hidden="true"></span>
         <p class="login-hero-slogan" id="login-hero-slogan">أنتَ أثرٌ طيّبٌ أينما حللت</p>
         <p class="login-hero-lead" id="login-hero-lead">منصّة متطوعي أكاديمية أثر: سجّل ساعاتك، وتابع لجانك واجتماعاتك، واحصل على شهاداتك.</p>
-
-        <div class="login-hero-stats">
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="80">0</span><span class="login-hero-stat-label" id="login-stat-volunteers">متطوع</span></div>
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="1600">0</span><span class="login-hero-stat-label" id="login-stat-hours">ساعة تطوعية</span></div>
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="12">0</span><span class="login-hero-stat-label" id="login-stat-committees">لجنة</span></div>
-        </div>
 
         <div class="login-hero-actions">
           <a href="apply.html" class="login-hero-cta" id="login-hero-cta">تقدّم للتطوع الآن</a>
@@ -173,7 +177,7 @@
         </button>
 
         <div class="brand-container" id="brand-home-btn">
-          <img src="assets/logo-horizontal.svg" alt="Athar Academy" class="brand-logo-horizontal logo-light">
+          <img src="assets/brand/logo-horizontal.svg" alt="Athar Academy" class="brand-logo-horizontal logo-light">
           <img src="assets/brand/logo-horizontal-white.svg" alt="Athar Academy" class="brand-logo-horizontal logo-dark">
         </div>
       </div>
@@ -292,6 +296,8 @@
   <script src="js/api.js"></script>
   <script src="js/store.js"></script>
   <script src="js/utils/qr.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/utils/qr-adapter.js"></script>
   <script src="js/utils/diff.js"></script>
   <script src="js/utils/export.js"></script>
   <script src="js/auth.js"></script>
@@ -320,66 +326,11 @@
   <script src="js/views/settings.js"></script>
 
   <script src="js/app.js"></script>
+  <script src="js/ui-enhance.js"></script>
+  <script src="js/qr-scanner.js"></script>
+  <script src="js/pwa.js"></script>
   <script src="js/criteria-modal.js"></script>
-  <script>
-    (function () {
-      var loginScreen = document.getElementById('login-screen');
-      var values = loginScreen ? Array.prototype.slice.call(document.querySelectorAll('.login-hero-stat-value')) : [];
-
-      function showSkeletons() {
-        values.forEach(function (el) {
-          el.textContent = '';
-          el.innerHTML = '<span class="stat-skeleton" aria-hidden="true"></span>';
-        });
-      }
-
-      function renderStats(data) {
-        if (!values.length) return;
-        var d = data || {};
-        var keys = ["volunteers", "hoursApproved", "committees"];
-        values.forEach(function (el, i) {
-          var target = d[keys[i]] != null ? Number(d[keys[i]]) : (parseInt(el.getAttribute('data-count') || '0', 10) || 0);
-          if (!target) { showSkeletons(); return; }
-          var start = 0;
-          var duration = 1400;
-          var startTime = null;
-          function step(ts) {
-            if (!startTime) startTime = ts;
-            var p = Math.min((ts - startTime) / duration, 1);
-            var eased = 1 - Math.pow(1 - p, 3);
-            el.textContent = Math.floor(start + (target - start) * eased).toLocaleString();
-            if (p < 1) requestAnimationFrame(step);
-            else el.textContent = target.toLocaleString();
-          }
-          requestAnimationFrame(step);
-        });
-      }
-
-      function loadStats() {
-        if (loginScreen && loginScreen.style.display !== 'none') {
-          showSkeletons();
-          var api = window.AtharAPI;
-          if (api && api.public && typeof api.public.stats === 'function') {
-            api.public.stats()
-              .then(function (d) { if (loginScreen && loginScreen.style.display !== 'none') renderStats(d); })
-              .catch(function () { if (loginScreen && loginScreen.style.display !== 'none') showSkeletons(); });
-          }
-        }
-      }
-
-      // Run when login screen becomes visible
-      if (loginScreen) {
-        var obs = new MutationObserver(function () {
-          if (loginScreen.style.display !== 'none') loadStats();
-        });
-        obs.observe(loginScreen, { attributes: true, attributeFilter: ['style'] });
-      }
-      // Also try on load
-      window.addEventListener('load', function () {
-        if (loginScreen && loginScreen.style.display !== 'none') loadStats();
-      });
-    })();
-  </script>
+  
   <!-- Floating Action Button (speed-dial) -->
   <div id="fab-wrap" class="fab-wrap" style="display:none;">
     <div class="fab-menu" id="fab-menu" hidden>
@@ -524,7 +475,7 @@
       function tick() {
         const d = new Date();
         timeEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
-        if (dateEl) dateEl.textContent = d.toLocaleDateString(document.documentElement.lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+        if (dateEl) dateEl.textContent = d.toLocaleDateString(document.documentElement.lang === 'ar' ? 'ar-u-ca-gregory-nu-latn' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
       }
       tick();
       setInterval(tick, 1000);

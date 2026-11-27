@@ -28,7 +28,7 @@ window.AtharSpotlight = (function () {
         <div class="spotlight-results"></div>
         <div class="spotlight-footer">
           <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-          <span><kbd>Enter</kbd> open</span>
+          <span><kbd>${window.AtharTx("Enter")}</kbd> open</span>
           <span><kbd>Esc</kbd> close</span>
         </div>
       </div>
@@ -82,7 +82,7 @@ window.AtharSpotlight = (function () {
       return;
     }
     if (!window.AtharSearch || !window.AtharSearch._buildGroups) {
-      results.innerHTML = `<div class="spotlight-empty">Search unavailable</div>`;
+      results.innerHTML = `<div class="spotlight-empty">${window.AtharTx("Search unavailable")}</div>`;
       return;
     }
     const groups = window.AtharSearch._buildGroups(q);

@@ -1,0 +1,23 @@
+{
+  "name": "أثر — نظام المتطوعين",
+  "short_name": "أثر",
+  "description": "نظام إدارة المتطوعين واللجان — أكاديمية أثر",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#1D2B46",
+  "theme_color": "#1D2B46",
+  "categories": ["productivity", "education"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "تسجيل التطوع", "short_name": "تقدّم للتطوع", "url": "./apply.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

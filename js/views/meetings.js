@@ -29,8 +29,8 @@
     const label = isEvent ? (App.currentLang === 'ar' ? 'الفعالية' : 'event') : (App.currentLang === 'ar' ? 'الاجتماع' : 'meeting');
     const title = App.currentLang === 'ar' ? `حذف ${label}` : `Delete ${label}`;
     const msg = App.currentLang === 'ar'
-      ? `سيتم حذف "${session.title_ar || session.title_en}" نهائياً مع كل سجلات الحضور والساعات المرتبطة. لا يمكن التراجع.`
-      : `Permanently delete "${session.title_en}" and all its attendance + auto-logged hours. This cannot be undone.`;
+      ? `سيتم حذف "${escapeHtml(session.title_ar || session.title_en)}" نهائياً مع كل سجلات الحضور والساعات المرتبطة. لا يمكن التراجع.`
+      : `Permanently delete "${escapeHtml(session.title_en)}" and all its attendance + auto-logged hours. This cannot be undone.`;
 
     showConfirmModal({
       title,
@@ -141,7 +141,7 @@
             <input type="search" id="mt-search" class="form-control" placeholder="${App.currentLang === 'ar' ? 'بحث في ' + (isEvent ? 'الفعاليات' : 'الاجتماعات') + '…' : 'Search ' + (isEvent ? 'events' : 'meetings') + '…'}" value="${App.meetingsSearch || ''}" style="min-width:180px;">
             <select id="mt-filter-comm" class="form-control">
               <option value="all">${t("all_committees")}</option>
-              ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${App.meetingsFilterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+              ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${App.meetingsFilterComm === c.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
             </select>
             <input type="date" id="mt-date-from" class="form-control" value="${App.meetingsDateFrom || ''}" title="${App.currentLang === 'ar' ? 'من تاريخ' : 'From date'}">
             <input type="date" id="mt-date-to" class="form-control" value="${App.meetingsDateTo || ''}" title="${App.currentLang === 'ar' ? 'إلى تاريخ' : 'To date'}">
@@ -180,13 +180,13 @@
                     </td>
                     <td><span style="font-weight:700;">${formatDate(m.meeting_date)}</span></td>
                     <td>
-                      <div style="font-weight:700; color:var(--neutral-900);">${App.currentLang === 'ar' ? m.title_ar : m.title_en}</div>
-                      <div style="font-size:11px; color:var(--neutral-500);">${m.title_en}</div>
+                      <div style="font-weight:700; color:var(--neutral-900);">${escapeHtml(App.currentLang === 'ar' ? m.title_ar : m.title_en)}</div>
+                      
                     </td>
-                    <td><span>${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—'}</span></td>
+                    <td><span>${escapeHtml(comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—')}</span></td>
                     <td>
                       <div style="font-size:12px;">${ic("clock", 12)} <span class="num-ltr">${m.start_time}${m.end_time ? ' - ' + m.end_time : ''}</span></div>
-                      <div style="font-size:11px; color:var(--neutral-500);">${m.location || '—'}</div>
+                      <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(m.location || '—')}</div>
                     </td>
                     <td>
                       <span class="badge ${m.status === 'completed' ? 'badge-success' : m.status === 'scheduled' ? 'badge-primary' : 'badge-danger'}">
@@ -313,16 +313,16 @@
                 </div>
                 <div style="text-align:center; margin-bottom:12px;">
                   <div style="display:inline-block;">${qrSvg}</div>
-                  <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">Scan this code to check in</p>
+                  <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${window.AtharTx("Scan this code to check in")}</p>
                   <div style="font-size:11px; color:var(--neutral-400); word-break:break-all;">${escapeHtml(res.scanUrl)}</div>
                 </div>
                 <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <strong style="font-size:14px;">Checked-in attendees</strong>
-                    <button class="btn btn-secondary btn-sm" id="qr-refresh">Refresh</button>
+                    <strong style="font-size:14px;">${window.AtharTx("Checked-in attendees")}</strong>
+                    <button class="btn btn-secondary btn-sm" id="qr-refresh">${window.AtharTx("Refresh")}</button>
                   </div>
                   <div id="qr-attendance-list" style="max-height:260px; overflow:auto; border:1px solid var(--neutral-200,#e5e7eb); border-radius:8px; padding:8px;">
-                    <div style="color:var(--neutral-500); font-size:13px;">Loading...</div>
+                    <div style="color:var(--neutral-500); font-size:13px;">${window.AtharTx("Loading...")}</div>
                   </div>
                 </div>
               </div>
@@ -392,7 +392,7 @@
     const state = window.AtharStore.getState();
     const meeting = state.meetings.find(m => m.id === meetingId);
     if (!meeting) {
-      container.innerHTML = `<div class="empty-state"><p>Session not found</p></div>`;
+      container.innerHTML = `<div class="empty-state"><p>${window.AtharTx("Session not found")}</p></div>`;
       return;
     }
 
@@ -410,9 +410,9 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('${backView}')">${backLabel}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}</span>
+            <span>${escapeHtml(App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en)}</span>
           </div>
-          <h1 class="view-title">${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}</h1>
+          <h1 class="view-title">${escapeHtml(App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en)}</h1>
           <p class="view-subtitle">${t("loading")}</p>
         </div>
       </div>
@@ -430,7 +430,7 @@
       isDraft = !!res.isDraft;
     } catch (err) {
       if (err.status === 403) {
-        container.innerHTML = `<div class="empty-state"><p>You do not have permission to view this roster.</p></div>`;
+        container.innerHTML = `<div class="empty-state"><p>${window.AtharTx("You do not have permission to view this roster.")}</p></div>`;
       } else {
         showToast(err.message || "Failed to load roster", "error");
         container.innerHTML = `<div class="empty-state">
@@ -465,16 +465,16 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('${backView}')">${backLabel}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}</span>
+            <span>${escapeHtml(App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en)}</span>
           </div>
           <h1 class="view-title">
             <span style="color:${kindColor}; display:inline-flex; align-items:center; vertical-align:middle; margin-inline-end:8px;">
               ${ic(isEvent ? "sparkles" : "calendar", 22)}
             </span>
-            ${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}
+            ${escapeHtml(App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en)}
           </h1>
           <p class="view-subtitle">
-            ${formatDate(meeting.meeting_date)} &bull; ${meeting.start_time}${meeting.end_time ? ' - ' + meeting.end_time : ''} &bull; ${meeting.location || '—'}
+            ${formatDate(meeting.meeting_date)} &bull; ${meeting.start_time}${meeting.end_time ? ' - ' + meeting.end_time : ''} &bull; ${escapeHtml(meeting.location || '—')}
             ${isDraft && !isCompleted ? '&bull; <span class="badge badge-warning">DRAFT ROSTER</span>' : ''}
             ${isCompleted ? '&bull; <span class="badge badge-success">COMPLETED</span>' : ''}
           </p>
@@ -486,8 +486,8 @@
             </button>
           ` : ''}
           ${ (App.currentUser && (App.currentUser.volunteer_id || App.currentUser.volunteerId)) ? `
-            <button class="btn btn-secondary btn-sm" id="btn-rsvp-coming">Coming</button>
-            <button class="btn btn-secondary btn-sm" id="btn-rsvp-notcoming">Not coming</button>
+            <button class="btn btn-secondary btn-sm" id="btn-rsvp-coming">${window.AtharTx("Coming")}</button>
+            <button class="btn btn-secondary btn-sm" id="btn-rsvp-notcoming">${window.AtharTx("Not coming")}</button>
           ` : ''}
           <button class="btn btn-secondary btn-sm" id="btn-bulk-present">${ic("check", 14)} ${t("mark_all_present")}</button>
           <button class="btn btn-secondary btn-sm" id="btn-bulk-absent">${ic("x", 14)} ${t("mark_all_absent")}</button>
@@ -563,7 +563,7 @@
             ${Array.from(new Set(roster.map(r => (r.volunteer || {}).committee_id || (r.volunteer || {}).committeeId).filter(Boolean))).map(cid => {
               const c = state.committees.find(x => x.id === cid);
               const name = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : cid;
-              return `<option value="${cid}">${name}</option>`;
+              return `<option value="${escapeHtml(cid)}">${escapeHtml(name)}</option>`;
             }).join('')}
           </select>
         </div>
@@ -601,7 +601,7 @@
         return `
                 <tr data-vol-id="${volId}" data-att-search="${String((vol.fullName || vol.full_name || '') + ' ' + (vol.fullNameAr || vol.full_name_ar || '') + ' ' + (vol.phone || '')).toLowerCase().replace(/"/g, '&quot;')}" data-att-comm="${vol.committee_id || vol.committeeId || ''}">
                   <td>
-                    <div style="font-weight:700;">${App.currentLang === 'ar' ? (vol.fullNameAr || vol.full_name_ar || vol.fullName || vol.full_name) : (vol.fullName || vol.full_name)}</div>
+                    <div style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? (vol.fullNameAr || vol.full_name_ar || vol.fullName || vol.full_name) : (vol.fullName || vol.full_name))}</div>
                     <div style="font-size:11px; color:var(--neutral-500);">${vol.phone || '—'}</div>
                   </td>
                   <td>

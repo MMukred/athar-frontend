@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Installable web app: install button, banner, iOS guide, standalone polish
+   ========================================================================== */
+
+.login-install-btn { background: #1D2B46 !important; color: #FFFFFF !important; border-color: #1D2B46 !important; }
+.login-install-btn:hover { background: #2D5490 !important; }
+[data-theme="dark"] .login-install-btn { background: #C29E1A !important; color: #14233F !important; border-color: #C29E1A !important; }
+.login-install-btn[hidden] { display: none !important; }
+@media (max-width: 900px) {
+  .login-toolbar .login-install-btn { background: #C29E1A !important; color: #14233F !important; border-color: #C29E1A !important; }
+}
+
+/* Bottom install banner (phones, signed in) */
+.pwa-banner {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 8000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #1D2B46;
+  color: #F7F3EA;
+  font-family: var(--font-ar);
+  box-shadow: 0 20px 40px -16px rgba(10, 18, 34, 0.6);
+  animation: pwaUp 0.35s var(--ease-entrance, ease-out) both;
+}
+@keyframes pwaUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.pwa-banner-icon { width: 44px; height: 44px; border-radius: 12px; flex: none; }
+.pwa-banner-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.pwa-banner-text strong { font-size: 15px; color: #FFFFFF; }
+.pwa-banner-text span { font-size: 12.5px; color: rgba(247, 243, 234, 0.75); }
+.pwa-banner-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #C29E1A;
+  color: #14233F;
+  font: 700 14px var(--font-ar);
+  cursor: pointer;
+}
+.pwa-banner-x {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(247, 243, 234, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+body.is-logged-out .pwa-banner { display: none; }
+
+/* iOS "Add to Home Screen" guide */
+.pwa-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 18, 34, 0.55);
+  font-family: var(--font-ar);
+}
+.pwa-sheet-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: 22px;
+  background: #FFFFFF;
+  color: #1D2B46;
+  text-align: center;
+}
+.pwa-sheet-icon { width: 64px; height: 64px; border-radius: 16px; }
+.pwa-sheet-card h2 { margin: 12px 0 14px; font-size: 19px; font-weight: 800; }
+.pwa-steps { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: start; }
+.pwa-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #F7F3EA;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.pwa-step-ic {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background: #FFFFFF;
+  color: #2D5490;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pwa-sheet-btn {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 14px;
+  background: #1D2B46;
+  color: #FFFFFF;
+  font: 700 16px var(--font-ar);
+  cursor: pointer;
+}
+
+/* Opened from the home screen: behave like an app */
+html.is-standalone,
+html.is-standalone body { overscroll-behavior-y: none; }
+html.is-standalone body { -webkit-tap-highlight-color: transparent; }
+html.is-standalone .content-area { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important; }

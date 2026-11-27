@@ -218,9 +218,6 @@ window.AtharAuth = (function () {
     setText("login-hero-lead", isAr
       ? "منصّة متطوعي أكاديمية أثر: سجّل ساعاتك، وتابع لجانك واجتماعاتك، واحصل على شهاداتك."
       : "The Athar Academy volunteer platform: log your hours, follow your committees and meetings, and receive your certificates.");
-    setText("login-stat-volunteers", isAr ? "متطوع" : "Volunteers");
-    setText("login-stat-hours", isAr ? "ساعة تطوعية" : "Volunteer hours");
-    setText("login-stat-committees", isAr ? "لجنة" : "Committees");
     setText("login-hero-cta", isAr ? "تقدّم للتطوع الآن" : "Apply to volunteer");
     setText("login-hero-verify-text", isAr ? "التحقق من شهادة" : "Verify a certificate");
     setText("login-foot-verify", isAr ? "التحقق من شهادة" : "Verify a certificate");
@@ -306,7 +303,13 @@ window.AtharAuth = (function () {
       const isEn = (window.AtharApp && window.AtharApp.getLang && window.AtharApp.getLang() === "en");
       submitBtn.textContent = isEn ? "Signing in..." : "جاري تسجيل الدخول...";
 
+      // The API sleeps when idle (free hosting) and the first request can take
+      // up to a minute: tell the user instead of leaving a frozen button.
+      const wakeTimer = setTimeout(function () {
+        submitBtn.textContent = isEn ? "Waking up the server… this can take up to a minute" : "جارٍ تشغيل الخادم… قد يستغرق ذلك حتى دقيقة";
+      }, 4000);
       const result = await login(email, password, remember);
+      clearTimeout(wakeTimer);
 
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
@@ -328,7 +331,8 @@ window.AtharAuth = (function () {
       }
       startSessionWatcher();
       if (window.AtharApp && window.AtharApp.showToast) {
-        window.AtharApp.showToast("Welcome back, " + result.user.full_name, "success");
+        const isArToast = !(window.AtharApp.getLang && window.AtharApp.getLang() === "en");
+        window.AtharApp.showToast((isArToast ? "مرحباً بعودتك، " : "Welcome back, ") + ((isArToast && result.user.full_name_ar) || result.user.full_name || ""), "success");
       }
     };
   }

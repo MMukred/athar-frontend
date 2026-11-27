@@ -2,41 +2,39 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>أكاديمية أثر — طلب تطوع</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1D2B46">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="أثر">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Marcellus&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/rtl.css">
   <link rel="stylesheet" href="css/theme.css">
-  <style>
-    body { background: var(--app-bg); font-family: var(--font-ar); }
-    .apply-shell { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
-    .apply-card { background: var(--surface); border: 1px solid var(--neutral-300); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field.full { grid-column: 1 / -1; }
-    .field label { font-size: 13px; font-weight: 600; color: var(--neutral-800); }
-    .req { color: var(--danger); margin-inline-start: 2px; }
-    .form-control { padding: 8px 12px; border: 1px solid var(--neutral-300); border-radius: var(--radius-md); background: var(--neutral-50); color: var(--neutral-900); font-size: 13px; width: 100%; }
-    .form-control:focus { outline: none; background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-subtle); }
-    .radio-group, .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
-    .radio-group label, .checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
-    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; }
-    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .form-error { color: var(--danger); font-size: 13px; margin-top: 8px; }
-    .hp-field { position: absolute !important; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
-    .consent-label { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--neutral-700); cursor: pointer; }
-    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-  </style>
+  <link rel="stylesheet" href="css/apply.css">
+  <link rel="stylesheet" href="css/pwa.css">
 </head>
-<body>
-  <div class="apply-shell">
+<body class="apply-page">
+  <header class="apply-hero">
+    <div class="apply-hero-photo" aria-hidden="true"></div>
+    <div class="apply-hero-inner">
+      <a href="https://athar.my" target="_blank" rel="noopener" class="apply-logo-link"><img src="assets/brand/logo-vertical-white.svg" alt="أكاديمية أثر — Athar Academy" class="apply-logo"></a>
+      <span class="apply-divider" aria-hidden="true"></span>
+      <h1 class="apply-title">انضم إلى فريق أثر التطوعي</h1>
+      <p class="apply-sub">أنتَ أثرٌ طيّبٌ أينما حللت</p>
+      <p class="apply-en">Volunteer Application — Athar Academy</p>
+    </div>
+    <div class="apply-hero-strip" aria-hidden="true"></div>
+  </header>
+
+  <main class="apply-shell">
     <div class="apply-card">
-      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">أكاديمية أثر</h1>
-      <p style="color:var(--neutral-500); margin-bottom:16px;">طلب تطوع — Volunteer Application</p>
+      <p class="apply-intro">يستغرق تعبئة الطلب حوالي 5 دقائق. الحقول المعلّمة بـ <span class="req">*</span> مطلوبة.</p>
       <form id="apply-form" class="form-grid" novalidate>
         <!-- Honeypot -->
         <div class="hp-field" aria-hidden="true">
@@ -44,70 +42,73 @@
           <input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off">
         </div>
 
+        <h2 class="apply-section full"><span>المعلومات الشخصية</span><small>Personal information</small></h2>
         <div class="field full">
-          <label>1. الاسم الرباعي / FULL NAME <span class="req">*</span></label>
+          <label>الاسم الرباعي / FULL NAME <span class="req">*</span></label>
           <input type="text" id="f-fullName" class="form-control" required>
         </div>
         <div class="field">
-          <label>2. العمر / AGE <span class="req">*</span></label>
+          <label>العمر / AGE <span class="req">*</span></label>
           <input type="number" id="f-age" class="form-control" min="10" max="100" required>
         </div>
         <div class="field">
-          <label>3. الجنس / GENDER <span class="req">*</span></label>
+          <label>الجنس / GENDER <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="gender" value="male" required> ذكر / MALE</label>
             <label><input type="radio" name="gender" value="female"> أنثى / FEMALE</label>
           </div>
         </div>
         <div class="field">
-          <label>4. رقم الهاتف (واتساب) / Phone (WhatsApp) <span class="req">*</span></label>
+          <label>رقم الهاتف (واتساب) / Phone (WhatsApp) <span class="req">*</span></label>
           <input type="tel" id="f-phone" class="form-control" required>
         </div>
         <div class="field">
-          <label>5. البريد الإلكتروني / E-MAIL <span class="req">*</span></label>
+          <label>البريد الإلكتروني / E-MAIL <span class="req">*</span></label>
           <input type="email" id="f-email" class="form-control" required>
         </div>
         <div class="field">
-          <label>6. الجنسية / Nationality <span class="req">*</span></label>
+          <label>الجنسية / Nationality <span class="req">*</span></label>
           <input type="text" id="f-nationality" class="form-control" required>
         </div>
         <div class="field full">
-          <label>7. مكان الإقامة / Place of Residence <span class="req">*</span></label>
+          <label>مكان الإقامة / Place of Residence <span class="req">*</span></label>
           <input type="text" id="f-residence" class="form-control" required>
         </div>
+        <h2 class="apply-section full"><span>التعليم</span><small>Education</small></h2>
         <div class="field">
-          <label>8. المستوى التعليمي / Educational Level <span class="req">*</span></label>
+          <label>المستوى التعليمي / Educational Level <span class="req">*</span></label>
           <select id="f-eduLevel" class="form-control" required>
             <option value="">--</option>
             <option value="highschool">ثانوي / HIGHSCHOOL</option>
             <option value="diploma">دبلوم / DIPLOMA</option>
             <option value="bachelor">بكالوريوس / BACHELOR</option>
             <option value="master">ماجستير / MASTER</option>
-            <option value="other">Other:</option>
+            <option value="other">أخرى / Other</option>
           </select>
-          <input type="text" id="f-eduLevelOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+          <input type="text" id="f-eduLevelOther" class="form-control" placeholder="حدّد / Specify" style="margin-top:6px; display:none;">
         </div>
         <div class="field">
-          <label>9. التخصص الدراسي / Field of Study <span class="req">*</span></label>
+          <label>التخصص الدراسي / Field of Study <span class="req">*</span></label>
           <input type="text" id="f-fieldOfStudy" class="form-control" required>
         </div>
         <div class="field full">
-          <label>10. اسم الجامعة / المدرسة / المعهد / Educational Institution <span class="req">*</span></label>
+          <label>اسم الجامعة / المدرسة / المعهد / Educational Institution <span class="req">*</span></label>
           <input type="text" id="f-institution" class="form-control" required>
         </div>
+        <h2 class="apply-section full"><span>الخبرة والمهارات</span><small>Experience & skills</small></h2>
         <div class="field">
-          <label>11. هل سبق لك التطوع؟ / Have you volunteered before? <span class="req">*</span></label>
+          <label>هل سبق لك التطوع؟ / Have you volunteered before? <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="volBefore" value="yes" required> نعم / YES</label>
             <label><input type="radio" name="volBefore" value="no"> لا / NO</label>
           </div>
         </div>
         <div class="field full" id="volOrgsWrap" style="display:none;">
-          <label>12. الجهات/البرامج (إذا نعم) / Organizations (IF YES)</label>
+          <label>الجهات/البرامج (إذا نعم) / Organizations (IF YES)</label>
           <textarea id="f-volOrgs" class="form-control" rows="2"></textarea>
         </div>
         <div class="field full">
-          <label>13. المهارات / What skills do you have? <span class="req">*</span></label>
+          <label>المهارات / What skills do you have? <span class="req">*</span></label>
           <div class="checkbox-group">
             <label><input type="checkbox" value="org"> التنظيم وإدارة الفعاليات / Organization and Event Management</label>
             <label><input type="checkbox" value="media"> الإعلام والتصوير / Media and Photography</label>
@@ -119,12 +120,12 @@
             <label><input type="checkbox" value="translation"> الترجمة / Translation</label>
             <label><input type="checkbox" value="content"> كتابة المحتوى / Content Writing</label>
             <label><input type="checkbox" value="eventcoord"> تنسيق الفعاليات والبرامج / Event and Program Coordination</label>
-            <label><input type="checkbox" value="other"> Other:</label>
+            <label><input type="checkbox" value="other"> أخرى / Other</label>
           </div>
-          <input type="text" id="f-skillsOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+          <input type="text" id="f-skillsOther" class="form-control" placeholder="حدّد / Specify" style="margin-top:6px; display:none;">
         </div>
         <div class="field full">
-          <label>14. مجال التطوع المفضل / Preferred area <span class="req">*</span></label>
+          <label>مجال التطوع المفضل / Preferred area <span class="req">*</span></label>
           <select id="f-preferredArea" class="form-control" required>
             <option value="">--</option>
             <option value="events">تنظيم الفعاليات والبرامج / Event and Program Organization</option>
@@ -136,46 +137,48 @@
             <option value="hospitality">الضيافة والخدمات اللوجستية / Hospitality and Logistics</option>
             <option value="pr">العلاقات العامة / Public Relations</option>
             <option value="any">أي مجال حسب الحاجة / Any Area as Needed</option>
-            <option value="other">Other:</option>
+            <option value="other">أخرى / Other</option>
           </select>
-          <input type="text" id="f-preferredAreaOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+          <input type="text" id="f-preferredAreaOther" class="form-control" placeholder="حدّد / Specify" style="margin-top:6px; display:none;">
         </div>
+        <h2 class="apply-section full"><span>الالتزام والتوفر</span><small>Commitment</small></h2>
         <div class="field">
-          <label>15. الالتزام بفترة الإعداد؟ / Commit to preparation period? <span class="req">*</span></label>
+          <label>الالتزام بفترة الإعداد؟ / Commit to preparation period? <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="commitPrep" value="yes" required> نعم / YES</label>
             <label><input type="radio" name="commitPrep" value="no"> لا / NO</label>
-            <label><input type="radio" name="commitPrep" value="other"> Other:</label>
+            <label><input type="radio" name="commitPrep" value="other"> أخرى / Other</label>
           </div>
-          <input type="text" id="f-commitPrepOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+          <input type="text" id="f-commitPrepOther" class="form-control" placeholder="حدّد / Specify" style="margin-top:6px; display:none;">
         </div>
         <div class="field">
-          <label>16. قيود/التزامات تؤثر على الحضور؟ / Restrictions affecting attendance? <span class="req">*</span></label>
+          <label>قيود/التزامات تؤثر على الحضور؟ / Restrictions affecting attendance? <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="restrictions" value="yes" required> نعم / YES</label>
             <label><input type="radio" name="restrictions" value="no"> لا / NO</label>
-            <label><input type="radio" name="restrictions" value="other"> Other:</label>
+            <label><input type="radio" name="restrictions" value="other"> أخرى / Other</label>
           </div>
-          <textarea id="f-restrictionsDetail" class="form-control" rows="2" placeholder="Details..." style="margin-top:6px; display:none;"></textarea>
+          <textarea id="f-restrictionsDetail" class="form-control" rows="2" placeholder="التفاصيل / Details" style="margin-top:6px; display:none;"></textarea>
         </div>
         <div class="field">
-          <label>17. وسيلة مواصلات؟ / Do you have transportation? <span class="req">*</span></label>
+          <label>وسيلة مواصلات؟ / Do you have transportation? <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="transport" value="yes" required> نعم / YES</label>
             <label><input type="radio" name="transport" value="no"> لا / NO</label>
-            <label><input type="radio" name="transport" value="other"> Other:</label>
+            <label><input type="radio" name="transport" value="other"> أخرى / Other</label>
           </div>
-          <input type="text" id="f-transportOther" class="form-control" placeholder="Other..." style="margin-top:6px; display:none;">
+          <input type="text" id="f-transportOther" class="form-control" placeholder="حدّد / Specify" style="margin-top:6px; display:none;">
         </div>
         <div class="field full">
-          <label>18. اقتراحات أو ملاحظات / Any suggestions or comments? <span class="req">*</span></label>
+          <label>اقتراحات أو ملاحظات / Any suggestions or comments? <span class="req">*</span></label>
           <textarea id="f-suggestions" class="form-control" rows="3" required></textarea>
         </div>
+        <h2 class="apply-section full"><span>الإقرار</span><small>Pledge</small></h2>
         <div class="field full">
-          <label>19. إقرار / Pledge <span class="req">*</span></label>
+          <label>إقرار / Pledge <span class="req">*</span></label>
           <div class="radio-group">
             <label><input type="radio" name="pledge" value="agree" required> أوافق / I Agree</label>
-            <label><input type="radio" name="pledge" value="other"> Other:</label>
+            <label><input type="radio" name="pledge" value="other"> أخرى / Other</label>
           </div>
         </div>
         <div class="field full">
@@ -190,8 +193,10 @@
         </div>
       </form>
     </div>
-  </div>
+    <p class="apply-foot"><a href="index.html">لديك حساب؟ تسجيل الدخول</a> <span aria-hidden="true">·</span> <a href="https://athar.my" target="_blank" rel="noopener" dir="ltr">athar.my</a></p>
+  </main>
   <script src="js/apply.js"></script>
+  <script src="js/pwa.js"></script>
   <script>
     // Toggle "Other:" free-text inputs
     function toggleOther(radioName, inputId, showWhen) {

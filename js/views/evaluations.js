@@ -31,7 +31,7 @@
             <span>${t("nav_evaluations")}</span>
           </div>
           <h1 class="view-title">${t("evaluations_title")}</h1>
-          <p class="view-subtitle">Star-based evaluations across dynamic weighted criteria</p>
+          <p class="view-subtitle">${window.AtharTx("Star-based evaluations across dynamic weighted criteria")}</p>
         </div>
         <div class="view-header-actions">
           ${canCreate && state.volunteers.filter(v => v.status !== 'archived').length > 0 ? `
@@ -39,6 +39,7 @@
               ${ic("star", 14)} ${App.currentLang === 'ar' ? 'تقييم جماعي' : 'Bulk Rating'}
             </button>
           ` : ''}
+          ${hasPermission("evaluation_criteria", "view") ? `<button class="btn btn-secondary" onclick="window.AtharApp.navigateTo('evaluation-criteria')">${ic("sliders", 14)} ${t("nav_evaluation_criteria")}</button>` : ''}
           ${canCreate ? `<button class="btn btn-primary" id="btn-add-eval">${ic("plus", 14)} ${t("add_evaluation")}</button>` : ''}
         </div>
       </div>
@@ -46,21 +47,21 @@
       ${state.evaluations.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("star", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluations yet</div>
-          <p style="color:var(--neutral-500); font-size:13px;">Create your first evaluation to start tracking volunteer performance.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No evaluations yet")}</div>
+          <p style="color:var(--neutral-500); font-size:13px;">${window.AtharTx("Create your first evaluation to start tracking volunteer performance.")}</p>
         </div>
       ` : `
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Volunteer</th>
-                <th>Period</th>
-                <th>Overall Score</th>
-                <th>Completion</th>
-                <th>Evaluator</th>
-                <th>Date</th>
-                <th style="text-align:right;">Actions</th>
+                <th>${window.AtharTx("Volunteer")}</th>
+                <th>${window.AtharTx("Period")}</th>
+                <th>${window.AtharTx("Overall Score")}</th>
+                <th>${window.AtharTx("Completion")}</th>
+                <th>${window.AtharTx("Evaluator")}</th>
+                <th>${window.AtharTx("Date")}</th>
+                <th style="text-align:right;">${window.AtharTx("Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -71,16 +72,16 @@
       return `
                   <tr>
                     <td style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${ev.volunteer_id}', sub:'evaluations'})">
-                      ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
+                      ${escapeHtml(vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer')}
                     </td>
-                    <td><span class="badge badge-primary">${ev.period_label}</span></td>
+                    <td><span class="badge badge-primary">${escapeHtml(ev.period_label)}</span></td>
                     <td><span style="font-weight:800; color:var(--warning); font-size:14px;">${ev.overall_score} / 5.0</span></td>
                     <td>
                       ${c.complete
           ? `<span class="badge badge-success num-ltr">✓ ${c.done}/${c.total}</span>`
           : `<span class="badge badge-warning num-ltr">⚠ ${c.done}/${c.total}</span>`}
                     </td>
-                    <td>${user ? user.full_name : 'Super Admin'}</td>
+                    <td>${escapeHtml(user ? user.full_name : 'Super Admin')}</td>
                     <td class="num-ltr">${formatDate(ev.evaluated_at)}</td>
                     <td>
                       <div class="row-actions-cell">
@@ -123,11 +124,11 @@
         <div class="view-header"><div class="view-header-left"><h1 class="view-title">${t("add_evaluation")}</h1></div></div>
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--warning); margin-bottom:12px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No evaluation criteria defined</div>
-          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">You need to add at least one criterion before creating evaluations.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No evaluation criteria defined")}</div>
+          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">${window.AtharTx("You need to add at least one criterion before creating evaluations.")}</p>
           ${(App.currentUser && App.currentUser.role === "super_admin")
           ? `<button class="btn btn-primary" id="btn-goto-criteria">${ic("plus", 14)} ${t("add_criterion")}</button>`
-          : `<p style="color:var(--neutral-500); font-size:12px;">Contact the Super Admin to add criteria.</p>`}
+          : `<p style="color:var(--neutral-500); font-size:12px;">${window.AtharTx("Contact the Super Admin to add criteria.")}</p>`}
         </div>`;
       const b = document.getElementById("btn-goto-criteria");
       if (b) b.onclick = () => navigateTo("evaluation-criteria");
@@ -139,8 +140,8 @@
         <div class="view-header"><div class="view-header-left"><h1 class="view-title">${t("add_evaluation")}</h1></div></div>
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("users", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No active volunteers</div>
-          <button class="btn btn-primary" id="btn-goto-vols">Go to Volunteers</button>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No active volunteers")}</div>
+          <button class="btn btn-primary" id="btn-goto-vols">${window.AtharTx("Go to Volunteers")}</button>
         </div>`;
       const b = document.getElementById("btn-goto-vols");
       if (b) b.onclick = () => navigateTo("volunteers");
@@ -160,7 +161,7 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('evaluations')">${t("nav_evaluations")}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>New Evaluation</span>
+            <span>${window.AtharTx("New Evaluation")}</span>
           </div>
           <h1 class="view-title">${t("add_evaluation")}</h1>
           <p class="view-subtitle">${t("star_rating_prompt")}</p>
@@ -180,7 +181,7 @@
               <label class="field-label">${t("volunteer_name")} <span class="required-asterisk">*</span></label>
               <select class="form-control" id="eval-vol-select" required>
                 <option value="">—</option>
-                ${activeVols.map(v => `<option value="${v.id}" ${(preSelectedVolId || (draft && draft.volunteerId)) === v.id ? 'selected' : ''}>${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}</option>`).join('')}
+                ${activeVols.map(v => `<option value="${v.id}" ${(preSelectedVolId || (draft && draft.volunteerId)) === v.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name)}</option>`).join('')}
               </select>
             </div>
             <div class="form-field">
@@ -207,7 +208,7 @@
             ${criteria.map(c => `
               <div class="eval-criterion-row" data-crit-id="${c.id}" data-weight="${c.weight}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md);">
                 <div>
-                  <div style="font-weight:700; color:var(--neutral-900);">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</div>
+                  <div style="font-weight:700; color:var(--neutral-900);">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</div>
                   <div style="font-size:11px; color:var(--neutral-500);">Weight: ${c.weight}x</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:16px;">
@@ -227,7 +228,7 @@
           <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-lg); margin-bottom:20px;">
             <div>
               <div style="font-weight:800; font-size:16px; color:var(--primary);">${t("overall_score")} (Auto-calculated)</div>
-              <div style="font-size:12px; color:var(--neutral-600);">Weighted average — pick all stars to see the score</div>
+              <div style="font-size:12px; color:var(--neutral-600);">${window.AtharTx("Weighted average — pick all stars to see the score")}</div>
             </div>
             <div id="live-overall-score" style="font-size:28px; font-weight:800; color:var(--primary);" class="num-ltr">— / 5.0</div>
           </div>
@@ -428,10 +429,10 @@
           <div class="breadcrumb-trail">
             <span class="breadcrumb-item" onclick="window.AtharApp.navigateTo('evaluations')">${t("nav_evaluations")}</span>
             <span class="breadcrumb-separator">/</span>
-            <span>Settings</span>
+            <span>${window.AtharTx("Settings")}</span>
           </div>
           <h1 class="view-title">${t("criteria_settings_title")}</h1>
-          <p class="view-subtitle">Define scoring criteria and their weights</p>
+          <p class="view-subtitle">${window.AtharTx("Define scoring criteria and their weights")}</p>
         </div>
         <div class="view-header-actions">
           ${isSuper ? `<button class="btn btn-primary" id="btn-add-crit">${ic("plus", 14)} ${t("add_criterion")}</button>` : ''}
@@ -441,8 +442,8 @@
       ${state.criteria.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("sliders", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No criteria yet</div>
-          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">Add criteria to enable volunteer evaluations.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No criteria yet")}</div>
+          <p style="color:var(--neutral-500); font-size:13px; margin-bottom:16px;">${window.AtharTx("Add criteria to enable volunteer evaluations.")}</p>
           ${isSuper ? `<button class="btn btn-primary" id="btn-add-crit-empty">${ic("plus", 14)} ${t("add_criterion")}</button>` : ''}
         </div>
       ` : `
@@ -450,11 +451,11 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Order</th>
-                <th>Criterion Name (EN)</th>
-                <th>Criterion Name (AR)</th>
-                <th>Weight</th>
-                <th>Active</th>
+                <th>${window.AtharTx("Order")}</th>
+                <th>${window.AtharTx("Criterion Name (EN)")}</th>
+                <th>${window.AtharTx("Criterion Name (AR)")}</th>
+                <th>${window.AtharTx("Weight")}</th>
+                <th>${window.AtharTx("Active")}</th>
                 ${isSuper ? '<th style="text-align:right;">Actions</th>' : ''}
               </tr>
             </thead>
@@ -462,8 +463,8 @@
               ${state.criteria.map((c, idx) => `
                 <tr>
                   <td><span class="badge badge-neutral num-ltr">#${c.display_order || idx + 1}</span></td>
-                  <td style="font-weight:700;">${c.name_en}</td>
-                  <td style="font-weight:700;">${c.name_ar}</td>
+                  <td style="font-weight:700;">${escapeHtml(c.name_en)}</td>
+                  <td style="font-weight:700;">${escapeHtml(c.name_ar)}</td>
                   <td><span class="num-ltr badge badge-primary">${c.weight}x</span></td>
                   <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-danger'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
                   ${isSuper ? `
