@@ -448,7 +448,7 @@
               <div class="cert-corner-ornament cert-corner-br"></div>
               <div class="cert-header">
                 <img src="assets/logo.svg" alt="Athar" class="cert-logo">
-                <div class="cert-org-name">${certLang === 'ar' ? state.settings.org_name_ar : state.settings.org_name_en}</div>
+                <div class="cert-org-name">${escapeHtml(certLang === 'ar' ? state.settings.org_name_ar : state.settings.org_name_en)}</div>
                 <h2 class="cert-title">${certLang === 'ar' ? 'شهادة شكر وتقدير للعمل التطوعي' : 'Certificate of Volunteer Service'}</h2>
               </div>
               <div class="cert-body">
@@ -474,8 +474,8 @@
               <div class="cert-footer">
                 <div class="cert-sig-box">
                   <div class="cert-signature-line"></div>
-                  <div class="cert-sig-name">${certLang === 'ar' ? state.settings.signatory_name_ar : state.settings.signatory_name_en}</div>
-                  <div class="cert-sig-title">${certLang === 'ar' ? state.settings.signatory_title_ar : state.settings.signatory_title_en}</div>
+                  <div class="cert-sig-name">${escapeHtml(certLang === 'ar' ? state.settings.signatory_name_ar : state.settings.signatory_name_en)}</div>
+                  <div class="cert-sig-title">${escapeHtml(certLang === 'ar' ? state.settings.signatory_title_ar : state.settings.signatory_title_en)}</div>
                 </div>
                 <div class="cert-seal-box">
                   <div class="cert-seal-badge">ATHAR<br>OFFICIAL<br>SEAL</div>

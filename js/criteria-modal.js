@@ -10,7 +10,7 @@
     function openCriterionModal(criterionId) {
         criterionId = criterionId || null;
 
-        const { App, t, ic, showToast } = window.AtharCore;
+        const { App, t, ic, showToast, escapeHtml } = window.AtharCore;
 
         if ((App.currentUser && App.currentUser.role !== "super_admin")) {
             showToast(t("permission_denied"), "error");
@@ -33,11 +33,11 @@
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
               <div class="form-field">
                 <label class="field-label">${t("criterion_name_en")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="crit-name-en" class="form-control" required value="${existing ? (existing.name_en || '') : ''}">
+                <input type="text" id="crit-name-en" class="form-control" required value="${existing ? escapeHtml(existing.name_en || '') : ''}">
               </div>
               <div class="form-field">
                 <label class="field-label">${t("criterion_name_ar")} <span class="required-asterisk">*</span></label>
-                <input type="text" id="crit-name-ar" class="form-control" required value="${existing ? (existing.name_ar || '') : ''}">
+                <input type="text" id="crit-name-ar" class="form-control" required value="${existing ? escapeHtml(existing.name_ar || '') : ''}">
               </div>
               <div class="form-grid">
                 <div class="form-field">
@@ -147,7 +147,7 @@
 
         showConfirmModal({
             title: t("confirm_destructive"),
-            message: `Delete criterion "${c.name_en}"? Only possible if not used in any evaluation.`,
+            message: `Delete criterion "${escapeHtml(c.name_en)}"? Only possible if not used in any evaluation.`,
             confirmText: t("delete"),
             onConfirm: async () => {
                 try {

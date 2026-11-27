@@ -23,10 +23,17 @@ window.AtharAPI = (function () {
   function loadTokens() {
     try {
       const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
-      accessToken = sessionStorage.getItem(ACCESS_KEY) || localStorage.getItem(ACCESS_KEY);
-      // Refresh token is shared across tabs via localStorage to avoid
-      // concurrent rotations revoking the whole token family.
-      refreshToken = localStorage.getItem(REFRESH_KEY) || (remembered ? null : sessionStorage.getItem(REFRESH_KEY));
+      if (remembered) {
+        accessToken = localStorage.getItem(ACCESS_KEY);
+        refreshToken = localStorage.getItem(REFRESH_KEY);
+      } else {
+        accessToken = sessionStorage.getItem(ACCESS_KEY);
+        refreshToken = sessionStorage.getItem(REFRESH_KEY);
+        // Do not silently adopt tokens persisted by an older build when the
+        // user did not choose "remember me".
+        localStorage.removeItem(ACCESS_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+      }
     } catch { }
   }
 
@@ -34,12 +41,21 @@ window.AtharAPI = (function () {
     accessToken = at;
     refreshToken = rt;
     try {
-      sessionStorage.setItem(ACCESS_KEY, at);
-      // Share the refresh token across tabs to coordinate rotation.
-      localStorage.setItem(REFRESH_KEY, rt);
-      localStorage.setItem(ACCESS_KEY, at);
-      localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
-      if (!remember) sessionStorage.setItem(REFRESH_KEY, rt);
+      if (remember) {
+        // Explicit "remember me" is the only case that may persist tokens
+        // across browser restarts.
+        localStorage.setItem(ACCESS_KEY, at);
+        localStorage.setItem(REFRESH_KEY, rt);
+        localStorage.setItem(REMEMBER_KEY, "1");
+        sessionStorage.removeItem(ACCESS_KEY);
+        sessionStorage.removeItem(REFRESH_KEY);
+      } else {
+        sessionStorage.setItem(ACCESS_KEY, at);
+        sessionStorage.setItem(REFRESH_KEY, rt);
+        localStorage.removeItem(ACCESS_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        localStorage.setItem(REMEMBER_KEY, "0");
+      }
       broadcastTokens(at, rt);
     } catch { }
   }
@@ -58,7 +74,11 @@ window.AtharAPI = (function () {
       if (m.refreshToken && m.refreshToken !== refreshToken) refreshToken = m.refreshToken;
       try {
         if (m.accessToken) sessionStorage.setItem(ACCESS_KEY, m.accessToken);
-        if (m.refreshToken) localStorage.setItem(REFRESH_KEY, m.refreshToken);
+        if (m.refreshToken) {
+          const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
+          if (remembered) localStorage.setItem(REFRESH_KEY, m.refreshToken);
+          else sessionStorage.setItem(REFRESH_KEY, m.refreshToken);
+        }
       } catch { }
     };
   }

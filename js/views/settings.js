@@ -29,11 +29,11 @@
           <form id="settings-branding-form">
             <div class="form-field" style="margin-bottom:12px;">
               <label class="field-label">${t("org_name_en")}</label>
-              <input type="text" id="set-org-name-en" class="form-control" value="${state.settings.org_name_en || ''}" ${!isSuper ? 'disabled' : ''}>
+              <input type="text" id="set-org-name-en" class="form-control" value="${escapeHtml(state.settings.org_name_en || '')}" ${!isSuper ? 'disabled' : ''}>
             </div>
             <div class="form-field" style="margin-bottom:12px;">
               <label class="field-label">${t("org_name_ar")}</label>
-              <input type="text" id="set-org-name-ar" class="form-control" value="${state.settings.org_name_ar || ''}" ${!isSuper ? 'disabled' : ''}>
+              <input type="text" id="set-org-name-ar" class="form-control" value="${escapeHtml(state.settings.org_name_ar || '')}" ${!isSuper ? 'disabled' : ''}>
             </div>
             <div class="form-field" style="margin-bottom:12px;">
               <label class="field-label">${t("cert_prefix")}</label>
