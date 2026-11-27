@@ -83,10 +83,13 @@
         </div>
       </div>
 
+      ${window.AtharReportCharts ? window.AtharReportCharts.html({ hours: scopedHours(), meetings: scopedMeetings() }) : ""}
+
       <div id="report-display-container">
         ${renderReportContent(currentReport)}
       </div>
     `;
+    if (window.AtharReportCharts) window.AtharReportCharts.bind(container);
 
     document.getElementById("report-type-select").onchange = (e) => {
       App.activeReportType = e.target.value;

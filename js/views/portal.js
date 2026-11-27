@@ -371,6 +371,8 @@
         </div>
       </div>
 
+      ${window.AtharImpact ? window.AtharImpact.badgesHtml(approved) : ""}
+
       <div class="portal-grid">
         <div class="portal-main-col">
           <section class="card">
@@ -505,6 +507,23 @@
         } catch (e) {
           showToast((e && e.message) || L("فشل الحفظ", "Save failed"), "error");
         }
+      };
+    }
+
+    const impactBtn = container.querySelector("#portal-impact-card");
+    if (impactBtn && window.AtharImpact && cachedData) {
+      impactBtn.onclick = () => {
+        const d = cachedData;
+        const v = d.volunteer || {};
+        const att = d.attendance || {};
+        const c = d.committee;
+        window.AtharImpact.openCard({
+          name: App.currentLang === "ar" ? (v.fullNameAr || v.fullName) : (v.fullName || v.fullNameAr),
+          hours: fmtHours((d.hours || {}).approved),
+          attended: num(att.present) + num(att.late),
+          certs: (d.certificates || []).length,
+          committee: c ? (App.currentLang === "ar" ? (c.nameAr || c.nameEn) : (c.nameEn || c.nameAr)) : "",
+        });
       };
     }
 

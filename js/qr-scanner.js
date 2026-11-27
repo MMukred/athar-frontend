@@ -103,6 +103,14 @@ window.AtharScanner = (function () {
         '<p class="qr-meta">' + esc([date, m.startTime].filter(Boolean).join(" • ")) + "</p>" +
         (status ? '<span class="qr-chip">' + esc(status) + "</span>" : ""));
     } catch (e) {
+      if (!navigator.onLine || (e && e.status === 0)) {
+        queuePush(token);
+        showMessage(el, "ok", L("حُفظ حضورك على جهازك", "Saved on your device"),
+          "<p>" + L("لا يوجد اتصال الآن. سنرسل تسجيل حضورك تلقائياً فور عودة الإنترنت — أبقِ التطبيق مفتوحاً أو افتحه لاحقاً اليوم.",
+            "You're offline. Your check-in will be sent automatically when the connection returns — keep the app open or reopen it later today.") + "</p>" +
+          '<span class="qr-chip">' + L("بانتظار الإرسال", "Waiting to send") + "</span>");
+        return;
+      }
       showMessage(el, "err", L("تعذّر تسجيل الحضور", "Could not check in"),
         "<p>" + esc((e && e.message) || L("الرمز غير صالح أو انتهت صلاحيته.", "The code is invalid or has expired.")) + "</p>");
     } finally {
@@ -183,5 +191,45 @@ window.AtharScanner = (function () {
     if (e.key === "Escape" && document.getElementById("qr-scanner")) close();
   });
 
-  return { open: open, close: close, tokenFrom: tokenFrom };
+  // ---- Offline check-in queue -------------------------------------------
+  // Tokens scanned without a connection are kept locally (max 12h) and sent
+  // when the device is back online. The server still validates each token.
+  const QKEY = "athar_checkin_queue_v1";
+  const QTTL = 12 * 60 * 60 * 1000;
+  function queueRead() {
+    try { return (JSON.parse(localStorage.getItem(QKEY) || "[]") || []).filter(function (q) { return q && q.token && Date.now() - q.at < QTTL; }); }
+    catch (e) { return []; }
+  }
+  function queueWrite(list) {
+    try { if (list.length) localStorage.setItem(QKEY, JSON.stringify(list)); else localStorage.removeItem(QKEY); } catch (e) { /* ignore */ }
+  }
+  function queuePush(token) {
+    const list = queueRead().filter(function (q) { return q.token !== token; });
+    list.push({ token: token, at: Date.now() });
+    queueWrite(list);
+  }
+  let flushing = false;
+  async function flushQueue() {
+    if (flushing || !navigator.onLine) return;
+    if (!(window.AtharCore && window.AtharCore.App.currentUser)) return;
+    const list = queueRead();
+    if (!list.length) return;
+    flushing = true;
+    const keep = [];
+    let sent = 0, failed = 0;
+    for (const q of list) {
+      try { await window.AtharAPI.portal.checkInAttendance(q.token); sent++; }
+      catch (e) { if (e && e.status === 0) keep.push(q); else failed++; }
+    }
+    queueWrite(keep);
+    flushing = false;
+    const toast = window.AtharCore && window.AtharCore.showToast;
+    if (toast && sent) toast(L("تم إرسال حضورك المحفوظ ✓", "Your saved check-in was sent ✓"), "success");
+    if (toast && failed) toast(L("تعذّر إرسال حضور محفوظ — ربما انتهت صلاحية الرمز. راجع مسؤول اللجنة.", "A saved check-in failed — the code may have expired. Contact your committee lead."), "error");
+  }
+  window.addEventListener("online", flushQueue);
+  setInterval(flushQueue, 60 * 1000);
+  setTimeout(flushQueue, 4000);
+
+  return { open: open, close: close, tokenFrom: tokenFrom, flushQueue: flushQueue, pending: function () { return queueRead().length; } };
 })();
