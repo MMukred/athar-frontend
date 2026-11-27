@@ -1286,5 +1286,8 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
     } catch (e) { /* ignore */ }
   }
 
-  window.AtharViews.dashboard = (c, p) => renderDashboard(c);
+  window.AtharViews.dashboard = (c, p) => {
+    renderDashboard(c);
+    if (window.AtharAbsence) window.AtharAbsence.mount(c);
+  };
 })();

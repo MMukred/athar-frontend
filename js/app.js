@@ -598,17 +598,21 @@ goVolunteersFilter: function (status, flags) {
       const cert = state.certificates.find(c => c.id === certId);
       if (!cert) return;
       const vol = state.volunteers.find(v => v.id === cert.volunteer_id);
-      if (!vol || !vol.whatsapp) {
-        showToast("Volunteer has no WhatsApp number", "error");
+      const waNum = vol && (vol.whatsapp || vol.phone);
+      if (!waNum) {
+        showToast(App.currentLang === "ar" ? "لا يوجد رقم واتساب لهذا المتطوع" : "Volunteer has no WhatsApp number", "error");
         return;
       }
-      const tmpl = state.whatsapp_templates.find(t => t.name.includes("Certificate") && t.language === cert.language) || state.whatsapp_templates[2];
-      let msg = tmpl ? tmpl.body : "Your certificate is ready!";
-      msg = msg.replace("{name}", vol.full_name)
+      const tmpl = state.whatsapp_templates.find(t => (t.name || "").includes("Certificate") && t.language === cert.language);
+      const volName = (cert.language === "ar" ? (vol.full_name_ar || vol.full_name) : (vol.full_name || vol.full_name_ar)) || "";
+      let msg = tmpl ? tmpl.body : (cert.language === "en"
+        ? "Hi {name} 🌿\nYour Athar Academy volunteer certificate is ready ({hours} hours).\nCertificate no: {certificate_no}\nVerify: {verify_url}"
+        : "أهلاً {name} 🌿\nشهادتك التطوعية من أكاديمية أثر جاهزة ({hours} ساعة).\nرقم الشهادة: {certificate_no}\nرابط التحقق: {verify_url}\nأنتَ أثرٌ طيّبٌ أينما حللت.");
+      msg = msg.replace("{name}", volName)
         .replace("{certificate_no}", cert.certificate_no)
         .replace("{hours}", cert.total_hours)
         .replace("{verify_url}", cert.qr_code || `${window.location.origin}${window.location.pathname}#public-verify/${cert.certificate_no}`);
-      window.open(`https://wa.me/${vol.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, "_blank");
+      window.open(`https://wa.me/${String(waNum).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, "_blank");
     },
 
     printCertificateDoc: function () {

@@ -27,6 +27,7 @@
         </div>
         <div class="view-header-actions">
           <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('public-verify')">${ic("qr_code", 14)} ${window.AtharTx("Public Verification")}</button>
+          ${canCreate ? `<button class="btn btn-secondary" id="btn-bulk-cert">${ic("users", 14)} ${App.currentLang === "ar" ? "إصدار جماعي" : "Bulk issue"}</button>` : ''}
           ${canCreate ? `<button class="btn btn-primary" id="btn-add-cert">${ic("award", 14)} ${t("generate_certificate")}</button>` : ''}
         </div>
       </div>
@@ -105,6 +106,8 @@
 
     const addBtn = document.getElementById("btn-add-cert");
     if (addBtn) addBtn.onclick = () => navigateTo("generate-certificate");
+    const bulkBtn = document.getElementById("btn-bulk-cert");
+    if (bulkBtn) bulkBtn.onclick = () => window.AtharBulkCerts && window.AtharBulkCerts.open();
 
     // ---- Kebab action menu toggle ----
     container.querySelectorAll("[data-action-menu]").forEach(btn => {

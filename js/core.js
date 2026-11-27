@@ -35,6 +35,7 @@ window.AtharCore = (function () {
   const VIEW_REGISTRY = {
     "dashboard": "dashboard",
     "volunteers": "volunteers",
+    "applications": "applications",
     "volunteer-profile": "volunteerProfile",
     "committees": "committees",
     "committee-detail": "committeeDetail",
@@ -516,6 +517,7 @@ window.AtharCore = (function () {
   const VIEW_MODULE_MAP = {
     dashboard: "dashboard",
     volunteers: "volunteers",
+    applications: "volunteers",
     "volunteer-profile": "volunteers",
     committees: "committees",
     "committee-detail": "committees",
@@ -638,6 +640,7 @@ window.AtharViews.showAttendanceScanStandalone) {
 
     // ---- Live counts ----
     const activeVolunteers = state.volunteers.filter(v => v.status !== "archived").length;
+    const pendingApplications = state.volunteers.filter(v => v.status === "pending").length;
     const activeCommittees = state.committees.filter(c => c.status === "active").length;
     const upcomingMeetings = state.meetings.filter(m => m.status === "scheduled" && (m.kind || "meeting") === "meeting").length;
     const upcomingEvents = state.meetings.filter(m => m.status === "scheduled" && m.kind === "event").length;
@@ -662,6 +665,7 @@ window.AtharViews.showAttendanceScanStandalone) {
         items: [
           { id: "dashboard", label: t("nav_dashboard"), icon: "dashboard", module: "dashboard" },
           { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers", badgeHtml: badge(activeVolunteers, "info") },
+          { id: "applications", label: App.currentLang === "ar" ? "طلبات التطوع" : "Applications", icon: "user_plus", module: "volunteers", perm: "edit", badgeHtml: badge(pendingApplications, "warn") },
           { id: "committees", label: t("nav_committees"), icon: "building", module: "committees", badgeHtml: badge(activeCommittees, "info") },
           { id: "meetings", label: App.currentLang === "ar" ? "الاجتماعات والفعاليات" : "Meetings & Events", icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings + upcomingEvents, "info") }
         ]
@@ -700,7 +704,7 @@ window.AtharViews.showAttendanceScanStandalone) {
 
     let html = "";
     navStructure.forEach(group => {
-      const accessibleItems = group.items.filter(item => hasPermission(item.module, "view"));
+      const accessibleItems = group.items.filter(item => hasPermission(item.module, item.perm || "view"));
       if (accessibleItems.length === 0) return;
 
       html += `<div class="nav-group-title">${group.group}</div>`;
