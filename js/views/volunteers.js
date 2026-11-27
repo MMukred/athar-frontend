@@ -185,7 +185,7 @@
               ${avatarHtml(v, 64)}
               <div style="flex:1;">
                 <div style="font-size:20px; font-weight:800; color:var(--neutral-900);">
-                  ${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}
+                  ${escapeHtml(App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name)}
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap;">
                   ${genderChip(v.gender)}
@@ -222,7 +222,7 @@
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("committee") || "Committee"}</div>
-                <div style="font-weight:600; font-size:14px;">${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : "—"}</div>
+                <div style="font-weight:600; font-size:14px;">${escapeHtml(comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : "—")}</div>
               </div>
               <div>
                 <div style="font-size:11px; color:var(--neutral-500); font-weight:700; text-transform:uppercase;">${t("join_date") || "Join Date"}</div>
@@ -633,10 +633,10 @@
 
       <div class="filter-bar">
         <div class="filter-group">
-          <input type="text" id="vol-search-box" class="form-control" style="width:200px;" placeholder="${t("search_volunteers_ph")}" value="${search}">
+          <input type="text" id="vol-search-box" class="form-control" style="width:200px;" placeholder="${t("search_volunteers_ph")}" value="${escapeHtml(search)}">
           <select id="vol-filter-comm" class="form-control" ${App.currentUser && App.currentUser.role === 'committee_leader' ? 'disabled' : ''}>
             <option value="all">${t("all_committees")}</option>
-            ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+            ${state.committees.map(c => `<option value="${c.id}" ${filterComm === c.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
           </select>
           <select id="vol-filter-status" class="form-control">
             <option value="all">${t("all_statuses")}</option>
@@ -654,19 +654,19 @@
           </select>
           <div style="display:flex; align-items:center; gap:4px;">
             <span style="font-size:12px; color:var(--neutral-600);">${App.currentLang === 'ar' ? 'العمر:' : 'Age:'}</span>
-            <input type="number" id="vol-filter-age-min" class="form-control num-ltr" style="width:70px;" placeholder="min" value="${filterAgeMin}" min="0" max="130">
+            <input type="number" id="vol-filter-age-min" class="form-control num-ltr" style="width:70px;" placeholder="${App.currentLang === 'ar' ? 'من' : 'min'}" value="${escapeHtml(filterAgeMin)}" min="0" max="130">
             <span style="color:var(--neutral-400);">–</span>
-            <input type="number" id="vol-filter-age-max" class="form-control num-ltr" style="width:70px;" placeholder="max" value="${filterAgeMax}" min="0" max="130">
+            <input type="number" id="vol-filter-age-max" class="form-control num-ltr" style="width:70px;" placeholder="${App.currentLang === 'ar' ? 'إلى' : 'max'}" value="${escapeHtml(filterAgeMax)}" min="0" max="130">
           </div>
           <select id="vol-filter-skill" class="form-control" style="width:150px;">
             <option value="all">${t("all_skills")}</option>
-            ${allSkills.map(s => `<option value="${s}" ${filterSkill === s ? 'selected' : ''}>${s}</option>`).join('')}
+            ${allSkills.map(s => `<option value="${escapeHtml(s)}" ${filterSkill === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
           </select>
           <select id="vol-per-page" class="form-control" style="width:110px;">
-            <option value="10" ${perPage === 10 ? 'selected' : ''}>10 / page</option>
-            <option value="20" ${perPage === 20 ? 'selected' : ''}>20 / page</option>
-            <option value="50" ${perPage === 50 ? 'selected' : ''}>50 / page</option>
-            <option value="100" ${perPage === 100 ? 'selected' : ''}>100 / page</option>
+            <option value="10" ${perPage === 10 ? 'selected' : ''}>10 ${App.currentLang === 'ar' ? 'لكل صفحة' : '/ page'}</option>
+            <option value="20" ${perPage === 20 ? 'selected' : ''}>20 ${App.currentLang === 'ar' ? 'لكل صفحة' : '/ page'}</option>
+            <option value="50" ${perPage === 50 ? 'selected' : ''}>50 ${App.currentLang === 'ar' ? 'لكل صفحة' : '/ page'}</option>
+            <option value="100" ${perPage === 100 ? 'selected' : ''}>100 ${App.currentLang === 'ar' ? 'لكل صفحة' : '/ page'}</option>
             <option value="5000" ${perPage >= 5000 ? 'selected' : ''}>${App.currentLang === 'ar' ? 'الكل' : 'All'}</option>
           </select>
           <button class="btn btn-secondary btn-sm" id="btn-reset-vol-filters">${t("reset")}</button>
@@ -770,7 +770,7 @@
       const idle = idleDaysOf(v);
       const stale = state.activityLoaded && idle !== null && idle >= FOLLOWUP_DAYS;
       const dgr = dupMark.get(v.id);
-      const commLabel = comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—';
+      const commLabel = escapeHtml(comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—');
       const commCell = canEdit
         ? `<button type="button" class="cell-edit-btn" data-quick-comm="${v.id}" title="${t("change_committee")}">${commLabel}</button>`
         : `<span style="font-weight:500;">${commLabel}</span>`;
@@ -1271,7 +1271,7 @@
           const comm = c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : '—';
           return `<tr><td>${escapeHtml(volDisplayName(v))}</td><td>${escapeHtml(v.phone || '—')}</td><td>${escapeHtml(v.whatsapp || '—')}</td><td>${escapeHtml(v.email || '—')}</td><td>${escapeHtml(comm)}</td><td>${t(v.status)}</td></tr>`;
         }).join("");
-        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Volunteer Directory</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? 'دليل المتطوعين' : 'Volunteer Directory'}</h1><p>${filtered.length} ${App.currentLang === 'ar' ? 'متطوع' : 'volunteers'} • ${new Date().toLocaleDateString()}</p><table><thead><tr><th>${App.currentLang === 'ar' ? 'الاسم' : 'Name'}</th><th>${App.currentLang === 'ar' ? 'الهاتف' : 'Phone'}</th><th>WhatsApp</th><th>Email</th><th>${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'}</th><th>${t("status")}</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
+        w.document.write(`<!DOCTYPE html><html dir="${App.currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${window.AtharTx("Volunteer Directory")}</title><style>body{font-family:Cairo,Inter,sans-serif;padding:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #ccc;padding:6px 8px;text-align:start;}th{background:#f1f3f5;}h1{font-size:18px;margin-bottom:12px;}</style></head><body><h1>${App.currentLang === 'ar' ? 'دليل المتطوعين' : 'Volunteer Directory'}</h1><p>${filtered.length} ${App.currentLang === 'ar' ? 'متطوع' : 'volunteers'} • ${new Date().toLocaleDateString()}</p><table><thead><tr><th>${App.currentLang === 'ar' ? 'الاسم' : 'Name'}</th><th>${App.currentLang === 'ar' ? 'الهاتف' : 'Phone'}</th><th>WhatsApp</th><th>${window.AtharTx("Email")}</th><th>${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'}</th><th>${t("status")}</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>window.print();</script></body></html>`);
         w.document.close();
       };
     }
@@ -1290,7 +1290,7 @@
     const state = window.AtharStore.getState();
     const vol = state.volunteers.find(v => v.id === volunteerId);
     if (!vol) {
-      container.innerHTML = `<div class="empty-state"><p>Volunteer not found.</p></div>`;
+      container.innerHTML = `<div class="empty-state"><p>${window.AtharTx("Volunteer not found.")}</p></div>`;
       return;
     }
 
@@ -1391,7 +1391,7 @@
         type: "transfer",
         icon: ic("arrow_right", 13),
         date: tr.transferred_at,
-        title: `${commName(fromComm)} → ${commName(toComm)}`,
+        title: `${escapeHtml(commName(fromComm))} → ${escapeHtml(commName(toComm))}`,
         meta: tr.reason || '',
       });
     });
@@ -1450,7 +1450,7 @@
           <div class="card">
             <div class="card-header">
               <div>
-                <span style="font-weight:700; font-size:16px;">${e.period_label}</span>
+                <span style="font-weight:700; font-size:16px;">${escapeHtml(e.period_label)}</span>
                 <span style="margin:0 8px; color:var(--neutral-400);">&bull;</span>
                 <span style="font-size:12px; color:var(--neutral-500);">${e.evaluated_at}</span>
                 ${isComplete
@@ -1459,13 +1459,13 @@
               </div>
               <div style="font-size:18px; font-weight:800; color:var(--warning);">${e.overall_score} / 5.0</div>
             </div>
-            <p style="color:var(--neutral-700); font-size:13px; margin-bottom:12px;">${e.notes || ''}</p>
+            <p style="color:var(--neutral-700); font-size:13px; margin-bottom:12px;">${escapeHtml(e.notes || '')}</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; background:var(--neutral-50); padding:12px; border-radius:var(--radius-md);">
               ${allCrit.map(c => {
               const sc = scores.find(s => s.criteria_id === c.id);
               return `
                   <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; ${sc ? '' : 'opacity:0.5;'}">
-                    <span style="font-weight:600;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+                    <span style="font-weight:600;">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</span>
                     <span style="color:${sc ? '#F59E0B' : 'var(--danger)'}; font-weight:700;">${sc ? sc.score + ' / 5' : '—'}</span>
                   </div>
                 `;
@@ -1511,7 +1511,7 @@
               ${vol.study_level ? `<div class="profile-meta-item">${escapeHtml(vol.study_level)}</div>` : ''}
               <div class="profile-meta-item">
                 <span>${ic("building", 14)}</span>
-                <span>${comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—'}</span>
+                <span>${escapeHtml(comm ? (App.currentLang === 'ar' ? comm.name_ar : comm.name_en) : '—')}</span>
               </div>
               <div class="profile-meta-item">
                 <span>${ic("calendar", 14)}</span>
@@ -1609,7 +1609,7 @@
               ? formatDate(dateOnly(mtg.meetingDate || mtg.meeting_date))
               : '—';
             return `<tr>
-                  <td style="font-weight:600;">${title}</td>
+                  <td style="font-weight:600;">${escapeHtml(title)}</td>
                   <td>${date}</td>
                   <td><span class="badge ${a.status === 'present' ? 'badge-success' : a.status === 'late' ? 'badge-warning' : a.status === 'excused' ? 'badge-info' : 'badge-danger'}">${t(a.status)}</span></td>
                   <td style="color:var(--neutral-600);">${a.note || '—'}</td>
@@ -1660,7 +1660,7 @@
             <tbody>
               ${certs.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding:24px;">—</td></tr>` : certs.map(c => `
                 <tr>
-                  <td style="font-family:var(--font-mono); font-weight:700;">${c.certificate_no || 'DRAFT'}</td>
+                  <td style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(c.certificate_no || 'DRAFT')}</td>
                   <td><span class="num-ltr" style="font-weight:700;">${c.total_hours} h</span></td>
                   <td>${formatDate(c.issue_date)}</td>
                   <td><span class="badge ${c.status === 'issued' ? 'badge-success' : c.status === 'draft' ? 'badge-warning' : 'badge-danger'}">${t(c.status)}</span></td>

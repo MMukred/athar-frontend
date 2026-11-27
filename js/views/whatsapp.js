@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  const { App, t, ic, showToast, hasPermission } = window.AtharCore;
+  const { App, t, ic, showToast, hasPermission, escapeHtml } = window.AtharCore;
 
   function renderWhatsAppTemplates(container) {
     const state = window.AtharStore.getState();
@@ -39,8 +39,8 @@
       ${sorted.length === 0 ? `
         <div class="card" style="text-align:center; padding:40px;">
           <div style="color:var(--neutral-400); margin-bottom:8px;">${ic("message_circle", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No message templates yet</div>
-          <p style="color:var(--neutral-500); font-size:13px;">Create your first template to start sending WhatsApp invites.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No message templates yet")}</div>
+          <p style="color:var(--neutral-500); font-size:13px;">${window.AtharTx("Create your first template to start sending WhatsApp invites.")}</p>
         </div>
       ` : `
         <div style="display:flex; flex-direction:column; gap:16px;">
@@ -60,9 +60,9 @@
                   <div style="display:flex; gap:8px;">
                     ${canEdit ? `
                       <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.openEditWhatsAppTemplate('${tmpl.id}')">${ic("pencil", 14)} ${t("edit")}</button>
-                      <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.duplicateWhatsAppTemplate('${tmpl.id}')">${ic("copy", 14)} Duplicate</button>
+                      <button class="btn btn-secondary btn-sm" onclick="window.AtharModals.duplicateWhatsAppTemplate('${tmpl.id}')">${ic("copy", 14)} ${window.AtharTx("Duplicate")}</button>
                     ` : ''}
-                    ${canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharModals.deleteWhatsAppTemplate('${tmpl.id}')">${ic("trash", 14)} Delete</button>` : ''}
+                    ${canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="window.AtharModals.deleteWhatsAppTemplate('${tmpl.id}')">${ic("trash", 14)} ${window.AtharTx("Delete")}</button>` : ''}
                   </div>
                 </div>
                 <div class="wa-bubble-preview" dir="${tmpl.language === 'ar' ? 'rtl' : 'ltr'}">

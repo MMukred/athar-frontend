@@ -2,6 +2,19 @@
   "use strict";
 
   const { App, t, ic, escapeHtml, formatDate, showToast } = window.AtharCore;
+
+  // Draw the attendance QR locally (js/vendor/qrcode.js) so the scan link
+  // never leaves the browser and the code shows even without internet.
+  function localQrSvg(text) {
+    try {
+      const qr = window.qrcode(0, "M");
+      qr.addData(String(text || ""));
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    } catch (e) {
+      return '<p style="color:var(--danger,#dc2626); font-size:12px;">QR</p>';
+    }
+  }
   const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
 
   async function render(container, params) {
@@ -35,7 +48,7 @@
     const m = qrRes.meeting || {};
     const title = App.currentLang === "ar" ? (m.titleAr || m.titleEn) : (m.titleEn || m.titleAr);
     const dateStr = m.meetingDate ? formatDate(String(m.meetingDate).slice(0, 10)) : "";
-    const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrRes.scanUrl);
+    const qrMarkup = localQrSvg(qrRes.scanUrl);
 
     container.querySelector(".view-subtitle").textContent = title || "";
 
@@ -43,7 +56,7 @@
       <div style="text-align:center; margin-bottom:16px;">
         <h2 style="margin:0 0 6px;">${escapeHtml(title || L("الاجتماع", "Meeting"))}</h2>
         <p style="color:var(--neutral-500); margin:0 0 12px;">${escapeHtml(dateStr)} ${m.startTime ? "• " + escapeHtml(m.startTime) : ""} ${m.location ? "• " + escapeHtml(m.location) : ""}</p>
-        <img src="${qrImgUrl}" alt="QR" style="border-radius:8px; background:#fff; padding:8px;" />
+        <div role="img" aria-label="QR" style="display:inline-block; width:220px; height:220px; border-radius:8px; background:#fff; padding:8px;">${qrMarkup}</div>
         <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${L("امسح هذا الرمز لتسجيل حضورك", "Scan this code to check in")}</p>
       </div>
       <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
@@ -77,7 +90,7 @@
           return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">
             <div>
               <div style="font-weight:600; font-size:13px;">${escapeHtml(name || "")}</div>
-              <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(new Date(r.recordedAt).toLocaleString()) : ""}</div>
+              <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(new Date(r.recordedAt).toLocaleString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US")) : ""}</div>
             </div>
             <span class="badge ${r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning'}" style="font-size:11px;">${escapeHtml(r.status || "")}</span>
           </div>`;
@@ -143,13 +156,13 @@
       const m = qrRes.meeting || {};
       const title = App.currentLang === "ar" ? (m.titleAr || m.titleEn) : (m.titleEn || m.titleAr);
       const dateStr = m.meetingDate ? formatDate(String(m.meetingDate).slice(0, 10)) : "";
-      const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(qrRes.scanUrl);
+      const qrMarkup = localQrSvg(qrRes.scanUrl);
 
       body.innerHTML = `
         <div style="text-align:center; margin-bottom:16px;">
           <h2 style="margin:0 0 6px;">${escapeHtml(title || L("الاجتماع", "Meeting"))}</h2>
           <p style="color:var(--neutral-500); margin:0 0 12px;">${escapeHtml(dateStr)} ${m.startTime ? "• " + escapeHtml(m.startTime) : ""} ${m.location ? "• " + escapeHtml(m.location) : ""}</p>
-          <img src="${qrImgUrl}" alt="QR" style="border-radius:8px; background:#fff; padding:8px;" />
+          <div role="img" aria-label="QR" style="display:inline-block; width:220px; height:220px; border-radius:8px; background:#fff; padding:8px;">${qrMarkup}</div>
           <p style="font-size:13px; color:var(--neutral-500); margin:8px 0 4px;">${L("امسح هذا الرمز لتسجيل حضورك", "Scan this code to check in")}</p>
         </div>
         <div style="border-top:1px solid var(--neutral-200,#e5e7eb); padding-top:12px;">
@@ -183,7 +196,7 @@
             return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--neutral-100,#f3f4f6);">
               <div>
                 <div style="font-weight:600; font-size:13px;">${escapeHtml(name || "")}</div>
-                <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(new Date(r.recordedAt).toLocaleString()) : ""}</div>
+                <div style="font-size:11px; color:var(--neutral-500);">${escapeHtml(comm)}${r.recordedAt ? " • " + escapeHtml(new Date(r.recordedAt).toLocaleString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US")) : ""}</div>
               </div>
               <span class="badge ${r.status === 'present' ? 'badge-success' : r.status === 'absent' ? 'badge-danger' : 'badge-warning'}" style="font-size:11px;">${escapeHtml(r.status || "")}</span>
             </div>`;

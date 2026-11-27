@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, formatDate, ic, showToast } = window.AtharCore;
+  const { App, t, formatDate, ic, showToast, escapeHtml } = window.AtharCore;
 
   function isHoc() { return !!(App.currentUser && App.currentUser.role === "committee_leader"); }
   function hocCid() { return isHoc() ? (App.currentUser.committee_id || (App.currentUser.committee && App.currentUser.committee.id) || null) : null; }
@@ -121,7 +121,7 @@
               return `
                 <div>
                   <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;">
-                    <span>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+                    <span>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</span>
                     <span class="num-ltr">${count} (${pct}%)</span>
                   </div>
                   <div style="height:14px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
@@ -155,7 +155,7 @@
                   const rate = total > 0 ? Math.round(((p + l) / total) * 100) : 0;
                   return `
                     <tr>
-                      <td style="font-weight:700;">${App.currentLang === 'ar' ? m.title_ar : m.title_en}</td>
+                      <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? m.title_ar : m.title_en)}</td>
                       <td>${m.meeting_date}</td>
                       <td><span class="num-ltr" style="color:var(--success); font-weight:700;">${p}</span></td>
                       <td><span class="num-ltr" style="color:var(--warning); font-weight:700;">${l}</span></td>
@@ -194,7 +194,7 @@
               <tbody>
                 ${byComm.map(r => `
                   <tr>
-                    <td style="font-weight:700;">${App.currentLang === 'ar' ? r.c.name_ar : r.c.name_en}</td>
+                    <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? r.c.name_ar : r.c.name_en)}</td>
                     <td class="num-ltr">${r.count}</td>
                     <td class="num-ltr">${r.avg}</td>
                   </tr>
@@ -231,7 +231,7 @@
                   const pendH = hours.filter(h => h.committee_id === c.id && h.status === 'pending').reduce((a, b) => a + Number(b.hours), 0);
                   return `
                     <tr>
-                      <td style="font-weight:700;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</td>
+                      <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</td>
                       <td><span class="num-ltr" style="font-weight:700; color:var(--success);">${appH} h</span></td>
                       <td><span class="num-ltr" style="font-weight:700; color:var(--warning);">${pendH} h</span></td>
                     </tr>
@@ -275,7 +275,7 @@
               <tbody>
                 ${byComm.map(r => `
                   <tr>
-                    <td style="font-weight:700;">${App.currentLang === 'ar' ? r.c.name_ar : r.c.name_en}</td>
+                    <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? r.c.name_ar : r.c.name_en)}</td>
                     <td class="num-ltr">${r.count}</td>
                   </tr>
                 `).join('')}
@@ -305,8 +305,8 @@
                   return `
                     <tr>
                       <td class="num-ltr">${i + 1}</td>
-                      <td style="font-weight:700;">${App.currentLang === 'ar' ? (r.v.full_name_ar || r.v.full_name) : r.v.full_name}</td>
-                      <td>${c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : "—"}</td>
+                      <td style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? (r.v.full_name_ar || r.v.full_name) : r.v.full_name)}</td>
+                      <td>${escapeHtml(c ? (App.currentLang === 'ar' ? c.name_ar : c.name_en) : "—")}</td>
                       <td class="num-ltr" style="font-weight:700; color:var(--success);">${r.hours} h</td>
                       <td class="num-ltr">${r.attendance}%</td>
                     </tr>

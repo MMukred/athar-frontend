@@ -92,14 +92,14 @@ window.AtharModals = (function () {
                 </div>
                 <div class="form-field">
                   <label class="field-label">${t("email")}</label>
-                  <input type="email" id="vol-email" class="form-control" maxlength="150" value="${existing ? (existing.email || '') : ''}">
+                  <input type="email" id="vol-email" class="form-control" maxlength="150" value="${escapeHtml(existing ? (existing.email || '') : '')}">
                   <span class="field-hint" id="vol-email-err" style="color:var(--danger); display:none;"></span>
                   <div class="dup-warning" id="vol-email-dup"></div>
                 </div>
               </div>
 
               <div style="padding:10px 12px; background:var(--primary-light); border:1px solid var(--primary-border); border-radius:var(--radius-md); font-size:12px; color:var(--primary);">
-                ${App.currentLang === 'ar' ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.' : 'At least one of WhatsApp number or email is required.'}
+                ${escapeHtml(App.currentLang === 'ar' ? 'يجب توفير رقم واتساب أو بريد إلكتروني واحد على الأقل.' : 'At least one of WhatsApp number or email is required.')}
               </div>
 
               <div class="form-field">
@@ -129,7 +129,7 @@ window.AtharModals = (function () {
                   <label class="field-label">${App.currentLang === 'ar' ? 'المستوى الدراسي' : 'Study Level'}</label>
                   <select id="vol-study-level" class="form-control">
                     <option value="">—</option>
-                    ${STUDY_LEVELS.map(s => `<option value="${s.value}" ${existing && existing.study_level === s.value ? 'selected' : ''}>${App.currentLang === 'ar' ? s.ar : s.en}</option>`).join('')}
+                    ${STUDY_LEVELS.map(s => `<option value="${s.value}" ${escapeHtml(existing && existing.study_level === s.value ? 'selected' : '')}>${App.currentLang === 'ar' ? s.ar : s.en}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-field">
@@ -143,7 +143,7 @@ window.AtharModals = (function () {
                   <label class="field-label">${t("committee")}</label>
                   <select id="vol-comm" class="form-control">
                     <option value="">—</option>
-                    ${state.committees.filter(c => c.status !== 'archived' && (!isHoc || c.id === hocCid)).map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                    ${state.committees.filter(c => c.status !== 'archived' && (!isHoc || c.id === hocCid)).map(c => `<option value="${c.id}" ${existing && existing.committee_id === c.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-field">
@@ -312,7 +312,7 @@ window.AtharModals = (function () {
           </div>
           <form id="tr-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
-              <div><strong>Volunteer:</strong> ${escapeHtml(vol.full_name)}</div>
+              <div><strong>${window.AtharTx("Volunteer:")}</strong> ${escapeHtml(vol.full_name)}</div>
               ${(isLeaderHere || isCoLeaderHere) ? `
                 <div class="alert-soft alert-warning-soft">
                   ⚠️ ${isLeaderHere ? t("leader_badge") : t("coleader_badge")} — ${t("leadership_transfer_warning")}
@@ -321,7 +321,7 @@ window.AtharModals = (function () {
               <div class="form-field">
                 <label class="field-label">${t("to_committee")} <span class="required-asterisk">*</span></label>
                 <select id="tr-comm" class="form-control" required>
-                  ${state.committees.filter(c => c.id !== vol.committee_id).map(c => `<option value="${c.id}">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                  ${state.committees.filter(c => c.id !== vol.committee_id).map(c => `<option value="${c.id}">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
                 </select>
               </div>
               <div class="form-field">
@@ -386,7 +386,7 @@ window.AtharModals = (function () {
               <div class="form-field">
                 <label class="field-label">${t("volunteer_name")} <span class="required-asterisk">*</span></label>
                 <select id="hr-vol" class="form-control" required>
-                  ${active.map(v => `<option value="${v.id}" ${volunteerId === v.id ? 'selected' : ''}>${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}</option>`).join('')}
+                  ${active.map(v => `<option value="${v.id}" ${volunteerId === v.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name)}</option>`).join('')}
                 </select>
               </div>
               <div class="form-field">
@@ -498,8 +498,8 @@ window.AtharModals = (function () {
                 <label class="field-label">${t("committee")}</label>
                 <select id="mt-comm" class="form-control" ${isHoc ? 'disabled' : ''}>
                   ${isHoc
-                    ? (state.committees.filter(c => c.id === hocCid && c.status === 'active').map(c => `<option value="${c.id}" selected>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join(''))
-                    : (`<option value="">${t("all_committees")}</option>` + state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${pfCommittee === c.id ? 'selected' : ''}>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join(''))}
+                    ? (state.committees.filter(c => c.id === hocCid && c.status === 'active').map(c => `<option value="${c.id}" selected>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join(''))
+                    : (`<option value="">${t("all_committees")}</option>` + state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}" ${pfCommittee === c.id ? 'selected' : ''}>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join(''))}
                 </select>
                 ${isHoc ? `<input type="hidden" id="mt-comm-hoc" value="${hocCid || ''}" />` : ''}
               </div>
@@ -527,7 +527,7 @@ window.AtharModals = (function () {
                 <input type="text" id="mt-loc" class="form-control" value="${escapeHtml(pfLoc)}">
               </div>
               <div class="form-field">
-                <label class="field-label">Banner image</label>
+                <label class="field-label">${window.AtharTx("Banner image")}</label>
                 <input type="file" id="mt-banner" class="form-control" accept="image/*">
               </div>
               <div class="drawer-footer">
@@ -758,9 +758,9 @@ window.AtharModals = (function () {
           </div>
           <div class="modal-body">
             <div style="margin-bottom:16px; padding:12px; background:var(--neutral-100); border-radius:var(--radius-md); font-size:13px;">
-              <div><strong>Action:</strong> <span class="badge badge-primary">${log.action}</span> &bull; <strong>Entity:</strong> <code>${log.entity || '—'}</code></div>
-              ${log.details ? `<div style="margin-top:4px;"><strong>Details:</strong> ${log.details}</div>` : ''}
-              <div style="margin-top:4px; color:var(--neutral-500); font-size:11px;" class="num-ltr">${log.created_at} by ${log.user_name}</div>
+              <div><strong>${window.AtharTx("Action:")}</strong> <span class="badge badge-primary">${escapeHtml(log.action)}</span> &bull; <strong>${window.AtharTx("Entity:")}</strong> <code>${escapeHtml(log.entity || '—')}</code></div>
+              ${log.details ? `<div style="margin-top:4px;"><strong>${window.AtharTx("Details:")}</strong> ${escapeHtml(log.details)}</div>` : ''}
+              <div style="margin-top:4px; color:var(--neutral-500); font-size:11px;" class="num-ltr">${log.created_at} by ${escapeHtml(log.user_name)}</div>
             </div>
             ${diffHtml}
           </div>
@@ -793,12 +793,12 @@ window.AtharModals = (function () {
             <div style="display:flex; flex-direction:column; gap:10px;">
               ${state.users.map(u => `
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:${u.id === App.currentUser?.id ? 'var(--primary-light)' : 'var(--neutral-50)'}; border-radius:8px;">
-                  <div><strong>${u.full_name}</strong> <span style="font-size:11px; color:var(--neutral-500);">${u.email}</span></div>
+                  <div><strong>${escapeHtml(u.full_name)}</strong> <span style="font-size:11px; color:var(--neutral-500);">${escapeHtml(u.email)}</span></div>
                   ${u.id === App.currentUser?.id ? '<span class="badge badge-primary">Active</span>' : ''}
                 </div>
               `).join('')}
             </div>
-            <p style="font-size:12px; color:var(--neutral-500); margin-top:16px;">To switch users, log out and log in as another user.</p>
+            <p style="font-size:12px; color:var(--neutral-500); margin-top:16px;">${window.AtharTx("To switch users, log out and log in as another user.")}</p>
           </div>
         </div>
       </div>
@@ -825,7 +825,7 @@ window.AtharModals = (function () {
           </div>
           <form id="rv-form">
             <div class="modal-body">
-              <div style="margin-bottom:16px;"><strong>Certificate:</strong> <code>${cert.certificate_no}</code></div>
+              <div style="margin-bottom:16px;"><strong>${window.AtharTx("Certificate:")}</strong> <code>${escapeHtml(cert.certificate_no)}</code></div>
               <div class="form-field">
                 <label class="field-label">${t("revocation_reason")} <span class="required-asterisk">*</span></label>
                 <textarea id="rv-reason" class="form-control" rows="3" required></textarea>
@@ -873,17 +873,22 @@ window.AtharModals = (function () {
           </div>
           <div class="modal-body">
             <div style="display:flex; align-items:center; gap:14px; padding:12px; background:var(--neutral-50); border-radius:8px; margin-bottom:16px;">
-              <div class="user-avatar" style="width:44px; height:44px; font-size:16px;">${((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0)}</div>
+              <div class="user-avatar" style="width:44px; height:44px; font-size:16px;">${escapeHtml(((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0))}</div>
               <div style="flex:1;">
-                <div style="font-weight:700;">${(App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || ""}</div>
-                <div style="font-size:12px; color:var(--neutral-500);">${App.currentUser.email}</div>
-                <div style="font-size:11px; color:var(--neutral-500); margin-top:2px;">${isSuper ? t("super_admin") : t("trusted_admin")}</div>
+                <div style="font-weight:700;">${escapeHtml((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "")}</div>
+                <div style="font-size:12px; color:var(--neutral-500);">${escapeHtml(App.currentUser.email)}</div>
+                <div style="font-size:11px; color:var(--neutral-500); margin-top:2px;">${isSuper ? t("super_admin") : (App.currentUser && App.currentUser.role === "committee_leader") ? (App.currentLang === "ar" ? "رئيس لجنة" : "Committee leader") : (App.currentUser && App.currentUser.role === "volunteer") ? (App.currentLang === "ar" ? "متطوع" : "Volunteer") : t("trusted_admin")}</div>
               </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
               <button class="btn btn-secondary${App.currentUser?.must_change_password ? ' btn-must-change' : ''}" id="um-change-password" style="width:100%; justify-content:flex-start;">
                 ${ic("lock", 15)} ${t("change_password")}${App.currentUser?.must_change_password ? ` • ${t("default_password_flag")}` : ''}
               </button>
+              <div class="um-prefs">
+                <button class="btn btn-secondary" id="um-theme" style="flex:1; justify-content:center;">${ic("sparkles", 15)} ${App.currentLang === "ar" ? "تبديل المظهر" : "Toggle theme"}</button>
+                <button class="btn btn-secondary" id="um-lang" style="flex:1; justify-content:center;">${ic("globe", 15)} ${App.currentLang === "ar" ? "English" : "العربية"}</button>
+              </div>
+              ${window.AtharPWA && window.AtharPWA.canInstall() ? `<button class="btn btn-primary" id="um-install" style="width:100%; justify-content:flex-start;">${ic("download", 15)} ${App.currentLang === "ar" ? "ثبّت التطبيق على جهازك" : "Install the app"}</button>` : ""}
               <button class="btn btn-danger-outline" id="um-logout" style="width:100%; justify-content:flex-start;">
                 ${ic("logout", 15)} ${t("logout")}
               </button>
@@ -897,6 +902,12 @@ window.AtharModals = (function () {
     document.getElementById("um-backdrop").onclick = (e) => { if (e.target.id === "um-backdrop") close(); };
     document.getElementById("um-change-password").onclick = () => { close(); openChangePasswordModal(false); };
     document.getElementById("um-logout").onclick = () => { close(); if (window.AtharAuth) window.AtharAuth.logout(); };
+    const umTheme = document.getElementById("um-theme");
+    if (umTheme) umTheme.onclick = () => { close(); const b = document.getElementById("theme-toggle-btn"); if (b) b.click(); };
+    const umInstall = document.getElementById("um-install");
+    if (umInstall) umInstall.onclick = () => { close(); window.AtharPWA.install(); };
+    const umLang = document.getElementById("um-lang");
+    if (umLang) umLang.onclick = () => { close(); const b = document.getElementById("lang-toggle-btn"); if (b) b.click(); };
   }
 
   // =========================================================
@@ -1094,7 +1105,7 @@ window.AtharModals = (function () {
                 ${criteria.map(c => `
                   <div class="brt-criterion-row" data-crit-id="${c.id}" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md);">
                     <div>
-                      <div style="font-weight:700;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</div>
+                      <div style="font-weight:700;">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</div>
                       <div style="font-size:11px; color:var(--neutral-500);">Weight: ${c.weight}x</div>
                     </div>
                     <div class="star-rating" data-crit-id="${c.id}">
@@ -1277,7 +1288,7 @@ window.AtharModals = (function () {
           <form id="rej-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
               <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
-                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
+                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${escapeHtml(vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—')}</div>
                 <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${escapeHtml(entry.activity)}</div>
                 <div style="margin-top:4px;"><strong>${t("hours")}:</strong> <span class="num-ltr">${entry.hours}</span> h</div>
                 <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
@@ -1345,7 +1356,7 @@ window.AtharModals = (function () {
           <form id="eh-form">
             <div class="modal-body" style="display:flex; flex-direction:column; gap:14px;">
               <div style="padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); font-size:13px;">
-                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—'}</div>
+                <div><strong>${App.currentLang === 'ar' ? 'المتطوع' : 'Volunteer'}:</strong> ${escapeHtml(vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : '—')}</div>
                 <div style="margin-top:4px;"><strong>${t("activity")}:</strong> ${escapeHtml(entry.activity)}</div>
                 <div style="margin-top:4px;"><strong>${t("date")}:</strong> <span class="num-ltr">${entry.date}</span></div>
                 <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الحالي' : 'Current'}:</strong> <span class="num-ltr" style="color:var(--primary); font-weight:700;">${entry.hours} h</span></div>
@@ -1356,7 +1367,7 @@ window.AtharModals = (function () {
                 <span class="field-hint">${App.currentLang === 'ar' ? 'اضبط القيمة، أو اكتب 0 لإلغاء الساعات.' : 'Set to a new value, or 0 to zero them out.'}</span>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" class="btn btn-secondary btn-sm" data-quick="0">Set to 0</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-quick="0">${window.AtharTx("Set to 0")}</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="-0.5">− 0.5h</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="-1">− 1h</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-quick="-2">− 2h</button>
@@ -1590,14 +1601,14 @@ window.AtharModals = (function () {
           <div class="modal-header">
             <h3 class="modal-title">
               ${ic(isEvent ? "sparkles" : "calendar", 18)}
-              ${App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en}
+              ${escapeHtml(App.currentLang === 'ar' ? meeting.title_ar : meeting.title_en)}
             </h3>
             <button class="btn-icon" id="att-close">&times;</button>
           </div>
           <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
             <div style="padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); margin-bottom:16px; font-size:12.5px;">
               <div><strong>${t("date")}:</strong> ${meeting.meeting_date} &bull; <strong>${App.currentLang === 'ar' ? 'الوقت' : 'Time'}:</strong> <span class="num-ltr">${meeting.start_time}${meeting.end_time ? ' - ' + meeting.end_time : ''}</span></div>
-              <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الموقع' : 'Location'}:</strong> ${meeting.location || '—'}</div>
+              <div style="margin-top:4px;"><strong>${App.currentLang === 'ar' ? 'الموقع' : 'Location'}:</strong> ${escapeHtml(meeting.location || '—')}</div>
             </div>
             ${section(App.currentLang === 'ar' ? 'حاضر' : 'Present', groups.present, "var(--success)")}
             ${section(App.currentLang === 'ar' ? 'متأخر' : 'Late', groups.late, "var(--warning)")}
@@ -1967,7 +1978,7 @@ window.AtharModals = (function () {
             <div class="form-field">
               <label class="field-label">${t("reminder_template")}</label>
               <select id="wr-template" class="form-control">
-                ${templates.map((tpl) => `<option value="${tpl.id}">${App.currentLang === "ar" ? tpl.name_ar : tpl.name_en}</option>`).join("")}
+                ${templates.map((tpl) => `<option value="${tpl.id}">${escapeHtml(App.currentLang === "ar" ? tpl.name_ar : tpl.name_en)}</option>`).join("")}
               </select>
             </div>
             <div class="form-field">
@@ -2163,9 +2174,9 @@ window.AtharModals = (function () {
               <button type="button" class="btn btn-secondary btn-sm" id="im-template">${ic("download", 14)} ${t("download_template")}</button>
             </div>
             <div style="font-size:12px; color:var(--neutral-500); line-height:1.8;">
-              ${App.currentLang === "ar"
+              ${escapeHtml(App.currentLang === "ar"
         ? "الأعمدة المدعومة: الاسم (إلزامي)، الاسم بالعربية، رقم الهوية، الهاتف، واتساب، البريد الإلكتروني، الجنس، الجنسية، المستوى الدراسي، المهارات (مفصولة بـ |)، اللجنة، تاريخ الانضمام (YYYY-MM-DD)، ملاحظات. يجب توفير واتساب أو بريد إلكتروني لكل صف."
-        : "Supported columns: Name (required), Name_AR, National_ID, Phone, WhatsApp, Email, Gender, Nationality, Study_Level, Skills (| separated), Committee, Join_Date (YYYY-MM-DD), Notes. Each row needs a WhatsApp number or email."}
+        : "Supported columns: Name (required), Name_AR, National_ID, Phone, WhatsApp, Email, Gender, Nationality, Study_Level, Skills (| separated), Committee, Join_Date (YYYY-MM-DD), Notes. Each row needs a WhatsApp number or email.")}
             </div>
             <div id="im-preview"></div>
             <div id="im-result"></div>
@@ -2366,7 +2377,7 @@ window.AtharModals = (function () {
                 <input type="text" id="au-name" class="form-control" required>
               </div>
               <div class="form-field">
-                <label class="field-label">Email <span class="required-asterisk">*</span></label>
+                <label class="field-label">${window.AtharTx("Email")} <span class="required-asterisk">*</span></label>
                 <input type="email" id="au-email" class="form-control" required dir="ltr">
               </div>
               <div class="form-field">
@@ -2384,7 +2395,7 @@ window.AtharModals = (function () {
                 <label class="field-label">${App.currentLang === 'ar' ? 'اللجنة' : 'Committee'} <span class="required-asterisk">*</span></label>
                 <select id="au-comm" class="form-control">
                   <option value="">—</option>
-                  ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</option>`).join('')}
+                  ${state.committees.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</option>`).join('')}
                 </select>
               </div>
               <div class="form-field" id="au-gender-field" style="display:none;">
@@ -2402,7 +2413,7 @@ window.AtharModals = (function () {
                 <label class="field-label">${App.currentLang === 'ar' ? 'اللغة' : 'Language'}</label>
                 <select id="au-lang" class="form-control">
                   <option value="ar">العربية</option>
-                  <option value="en">English</option>
+                  <option value="en">${window.AtharTx("English")}</option>
                 </select>
               </div>
             </div>

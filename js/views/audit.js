@@ -88,9 +88,9 @@
         </div>
         <div class="card" style="border:2px solid var(--danger); text-align:center; padding:32px;">
           <div style="color:var(--danger); margin-bottom:8px;">${ic("alert", 42, { strokeWidth: 1.5 })}</div>
-          <h3 style="color:var(--danger); font-size:16px; margin-bottom:6px;">Failed to load audit log</h3>
+          <h3 style="color:var(--danger); font-size:16px; margin-bottom:6px;">${window.AtharTx("Failed to load audit log")}</h3>
           <p style="color:var(--neutral-600); font-size:13px;">${loadError.message || "Unknown error"}</p>
-          <button class="btn btn-primary" id="btn-retry-audit" style="margin-top:16px;">Retry</button>
+          <button class="btn btn-primary" id="btn-retry-audit" style="margin-top:16px;">${window.AtharTx("Retry")}</button>
         </div>
       `;
       const retry = document.getElementById("btn-retry-audit");
@@ -108,7 +108,7 @@
           </div>
           <h1 class="view-title">${t("audit_title")}</h1>
           <p class="view-subtitle">
-            Immutable chronological journal${meta ? ` &bull; ${meta.total} total entries` : ""}
+            ${App.currentLang === "ar" ? "سجل زمني ثابت لكل العمليات" : "Immutable chronological journal"}${meta ? ` &bull; ${meta.total} ${App.currentLang === "ar" ? "عملية" : "total entries"}` : ""}
           </p>
         </div>
         <div class="view-header-actions">
@@ -120,21 +120,21 @@
       ${logs.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("file_text", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No audit entries yet</div>
-          <p style="color:var(--neutral-500); font-size:13px;">Actions will appear here as they happen.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No audit entries yet")}</div>
+          <p style="color:var(--neutral-500); font-size:13px;">${window.AtharTx("Actions will appear here as they happen.")}</p>
         </div>
       ` : `
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Summary</th>
-                <th>IP / Device</th>
-                <th style="text-align:right;">Diff</th>
+                <th>${window.AtharTx("Timestamp")}</th>
+                <th>${window.AtharTx("User")}</th>
+                <th>${window.AtharTx("Action")}</th>
+                <th>${window.AtharTx("Entity")}</th>
+                <th>${window.AtharTx("Summary")}</th>
+                <th>${window.AtharTx("IP / Device")}</th>
+                <th style="text-align:right;">${window.AtharTx("Diff")}</th>
               </tr>
             </thead>
             <tbody>
@@ -142,19 +142,18 @@
                 <tr>
                   <td class="num-ltr" style="font-size:12px; color:var(--neutral-600);">${l.created_at}</td>
                   <td style="font-weight:700;">
-                    <div>${l.user_name}</div>
-                    ${l.user_email ? `<div style="font-size:10px; color:var(--neutral-500); font-weight:400;">${l.user_email}</div>` : ''}
+                    <div>${escapeHtml(l.user_name)}</div>
+                    ${l.user_email ? `<div style="font-size:10px; color:var(--neutral-500); font-weight:400;">${escapeHtml(l.user_email)}</div>` : ''}
                   </td>
                   <td>
-                    <span class="badge ${l.action === 'create' ? 'badge-success'
+                    <span class="badge ${escapeHtml(l.action === 'create' ? 'badge-success'
         : l.action === 'delete' || l.action === 'revoke' ? 'badge-danger'
           : l.action === 'approve' || l.action === 'issue' ? 'badge-primary'
-            : 'badge-neutral'
-      }">${l.action}</span>
+            : 'badge-neutral')}">${escapeHtml(window.AtharAuditLabel('actions', l.action))}</span>
                   </td>
-                  <td><code>${l.entity || '—'}</code></td>
+                  <td>${escapeHtml(window.AtharAuditLabel('entities', l.entity) || '—')}</td>
                   <td style="font-size:13px; color:var(--neutral-800); max-width:420px;">
-                    ${l.details || '—'}
+                    ${escapeHtml(l.details || '—')}
                   </td>
                   <td style="font-size:11px; color:var(--neutral-500); max-width:140px;">
                     ${l.ip_address ? `<div class="num-ltr" title="IP address">${l.ip_address}</div>` : '<div style="color:var(--neutral-400);">—</div>'}
@@ -162,7 +161,7 @@
                   </td>
                   <td>
                       <button class="btn btn-secondary btn-sm" data-log-id="${l.id}">
-                        ${ic("eye", 14)} View Diff
+                        ${ic("eye", 14)} ${App.currentLang === "ar" ? "عرض التغييرات" : "View Diff"}
                       </button>
                     </div>
                   </td>

@@ -20,7 +20,8 @@
     navigateTo,
     handleHashChange,
     renderSidebar,
-    renderCurrentView
+    renderCurrentView,
+    escapeHtml
   } = window.AtharCore;
 
   // =========================================================================
@@ -447,8 +448,8 @@ window.AtharViews.showAttendanceScanStandalone) {
       window.AtharCore.showConfirmModal({
         title: App.currentLang === "ar" ? "حذف نهائي" : "Permanent delete",
         message: App.currentLang === "ar"
-          ? `سيتم حذف "${v.full_name}" نهائياً مع جميع سجلات الحضور، الساعات، التقييمات، والشهادات. لا يمكن التراجع.`
-          : `Permanently delete "${v.full_name}" along with all attendance, hours, evaluations, and certificates. This cannot be undone.`,
+          ? `سيتم حذف "${escapeHtml(v.full_name)}" نهائياً مع جميع سجلات الحضور، الساعات، التقييمات، والشهادات. لا يمكن التراجع.`
+          : `Permanently delete "${escapeHtml(v.full_name)}" along with all attendance, hours, evaluations, and certificates. This cannot be undone.`,
         confirmText: App.currentLang === "ar" ? "حذف نهائي" : "Delete permanently",
         isDanger: true,
         onConfirm: async () => {

@@ -23,10 +23,10 @@
             <span>${t("nav_certificates")}</span>
           </div>
           <h1 class="view-title">${t("certificates_title")}</h1>
-          <p class="view-subtitle">Official verifiable credentials with QR codes and tamper verification</p>
+          <p class="view-subtitle">${window.AtharTx("Official verifiable credentials with QR codes and tamper verification")}</p>
         </div>
         <div class="view-header-actions">
-          <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('public-verify')">${ic("qr_code", 14)} Public Verification</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.AtharApp.navigateTo('public-verify')">${ic("qr_code", 14)} ${window.AtharTx("Public Verification")}</button>
           ${canCreate ? `<button class="btn btn-primary" id="btn-add-cert">${ic("award", 14)} ${t("generate_certificate")}</button>` : ''}
         </div>
       </div>
@@ -34,22 +34,22 @@
       ${state.certificates.length === 0 ? `
         <div class="card" style="text-align:center; padding:48px;">
           <div style="color:var(--neutral-400); margin-bottom:12px;">${ic("award", 42, { strokeWidth: 1.5 })}</div>
-          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">No certificates yet</div>
-          <p style="color:var(--neutral-500); font-size:13px;">Generate your first certificate for a volunteer with approved hours.</p>
-          <p class="empty-state-hint">Tip: a volunteer needs ≥ the configured approved hours (Settings) and no active certificate.</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${window.AtharTx("No certificates yet")}</div>
+          <p style="color:var(--neutral-500); font-size:13px;">${window.AtharTx("Generate your first certificate for a volunteer with approved hours.")}</p>
+          <p class="empty-state-hint">${window.AtharTx("Tip: a volunteer needs ≥ the configured approved hours (Settings) and no active certificate.")}</p>
         </div>
       ` : `
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Certificate No.</th>
-                <th>Volunteer</th>
-                <th>Approved Hours</th>
-                <th>Issue Date</th>
-                <th>Language</th>
-                <th>Status</th>
-                <th style="text-align:right;">Actions</th>
+                <th>${window.AtharTx("Certificate No.")}</th>
+                <th>${window.AtharTx("Volunteer")}</th>
+                <th>${window.AtharTx("Approved Hours")}</th>
+                <th>${window.AtharTx("Issue Date")}</th>
+                <th>${window.AtharTx("Language")}</th>
+                <th>${window.AtharTx("Status")}</th>
+                <th style="text-align:right;">${window.AtharTx("Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -62,12 +62,12 @@
                   <tr class="cert-status-${cert.status}">
                     <td>
                       <span class="cert-no" style="color:${isDraft ? 'var(--neutral-500)' : 'var(--primary)'};">
-                        ${cert.certificate_no || 'DRAFT (Unassigned)'}
+                        ${escapeHtml(cert.certificate_no || 'DRAFT (Unassigned)')}
                       </span>
                     </td>
                     <td>
                       <div style="font-weight:700; cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${cert.volunteer_id}'})">
-                        ${vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer'}
+                        ${escapeHtml(vol ? (App.currentLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer')}
                       </div>
                     </td>
                     <td><span class="cert-hours-chip">${cert.total_hours} h</span></td>
@@ -75,7 +75,7 @@
                     <td><span class="badge badge-neutral">${(cert.language || 'ar').toUpperCase()}</span></td>
                     <td>
                       <span class="badge ${isIssued ? 'badge-success' : isDraft ? 'badge-warning' : 'badge-danger'}">${t(cert.status)}</span>
-                      ${cert.revoked_reason ? `<div style="font-size:10px; color:var(--danger); max-width:180px; margin-top:2px;">${cert.revoked_reason}</div>` : ''}
+                      ${cert.revoked_reason ? `<div style="font-size:10px; color:var(--danger); max-width:180px; margin-top:2px;">${escapeHtml(cert.revoked_reason)}</div>` : ''}
                     </td>
                     <td>
                       <div class="row-actions-cell">
@@ -298,7 +298,7 @@
             ${existingCert ? `
               <p class="view-subtitle">
                 Status: <span class="badge ${isIssued ? 'badge-success' : isDraft ? 'badge-warning' : 'badge-danger'}">${t(existingCert.status)}</span>
-                ${isIssued ? `&bull; Number: <code>${existingCert.certificate_no}</code>` : ''}
+                ${isIssued ? `&bull; Number: <code>${escapeHtml(existingCert.certificate_no)}</code>` : ''}
               </p>
             ` : ''}
           </div>
@@ -306,9 +306,9 @@
             ${isIssued ? `
               <button class="btn btn-secondary" id="btn-open-pdf">${ic("printer", 14)} ${t("print")} / ${t("export_pdf")}</button>
               <button class="btn btn-secondary" id="btn-print-png">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة (قالب PNG)' : 'Print (PNG template)'}</button>
-              <button class="btn btn-primary" id="btn-download-pdf">${ic("download", 14)} Download</button>
+              <button class="btn btn-primary" id="btn-download-pdf">${ic("download", 14)} ${window.AtharTx("Download")}</button>
             ` : `
-              <button class="btn btn-secondary" id="btn-preview-print" style="${App.certUsePngTemplate !== false ? 'display:none;' : ''}">${ic("printer", 14)} Print Preview</button>
+              <button class="btn btn-secondary" id="btn-preview-print" style="${App.certUsePngTemplate !== false ? 'display:none;' : ''}">${ic("printer", 14)} ${window.AtharTx("Print Preview")}</button>
               <button class="btn btn-secondary" id="btn-print-png">${ic("printer", 14)} ${App.currentLang === 'ar' ? 'طباعة (قالب PNG)' : 'Print (PNG template)'}</button>
             `}
           </div>
@@ -316,21 +316,21 @@
 
         <div class="cert-layout">
           <div class="card">
-            <h3 style="font-size:15px; margin-bottom:14px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">Configuration</h3>
+            <h3 style="font-size:15px; margin-bottom:14px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">${window.AtharTx("Configuration")}</h3>
 
             <div class="form-field" style="margin-bottom:14px;">
               <label class="field-label">${t("volunteer_name")}</label>
               <select class="form-control" id="cert-vol-select" ${existingCert ? 'disabled' : ''}>
                 ${state.volunteers.filter(v => v.status !== 'archived').map(v => `
                   <option value="${v.id}" ${v.id === targetVolId ? 'selected' : ''}>
-                    ${App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name}
+                    ${escapeHtml(App.currentLang === 'ar' ? (v.full_name_ar || v.full_name) : v.full_name)}
                   </option>
                 `).join('')}
               </select>
             </div>
 
             <div class="form-field" style="margin-bottom:14px;">
-              <label class="field-label">Period Range</label>
+              <label class="field-label">${window.AtharTx("Period Range")}</label>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                 <input type="date" id="cert-start-date" class="form-control" value="${startDate}" ${existingCert ? 'disabled' : ''}>
                 <input type="date" id="cert-end-date" class="form-control" value="${endDate}" ${existingCert ? 'disabled' : ''}>
@@ -338,13 +338,13 @@
             </div>
 
             <div class="form-field" style="margin-bottom:14px;">
-              <label class="field-label">Certificate Language</label>
+              <label class="field-label">${window.AtharTx("Certificate Language")}</label>
               <div style="display:flex; gap:16px; margin-top:4px;">
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; ${existingCert ? 'opacity:0.6;' : ''}">
                   <input type="radio" name="cert-lang" value="ar" ${certLang === 'ar' ? 'checked' : ''} ${existingCert ? 'disabled' : ''}> العربية
                 </label>
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; ${existingCert ? 'opacity:0.6;' : ''}">
-                  <input type="radio" name="cert-lang" value="en" ${certLang === 'en' ? 'checked' : ''} ${existingCert ? 'disabled' : ''}> English
+                  <input type="radio" name="cert-lang" value="en" ${certLang === 'en' ? 'checked' : ''} ${existingCert ? 'disabled' : ''}> ${window.AtharTx("English")}
                 </label>
               </div>
             </div>
@@ -376,10 +376,10 @@
                     This draft is awaiting Super Admin approval.
                   </div>
                 `}
-                ${isSuper || canCreate ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-draft">Delete Draft</button>` : ''}
+                ${isSuper || canCreate ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-draft">${window.AtharTx("Delete Draft")}</button>` : ''}
               ` : isIssued ? `
                 <div class="badge badge-success" style="justify-content:center; padding:8px;">
-                  Issued: ${existingCert.certificate_no}
+                  Issued: ${escapeHtml(existingCert.certificate_no)}
                 </div>
                 ${isSuper ? `<button class="btn btn-danger-outline btn-sm" id="btn-delete-cert" style="margin-top:8px;">${ic("trash", 14)} ${t("delete")}</button>` : ''}
               ` : `
@@ -406,7 +406,7 @@
               <div id="png-template-preview" style="${App.certUsePngTemplate === false ? 'display:none;' : ''}">
                 <div class="cert-png-stage">
                   <div class="cert-png-template" id="cert-png-preview">
-                    <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%; font-size:${pngPos('name_font_size')}cqw;">${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}</div>
+                    <div class="cert-png-name" id="cert-png-name" style="top:${pngPos('name_top')}%; left:${pngPos('name_left')}%; font-size:${pngPos('name_font_size')}cqw;">${escapeHtml(vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name')}</div>
                     <div class="cert-png-hours" id="cert-png-hours" style="top:${pngPos('hours_top')}%; left:${pngPos('hours_left')}%; font-size:${pngPos('hours_font_size')}cqw;">${hoursDisplay}</div>
                     <div class="cert-png-qr" id="cert-png-qr" style="top:${pngPos('qr_top')}%; left:${pngPos('qr_left')}%; width:${pngPos('qr_size')}cqw; height:${pngPos('qr_size')}cqw;">${qrSvg}</div>
                     <div class="cert-png-code" id="cert-png-code" style="top:${pngPos('code_top')}%; left:${pngPos('code_left')}%; font-size:${pngPos('code_font_size')}cqw;">${escapeHtml(codeDisplay)}</div>
@@ -451,7 +451,7 @@
               <div class="cert-body">
                 <p>${certLang === 'ar' ? 'تشهد أكاديمية أثر للعمل المجتمعي بأن المتطوع المتميز:' : 'This is to officially certify that:'}</p>
                 <div class="cert-volunteer-name" id="cert-preview-name">
-                  ${vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name'}
+                  ${escapeHtml(vol ? (certLang === 'ar' ? (vol.full_name_ar || vol.full_name) : vol.full_name) : 'Volunteer Name')}
                 </div>
                 <p>
                   ${certLang === 'ar' ? `
@@ -675,7 +675,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${existingCert.certificate_no || "certificate"}.pdf`;
+            a.download = `${escapeHtml(existingCert.certificate_no || "certificate")}.pdf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -714,7 +714,7 @@
           const pngUrl = new URL("assets/Certificate.png", window.location.href).href;
           const w = window.open("", "_blank");
           if (!w) return;
-          w.document.write(`<!DOCTYPE html><html dir="${certLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>Certificate</title>
+          w.document.write(`<!DOCTYPE html><html dir="${certLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${window.AtharTx("Certificate")}</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=Amiri:wght@400;700&family=Inter:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">

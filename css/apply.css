@@ -1,0 +1,213 @@
+/* ==========================================================================
+   Volunteer application page — Athar Academy identity
+   ========================================================================== */
+
+body.apply-page {
+  margin: 0;
+  background: #F7F3EA;
+  font-family: var(--font-ar);
+  color: #1D2B46;
+}
+
+/* ---------- Brand header ---------- */
+.apply-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 48px 20px 92px;
+  text-align: center;
+  color: #FFFFFF;
+  background: #14233F;
+}
+.apply-hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url("../assets/brand/login-photo.jpg") 50% 40% / cover no-repeat;
+  filter: grayscale(30%);
+}
+.apply-hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(45, 84, 144, 0.86) 0%, rgba(29, 43, 70, 0.92) 55%, rgba(20, 35, 63, 0.97) 100%);
+}
+.apply-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url("../assets/brand/geo-white.png") center bottom / cover no-repeat;
+  opacity: 0.05;
+}
+.apply-hero-strip {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 12px;
+  background: url("../assets/brand/pattern-gold.png") repeat-x center / auto 12px;
+}
+.apply-hero-inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.apply-logo-link { display: inline-block; border-radius: 12px; }
+.apply-logo { width: 120px; height: auto; display: block; }
+.apply-divider { width: 44px; height: 2px; border-radius: 2px; background: #C29E1A; margin: 22px auto 18px; }
+.apply-title { margin: 0 0 8px; font-size: clamp(24px, 4vw, 32px); font-weight: 800; color: #FFFFFF; }
+.apply-sub { margin: 0 0 4px; font-size: 16px; color: #E9DDB4; }
+.apply-en { margin: 0; font-size: 13px; color: rgba(247, 243, 234, 0.65); }
+
+/* ---------- Form card ---------- */
+.apply-shell { max-width: 780px; margin: -56px auto 0; padding: 0 16px 48px; position: relative; }
+.apply-card {
+  background: #FFFFFF;
+  border: 1px solid #ECE5D2;
+  border-radius: 22px;
+  padding: 28px 28px 32px;
+  box-shadow: 0 24px 48px -28px rgba(20, 35, 63, 0.45);
+}
+.apply-intro { margin: 0 0 8px; font-size: 14.5px; color: #5B6475; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+
+.apply-section {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #F0EADB;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1D2B46;
+}
+.apply-section:first-of-type { border-top: 0; padding-top: 6px; margin-top: 6px; }
+.apply-section::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  border-radius: 4px;
+  background: #C29E1A;
+  align-self: center;
+}
+.apply-section small { font-size: 12.5px; font-weight: 500; color: #8A93A3; }
+
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.field > label { font-size: 14px; font-weight: 700; color: #1D2B46; line-height: 1.5; }
+.req { color: #B42318; margin-inline-start: 2px; }
+
+.form-control {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid #DCD5C2;
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #1D2B46;
+  font: 400 15px var(--font-ar);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+textarea.form-control { min-height: 84px; resize: vertical; line-height: 1.7; }
+.form-control:hover { border-color: #C9BF9F; }
+.form-control:focus { outline: none; border-color: #C29E1A; box-shadow: 0 0 0 4px rgba(194, 158, 26, 0.16); }
+
+/* Radio / checkbox choices as tappable pills */
+.radio-group, .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.radio-group label, .checkbox-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #DCD5C2;
+  border-radius: 12px;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1D2B46;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.radio-group label:hover, .checkbox-group label:hover { border-color: #C29E1A; }
+.radio-group label:has(input:checked), .checkbox-group label:has(input:checked) {
+  border-color: #1D2B46;
+  background: rgba(29, 43, 70, 0.06);
+  font-weight: 700;
+}
+.radio-group input, .checkbox-group input, .consent-label input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #1D2B46;
+  flex: none;
+}
+.checkbox-group { display: grid; grid-template-columns: 1fr 1fr; }
+
+.consent-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 12px;
+  background: #FBF9F3;
+  border: 1px solid #F0EADB;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1D2B46;
+  cursor: pointer;
+}
+
+.form-error {
+  display: none;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #FBE9E7;
+  border: 1px solid #F3C3BB;
+  color: #A3321F;
+  font-size: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 14px;
+  background: #1D2B46;
+  color: #FFFFFF;
+  font: 700 17px var(--font-ar);
+  cursor: pointer;
+  box-shadow: 0 12px 24px -14px rgba(20, 35, 63, 0.6);
+  transition: background 0.2s ease;
+}
+.submit-btn:hover:not(:disabled) { background: #2D5490; }
+.submit-btn:focus-visible { outline: 3px solid rgba(194, 158, 26, 0.5); outline-offset: 3px; }
+.submit-btn:disabled { opacity: 0.65; cursor: progress; }
+
+.hp-field { position: absolute !important; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+
+/* Success state */
+.apply-success { grid-column: 1 / -1; text-align: center; padding: 28px 8px; }
+.apply-success-icon {
+  width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #C29E1A; color: #14233F; box-shadow: 0 0 0 10px rgba(194, 158, 26, 0.16);
+}
+.apply-success h2 { margin: 0 0 8px; font-size: 24px; font-weight: 800; color: #1D2B46; }
+.apply-success p { margin: 0 0 6px; font-size: 15px; color: #5B6475; }
+.apply-success .apply-en { color: #8A93A3; font-size: 13px; }
+.apply-back {
+  display: inline-flex; margin-top: 18px; min-height: 48px; align-items: center; padding: 0 22px;
+  border-radius: 12px; background: #1D2B46; color: #FFFFFF; font-weight: 700; text-decoration: none;
+}
+
+.apply-foot { margin: 22px 0 0; text-align: center; font-size: 14px; color: #8A93A3; }
+.apply-foot a { color: #7E640A; font-weight: 700; text-decoration: none; }
+.apply-foot a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+@media (max-width: 640px) {
+  .apply-hero { padding: 36px 16px 84px; }
+  .apply-logo { width: 96px; }
+  .apply-card { padding: 20px 16px 24px; border-radius: 18px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .checkbox-group { grid-template-columns: 1fr; }
+}

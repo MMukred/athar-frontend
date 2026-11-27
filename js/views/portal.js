@@ -115,7 +115,7 @@
   }
 
   function unlinkedHtml(data) {
-    const name = data && data.account ? (data.account.fullName || "") : "";
+    const name = (App.currentLang === "ar" && data && data.volunteer && data.volunteer.fullNameAr) || (data && data.account ? (data.account.fullName || "") : "");
     return `
       <div class="view-header">
         <div class="view-header-left">
@@ -298,6 +298,7 @@
           <p class="view-subtitle">${L("مساحتك الشخصية لمتابعة أثرك التطوعي", "Your personal space to follow your volunteer impact")}</p>
         </div>
         <div class="view-header-actions">
+          <button type="button" class="btn btn-primary btn-sm portal-scan-btn" id="portal-scan" onclick="window.AtharScanner && window.AtharScanner.open()">${ic("qr_code", 15)} ${L("امسح رمز الحضور", "Scan attendance code")}</button>
           <button type="button" class="btn btn-secondary btn-sm" id="portal-refresh">${ic("refresh", 14)} ${t("refresh") || L("تحديث", "Refresh")}</button>
         </div>
       </div>
@@ -428,41 +429,41 @@
 
       <section class="card" style="margin-top:16px;">
         <div class="card-header">
-          <div class="card-title">${ic("user", 18)} ${L("U,O�U�O�Oc", "My profile")}</div>
-          <button type="button" class="btn btn-secondary btn-sm" id="portal-edit-profile">${ic("edit", 14)} ${L("O�O�USUSO�", "Edit")}</button>
+          <div class="card-title">${ic("user", 18)} ${L("ملفي", "My profile")}</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="portal-edit-profile">${ic("edit", 14)} ${L("تعديل", "Edit")}</button>
         </div>
         <div style="display:grid; gap:8px; font-size:14px;">
-          <div><strong>${L("O�O�O_U,U^ U,U.O�O�O_U.Oc", "Volunteer ID")}:</strong> <span class="num-ltr">${escapeHtml(v.volunteerCode || "—")}</span></div>
-          <div><strong>${L("OU,O3OO1", "Name")}:</strong> ${escapeHtml(name)}</div>
-          <div><strong>${L("U.O�U,U.Oc OU,U.O�O�O_U.Oc", "Email")}:</strong> ${escapeHtml(v.email || "—")}</div>
-          <div><strong>${L("U.O1O�U.O_", "Phone")}:</strong> ${escapeHtml(v.phone || v.whatsapp || "—")}</div>
-          <div><strong>${L("O�O�O1OO�US", "Skills")}:</strong> ${(v.skills && v.skills.length) ? v.skills.map(s => `<span class="tag-chip">#${escapeHtml(s)}</span>`).join(" ") : "—"}</div>
+          <div><strong>${L("رقم المتطوع", "Volunteer ID")}:</strong> <span class="num-ltr">${escapeHtml(v.volunteerCode || "—")}</span></div>
+          <div><strong>${L("الاسم", "Name")}:</strong> ${escapeHtml(name)}</div>
+          <div><strong>${L("البريد الإلكتروني", "Email")}:</strong> ${escapeHtml(v.email || "—")}</div>
+          <div><strong>${L("الجوال", "Phone")}:</strong> ${escapeHtml(v.phone || v.whatsapp || "—")}</div>
+          <div><strong>${L("المهارات", "Skills")}:</strong> ${(v.skills && v.skills.length) ? v.skills.map(s => `<span class="tag-chip">#${escapeHtml(s)}</span>`).join(" ") : "—"}</div>
         </div>
         <form id="portal-profile-form" hidden style="margin-top:14px; display:grid; gap:10px;">
           <div class="form-group">
-            <label class="form-label">${L("OU,O3OO1 U.O�O�O_U.Oc (English)", "Full name (English)")}</label>
+            <label class="form-label">${L("الاسم الكامل (بالإنجليزية)", "Full name (English)")}</label>
             <input class="form-control" id="pf-fullName" value="${escapeHtml(v.fullName || "")}" />
           </div>
           <div class="form-group">
-            <label class="form-label">${L("OU,O3OO1 U.O�O�O_U.Oc (Arabic)", "Full name (Arabic)")}</label>
+            <label class="form-label">${L("الاسم الكامل (بالعربية)", "Full name (Arabic)")}</label>
             <input class="form-control" id="pf-fullNameAr" value="${escapeHtml(v.fullNameAr || "")}" />
           </div>
           <div class="form-group">
-            <label class="form-label">${L("U.O�U,U.Oc OU,U.O�O�O_U.Oc", "Email")}</label>
+            <label class="form-label">${L("البريد الإلكتروني", "Email")}</label>
             <input class="form-control" id="pf-email" type="email" value="${escapeHtml(v.email || "")}" />
           </div>
           <div class="form-group">
-            <label class="form-label">${L("U.O1O�U.O_", "Phone / WhatsApp")}</label>
+            <label class="form-label">${L("الجوال / واتساب", "Phone / WhatsApp")}</label>
             <input class="form-control" id="pf-phone" value="${escapeHtml(v.phone || "")}" />
             <input class="form-control" id="pf-whatsapp" value="${escapeHtml(v.whatsapp || "")}" placeholder="WhatsApp" style="margin-top:6px;" />
           </div>
           <div class="form-group">
-            <label class="form-label">${L("O�O�O1OO�US", "Skills (comma separated)")}</label>
+            <label class="form-label">${L("المهارات (افصل بينها بفاصلة)", "Skills (comma separated)")}</label>
             <input class="form-control" id="pf-skills" value="${escapeHtml((v.skills || []).join(", "))}" />
           </div>
           <div style="display:flex; gap:8px;">
-            <button type="button" class="btn btn-primary btn-sm" id="pf-save">${L("O�O�U,O�", "Save")}</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="pf-cancel">${L("O�O-U.OU,O�", "Cancel")}</button>
+            <button type="button" class="btn btn-primary btn-sm" id="pf-save">${L("حفظ", "Save")}</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="pf-cancel">${L("إلغاء", "Cancel")}</button>
           </div>
         </form>
       </section>

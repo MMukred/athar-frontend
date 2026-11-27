@@ -267,6 +267,39 @@ window.AtharStore = (function () {
     };
   }
 
+
+  // Fetch every page of a list endpoint. The API caps one response at
+  // `limit` rows and reports the full count in `meta.total`; keep asking
+  // for the next page until all rows are in (or the server stops adding).
+  async function fetchAllPages(listFn, params) {
+    const limit = (params && params.limit) || 100;
+    let first;
+    try {
+      first = await listFn({ ...params, limit, page: 1 });
+    } catch (e) {
+      // Older API builds may reject an unknown `page` param: fall back to one page.
+      if (e && e.status === 400) return listFn({ ...params, limit });
+      throw e;
+    }
+    if (!first || !Array.isArray(first.items)) return first;
+    const items = first.items.slice();
+    const seen = new Set(items.map((x) => x && x.id));
+    const meta = first.meta || first.pagination || {};
+    const total = Number(meta.total || first.total || 0);
+    let page = 1;
+    while (total && items.length < total && page < 50) {
+      page += 1;
+      const next = await listFn({ ...params, limit, page });
+      const batch = (next && Array.isArray(next.items)) ? next.items : [];
+      let added = 0;
+      for (const it of batch) {
+        if (it && !seen.has(it.id)) { seen.add(it.id); items.push(it); added += 1; }
+      }
+      if (!added) break;
+    }
+    return { ...first, items };
+  }
+
   // ---------------------------------------------------------
   // Load all data from API
   // ---------------------------------------------------------
@@ -291,13 +324,13 @@ window.AtharStore = (function () {
     const api = window.AtharAPI;
 
     const results = await Promise.allSettled([
-      api.volunteers.list({ limit: 100, includeArchived: true }),
-      api.committees.list({ limit: 100 }),
-      api.meetings.list({ limit: 100 }),
-      api.hours.list({ limit: 100 }),
+      fetchAllPages(api.volunteers.list, { limit: 100, includeArchived: true }),
+      fetchAllPages(api.committees.list, { limit: 100 }),
+      fetchAllPages(api.meetings.list, { limit: 100 }),
+      fetchAllPages(api.hours.list, { limit: 100 }),
       api.criteria.list(),
-      api.evaluations.list({ limit: 100 }),
-      api.certificates.list({ limit: 100 }),
+      fetchAllPages(api.evaluations.list, { limit: 100 }),
+      fetchAllPages(api.certificates.list, { limit: 100 }),
       api.settings.list(),
       api.audit.list({ limit: 100 }),
       api.volunteers.activity(),
@@ -372,7 +405,7 @@ window.AtharStore = (function () {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.volunteers.list({ limit: 100, includeArchived: true });
+    const r = await fetchAllPages(window.AtharAPI.volunteers.list, { limit: 100, includeArchived: true });
     state.volunteers = (r.items || []).map(adaptVolunteer);
   }
 
@@ -401,21 +434,21 @@ window.AtharStore = (function () {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.committees.list({ limit: 100 });
+    const r = await fetchAllPages(window.AtharAPI.committees.list, { limit: 100 });
     state.committees = (r.items || []).map(adaptCommittee);
   }
   async function refreshMeetings() {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.meetings.list({ limit: 100 });
+    const r = await fetchAllPages(window.AtharAPI.meetings.list, { limit: 100 });
     state.meetings = (r.items || []).map(adaptMeeting);
   }
   async function refreshHours() {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.hours.list({ limit: 100 });
+    const r = await fetchAllPages(window.AtharAPI.hours.list, { limit: 100 });
     state.volunteer_hours = (r.items || []).map(adaptHours);
   }
   async function refreshCriteria() {
@@ -429,14 +462,14 @@ window.AtharStore = (function () {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.evaluations.list({ limit: 100 });
+    const r = await fetchAllPages(window.AtharAPI.evaluations.list, { limit: 100 });
     state.evaluations = (r.items || []).map(adaptEvaluation);
   }
   async function refreshCertificates() {
     if (!window.AtharAPI?.hasSession()) return;
     const _u = window.AtharAuth?.getCurrentUser?.();
     if (_u && _u.must_change_password) return;
-    const r = await window.AtharAPI.certificates.list({ limit: 100 });
+    const r = await fetchAllPages(window.AtharAPI.certificates.list, { limit: 100 });
     state.certificates = (r.items || []).map(adaptCertificate);
   }
   async function refreshSettings() {

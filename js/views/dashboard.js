@@ -16,7 +16,7 @@
     const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
     const arMembers = (n) => (n === 1 ? "عضو" : n === 2 ? "عضوان" : n <= 10 ? "أعضاء" : "عضوًا");
     const hp = window.AtharCore.hasPermission;
-    const userName = (App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "";
+    const userName = (App.currentUser && ((App.currentLang === "ar" && (App.currentUser.full_name_ar || App.currentUser.fullNameAr)) || App.currentUser.full_name || App.currentUser.fullName)) || "";
 
     const headerActions = `
       <div class="view-header-actions">
@@ -167,7 +167,7 @@
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-      monthLabels.push(d.toLocaleDateString(App.currentLang === "ar" ? "ar" : "en", { month: "short" }));
+      monthLabels.push(d.toLocaleDateString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en", { month: "short" }));
     }
     const hoursByMonth = monthKeys.map(k =>
       approvedHours
@@ -267,7 +267,7 @@
           </div>
           <div class="leader-member-metrics">
             <div class="leader-member-metric">
-              <strong class="num-ltr">${(hoursByMember[v.id] || 0).toLocaleString()}</strong>
+              <strong class="num-ltr">${(hoursByMember[v.id] || 0).toLocaleString("en-US")}</strong>
               <span>${L("ساعة", "hours")}</span>
             </div>
             <div class="leader-member-metric">
@@ -276,7 +276,7 @@
             </div>
             <div class="leader-member-metric">
               <strong>${lastActivityLabel(v)}</strong>
-              <span>${L("آخر نشاط", "last activity")}</span>
+              <span>${escapeHtml(L("آخر نشاط", "last activity"))}</span>
             </div>
           </div>
           <div class="leader-member-actions">
@@ -340,10 +340,10 @@
        <div class="dash-hero">
          <div class="dash-hero-greet">${_greet}, ${escapeHtml(userName)}</div>
          <div class="dash-hero-sub">${escapeHtml(committeeName)}</div>
-         <div class="dash-hero-focus">${pendingHours.length > 0 ? pendingHours + ' pending suggestions need review' : (upcomingMeetings.length > 0 ? 'Next: ' + (upcomingMeetings[0].title_en || upcomingMeetings[0].title_ar) : 'All caught up — great work!')}</div>
+         <div class="dash-hero-focus">${pendingHours.length > 0 ? L(`${pendingHours.length} ساعات تطوعية بانتظار المراجعة`, `${pendingHours.length} pending suggestions need review`) : (upcomingMeetings.length > 0 ? L('الاجتماع القادم: ', 'Next: ') + escapeHtml(App.currentLang === 'ar' ? (upcomingMeetings[0].title_ar || upcomingMeetings[0].title_en) : (upcomingMeetings[0].title_en || upcomingMeetings[0].title_ar)) : L('لا توجد مهام معلّقة — عمل رائع!', 'All caught up — great work!'))}</div>
          <div class="dash-hero-chips">
            <span class="dash-hero-chip">${members.length} ${L("\u0639\u0636\u0648", "members")}</span>
-           <span class="dash-hero-chip">${totalApproved.toLocaleString()} h</span>
+           <span class="dash-hero-chip">${totalApproved.toLocaleString("en-US")} h</span>
            <span class="dash-hero-chip">${pendingHours.length} ${L("\u0645\u0639\u0644\u0642", "pending")}</span>
          </div>
        </div>
@@ -368,7 +368,7 @@
         </div>
         <div class="leader-committee-meta">
           <span class="badge badge-primary num-ltr">${App.currentLang === "ar" ? `${members.length} ${arMembers(members.length)}` : `${members.length} members`}</span>
-          <span class="badge badge-success num-ltr">${totalApproved.toLocaleString()} h</span>
+          <span class="badge badge-success num-ltr">${totalApproved.toLocaleString("en-US")} h</span>
           <button type="button" class="btn btn-secondary btn-sm" id="leader-open-committee">${ic("building", 14)} ${L("صفحة اللجنة", "Committee page")}</button>
         </div>
       </div>
@@ -388,8 +388,8 @@
             <span class="kpi-title">${L("الساعات المعتمدة", "Approved hours")}</span>
             <div class="kpi-icon-badge">${ic("clock", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr">${totalApproved.toLocaleString()} h</div>
-          <div class="kpi-trend">${ic("trending_up", 12)} +${hoursThisMonth.toLocaleString()} h ${L("هذا الشهر", "this month")}</div>
+          <div class="kpi-value num-ltr">${totalApproved.toLocaleString("en-US")} h</div>
+          <div class="kpi-trend">${ic("trending_up", 12)} +${hoursThisMonth.toLocaleString("en-US")} h ${L("هذا الشهر", "this month")}</div>
         </div>
 
         <div class="kpi-card kpi-certs" id="leader-kpi-pending">
@@ -439,7 +439,7 @@
 
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
-          <div class="card-title">${ic("alert", 18)} ${L("بحاجة لإجراء", "Needs action")}</div>
+          <div class="card-title">${ic("alert", 18)} ${escapeHtml(L("بحاجة لإجراء", "Needs action"))}</div>
         </div>
         ${actionItems.length === 0
           ? `<div class="empty-state" style="padding:20px 16px;"><div class="empty-state-desc">${L("لا توجد إجراءات مطلوبة حالياً", "Nothing needs your attention right now")}</div></div>`
@@ -640,7 +640,7 @@
         const eased = 1 - Math.pow(1 - p, 3);
         counters.forEach(el => {
           const target = Number(el.getAttribute("data-count-to")) || 0;
-          el.textContent = Math.round(target * eased).toLocaleString();
+          el.textContent = Math.round(target * eased).toLocaleString("en-US");
         });
         if (p < 1) requestAnimationFrame(tick);
       };
@@ -659,6 +659,8 @@
   }
 
   function renderDashboard(container) {
+    const L = (ar, en) => (App.currentLang === "ar" ? ar : en);
+    const userDisplay = (u) => (u ? ((App.currentLang === "ar" && (u.full_name_ar || u.fullNameAr)) || u.full_name || u.fullName || "") : "");
     const state = window.AtharStore.getState();
     if (App.currentUser && App.currentUser.role === "committee_leader") {
       const cid = App.currentUser.committee_id
@@ -732,9 +734,9 @@
     // Reusable trend renderer
     const trend = (count, unit) => {
       if (count > 0) {
-        return `<div class="kpi-trend">${ic("trending_up", 12)} +${count}${unit} this month</div>`;
+        return `<div class="kpi-trend">${ic("trending_up", 12)} +${count}${unit === " h" ? L(" ساعة", " h") : unit} ${L("هذا الشهر", "this month")}</div>`;
       }
-      return `<div class="kpi-trend" style="color:var(--neutral-500);">0 this month</div>`;
+      return `<div class="kpi-trend" style="color:var(--neutral-500);">${L("لا جديد هذا الشهر", "0 this month")}</div>`;
     };
 
     // -------- Charts (pure SVG/CSS, no dependencies) --------
@@ -743,7 +745,7 @@
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-      monthLabels.push(d.toLocaleDateString(App.currentLang === "ar" ? "ar" : "en", { month: "short" }));
+      monthLabels.push(d.toLocaleDateString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en", { month: "short" }));
     }
     const hoursByMonth = monthKeys.map(k =>
       state.volunteer_hours
@@ -860,20 +862,14 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
         </div>`;
     };
 
-     const _adminGreet = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
+     const _adminGreet = new Date().getHours() < 12 ? L("صباح الخير", "Good morning") : new Date().getHours() < 17 ? L("مساء الخير", "Good afternoon") : L("مساء الخير", "Good evening");
      const _nextMtg = (upcomingMeetings && upcomingMeetings[0]) ? upcomingMeetings[0] : null;
-     const _focus = pendingHours > 0 ? `${pendingHours} pending hour suggestions need your review` : _nextMtg ? `Next meeting: ${_nextMtg.title_en || _nextMtg.title_ar || "a meeting"} ${_nextMtg.meeting_date ? "on " + String(_nextMtg.meeting_date).slice(0,10) : ""}` : (draftCerts > 0 ? `${draftCerts} draft certificates to issue` : "All caught up — great work!");
+     const _focus = pendingHours > 0 ? L(`${pendingHours} ساعات تطوعية بانتظار مراجعتك`, `${pendingHours} pending hour suggestions need your review`) : _nextMtg ? L(`الاجتماع القادم: ${escapeHtml(_nextMtg.title_ar || _nextMtg.title_en || "اجتماع")}${_nextMtg.meeting_date ? " — " + formatDate(String(_nextMtg.meeting_date).slice(0,10)) : ""}`, `Next meeting: ${escapeHtml(_nextMtg.title_en || _nextMtg.title_ar || "a meeting")}${_nextMtg.meeting_date ? " on " + String(_nextMtg.meeting_date).slice(0,10) : ""}`) : (draftCerts > 0 ? L(`${draftCerts} شهادات مسودة جاهزة للإصدار`, `${draftCerts} draft certificates to issue`) : L("لا توجد مهام معلّقة — عمل رائع!", "All caught up — great work!"));
      container.innerHTML = `
        <div class="dash-hero">
-         <div class="dash-hero-greet">${_adminGreet}, ${escapeHtml((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "")}</div>
-         <div class="dash-hero-sub">${new Date().toLocaleDateString(App.currentLang === "ar" ? "ar-SA" : "en-US", { weekday: "long", day: "numeric", month: "long" })}</div>
+         <div class="dash-hero-greet">${_adminGreet}، ${escapeHtml(userDisplay(App.currentUser))}</div>
+         <div class="dash-hero-sub">${new Date().toLocaleDateString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US", { weekday: "long", day: "numeric", month: "long" })}</div>
          <div class="dash-hero-focus">${_focus}</div>
-         <div class="dash-hero-chips">
-           <span class="dash-hero-chip">${totalVolunteers} volunteers</span>
-           <span class="dash-hero-chip">${totalHours.toLocaleString()} h</span>
-           <span class="dash-hero-chip">${pendingHours} pending</span>
-           <span class="dash-hero-chip">${upcomingMeetings.length} upcoming</span>
-         </div>
        </div>
       <div class="view-header">
         <div class="view-header-left">
@@ -883,7 +879,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <span>${t("nav_dashboard")}</span>
           </div>
           <h1 class="view-title">${t("nav_dashboard")}</h1>
-          <p class="view-subtitle">${t("welcome_back")} ${(App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || ''}${App.currentUser && App.currentUser.role === "committee_leader" && App.currentUser.committee_id ? ' &bull; ' + (state.committees.find(c => c.id === App.currentUser.committee_id) ? (App.currentLang === 'ar' ? state.committees.find(c => c.id === App.currentUser.committee_id).name_ar : state.committees.find(c => c.id === App.currentUser.committee_id).name_en) : '') : ''} &bull; ${new Date().toLocaleDateString(App.currentLang === 'ar' ? 'ar-SA' : 'en-US')}</p>
+          <p class="view-subtitle">${t("welcome_back")} ${escapeHtml(userDisplay(App.currentUser))}${App.currentUser && App.currentUser.role === "committee_leader" && App.currentUser.committee_id ? ' &bull; ' + escapeHtml(state.committees.find(c => c.id === App.currentUser.committee_id) ? (App.currentLang === 'ar' ? state.committees.find(c => c.id === App.currentUser.committee_id).name_ar : state.committees.find(c => c.id === App.currentUser.committee_id).name_en) : '') : ''} &bull; ${formatDate((() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })())}</p>
         </div>
         <div class="view-header-actions">
           <button class="btn btn-secondary btn-sm" id="btn-dash-refresh">
@@ -911,7 +907,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <div class="kpi-icon-badge">${ic("building", 20, { strokeWidth: 2 })}</div>
           </div>
           <div class="kpi-value num-ltr" data-count-to="${totalCommittees}">${totalCommittees}</div>
-          <div class="kpi-trend" style="color:var(--neutral-500);">${totalCommittees === 1 ? '1 active unit' : `${totalCommittees} active units`}</div>
+          <div class="kpi-trend" style="color:var(--neutral-500);">${L(`${totalCommittees} لجنة عاملة`, totalCommittees === 1 ? '1 active unit' : `${totalCommittees} active units`)}</div>
         </div>
 
         <div class="kpi-card kpi-hours" id="kpi-card-hours">
@@ -919,7 +915,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             <span class="kpi-title">${t("kpi_total_hours")}</span>
             <div class="kpi-icon-badge">${ic("clock", 20, { strokeWidth: 2 })}</div>
           </div>
-          <div class="kpi-value num-ltr" data-count-to="${totalHours}" data-count-suffix=" h">${totalHours.toLocaleString()} h</div>
+          <div class="kpi-value num-ltr" data-count-to="${totalHours}" data-count-suffix=" h">${totalHours.toLocaleString("en-US")} h</div>
           ${trend(hoursThisMonth, " h")}
         </div>
 
@@ -1057,7 +1053,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           <div style="font-weight:600; color:var(--neutral-900); font-size:13px; margin-bottom:6px;">${emptyComms} ${App.currentLang === "ar" ? "لجنة بدون أعضاء" : "committees with no members"}</div>
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${state.committees.filter(c => c.status === 'active' && state.volunteers.filter(v => v.committee_id === c.id && v.status !== 'archived').length === 0).map(c => `
-              <span class="mini-chip" style="background:var(--warning-light); color:var(--warning-strong);">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+              <span class="mini-chip" style="background:var(--warning-light); color:var(--warning-strong);">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</span>
             `).join('')}
           </div>
         </div>
@@ -1068,7 +1064,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
             const pct = totalVolunteers > 0 ? Math.round((cnt / totalVolunteers) * 100) : 0;
             return `
             <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="window.AtharApp.goVolunteersFilter('all', { comm: '${c.id}' })">
-              <span style="font-size:12px; font-weight:600; color:var(--neutral-900); min-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+              <span style="font-size:12px; font-weight:600; color:var(--neutral-900); min-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</span>
               <div style="flex:1; height:6px; background:var(--neutral-200); border-radius:9999px; overflow:hidden;">
                 <div style="width:${pct}%; height:100%; background:var(--primary); border-radius:9999px;"></div>
               </div>
@@ -1094,8 +1090,8 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
               ${upcomingMeetings.map(m => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('meeting-detail', {id:'${m.id}'})">
                   <div>
-                    <div style="font-weight:700; color:var(--neutral-900);">${App.currentLang === 'ar' ? m.title_ar : m.title_en}</div>
-                    <div style="font-size:12px; color:var(--neutral-500); margin-top:2px;">${m.location} &bull; ${m.start_time} - ${m.end_time}</div>
+                    <div style="font-weight:700; color:var(--neutral-900);">${escapeHtml(App.currentLang === 'ar' ? m.title_ar : m.title_en)}</div>
+                    <div style="font-size:12px; color:var(--neutral-500); margin-top:2px;">${escapeHtml(m.location)} &bull; ${m.start_time} - ${m.end_time}</div>
                   </div>
                   <div style="text-align:right;">
                     <span class="badge badge-primary">${formatDate(m.meeting_date)}</span>
@@ -1155,7 +1151,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
     ${state.committees.length === 0
         ? `<div class="empty-state" style="padding:32px 16px;">
              <div class="empty-state-icon">${ic("building", 36, { strokeWidth: 1.5 })}</div>
-             <div class="empty-state-title">No committees yet</div>
+             <div class="empty-state-title">${window.AtharTx("No committees yet")}</div>
            </div>`
         : state.committees.map(c => {
           const count = state.volunteers.filter(v => v.committee_id === c.id && v.status !== "archived").length;
@@ -1163,7 +1159,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           return `
                   <div>
                     <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;">
-                      <span>${App.currentLang === 'ar' ? c.name_ar : c.name_en}</span>
+                      <span>${escapeHtml(App.currentLang === 'ar' ? c.name_ar : c.name_en)}</span>
                       <span class="num-ltr">${count} vols (${percent}%)</span>
                     </div>
                     <div style="height:10px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
@@ -1184,15 +1180,15 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
                        ${topVols.length === 0
         ? `<div class="empty-state" style="padding:32px 16px;">
              <div class="empty-state-icon">${ic("award", 36, { strokeWidth: 1.5 })}</div>
-             <div class="empty-state-title">No approved hours yet</div>
+             <div class="empty-state-title">${window.AtharTx("No approved hours yet")}</div>
            </div>`
         : topVols.map((item, idx) => `
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--neutral-50); border:1px solid var(--neutral-300); border-radius:var(--radius-md); cursor:pointer;" onclick="window.AtharApp.navigateTo('volunteer-profile', {id:'${item.vol.id}'})">
                   <div style="display:flex; align-items:center; gap:12px;">
                     <span style="font-weight:800; font-size:14px; color:${idx === 0 ? '#F59E0B' : idx === 1 ? '#94A3B8' : '#B45309'};">#${idx + 1}</span>
-                    <div class="user-avatar" style="width:28px; height:28px; font-size:11px;">${item.vol.full_name.charAt(0)}</div>
+                    <div class="user-avatar" style="width:28px; height:28px; font-size:11px;">${escapeHtml(item.vol.full_name.charAt(0))}</div>
                     <div>
-                      <div style="font-weight:700; color:var(--neutral-900); font-size:13px;">${App.currentLang === 'ar' ? (item.vol.full_name_ar || item.vol.full_name) : item.vol.full_name}</div>
+                      <div style="font-weight:700; color:var(--neutral-900); font-size:13px;">${escapeHtml(App.currentLang === 'ar' ? (item.vol.full_name_ar || item.vol.full_name) : item.vol.full_name)}</div>
                       <div style="font-size:11px; color:var(--neutral-500);">${item.vol.skills ? item.vol.skills.slice(0, 2).map(escapeHtml).join(', ') : ''}</div>
                     </div>
                   </div>
@@ -1210,13 +1206,13 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             ${recentAudit.length === 0
-        ? `<p style="color:var(--neutral-500); font-size:13px; padding:12px 0;">No activity recorded yet.</p>`
+        ? `<p style="color:var(--neutral-500); font-size:13px; padding:12px 0;">${window.AtharTx("No activity recorded yet.")}</p>`
         : recentAudit.map(al => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--neutral-200); font-size:13px; gap:10px;">
                   <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-                    <span style="color:${al.action === 'create' ? 'var(--success)' : al.action === 'approve' || al.action === 'issue' ? 'var(--primary)' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'var(--danger)' : 'var(--neutral-500)'}; flex-shrink:0;">${ic(al.action === 'create' ? 'plus' : al.action === 'approve' || al.action === 'issue' ? 'check_circle' : al.action === 'revoke' || al.action === 'delete' ? 'trash' : al.action === 'archive' ? 'archive' : 'activity', 16)}</span>
-                    <span class="badge ${al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'badge-danger' : 'badge-neutral'}">${al.action}</span>
-                    <span style="font-weight:600; color:var(--neutral-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${al.details}</span>
+                    <span style="color:${escapeHtml(al.action === 'create' ? 'var(--success)' : al.action === 'approve' || al.action === 'issue' ? 'var(--primary)' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'var(--danger)' : 'var(--neutral-500)')}; flex-shrink:0;">${ic(al.action === 'create' ? 'plus' : al.action === 'approve' || al.action === 'issue' ? 'check_circle' : al.action === 'revoke' || al.action === 'delete' ? 'trash' : al.action === 'archive' ? 'archive' : 'activity', 16)}</span>
+                    <span class="badge ${escapeHtml(al.action === 'create' ? 'badge-success' : al.action === 'approve' || al.action === 'issue' ? 'badge-primary' : al.action === 'revoke' || al.action === 'delete' || al.action === 'archive' ? 'badge-danger' : 'badge-neutral')}">${escapeHtml(window.AtharAuditLabel('actions', al.action))}</span>
+                    <span style="font-weight:600; color:var(--neutral-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(al.details)}</span>
                   </div>
                   <div style="font-size:11px; color:var(--neutral-500); flex-shrink:0;" class="num-ltr">
                     ${escapeHtml(al.user_name)} &bull; ${al.created_at}
@@ -1272,7 +1268,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
         counters.forEach((el) => {
           const target = Number(el.getAttribute("data-count-to")) || 0;
           const suffix = el.getAttribute("data-count-suffix") || "";
-          el.textContent = Math.round(target * eased).toLocaleString() + suffix;
+          el.textContent = Math.round(target * eased).toLocaleString("en-US") + suffix;
         });
         if (p < 1) requestAnimationFrame(tick);
       };

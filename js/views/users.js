@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, ic, showToast, hasPermission, navigateTo } = window.AtharCore;
+  const { App, t, ic, showToast, hasPermission, navigateTo, escapeHtml } = window.AtharCore;
 
   function renderUsersList(container) {
     if (!hasPermission("users", "view")) {
@@ -43,7 +43,7 @@
             <span>${t("nav_users")}</span>
           </div>
           <h1 class="view-title">${t("users_title")}</h1>
-          <p class="view-subtitle">Manage administrative privileges and preset role bundles</p>
+          <p class="view-subtitle">${window.AtharTx("Manage administrative privileges and preset role bundles")}</p>
         </div>
         <div class="view-header-actions">
           <button class="btn btn-primary" id="btn-add-trusted-user">${ic("user_plus", 14)} ${t("add_user")}</button>
@@ -76,30 +76,30 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>User Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Preset Bundle</th>
-              <th>Status</th>
-              <th>Last Login</th>
-              <th style="text-align:right;">Actions</th>
+              <th>${window.AtharTx("User Name")}</th>
+              <th>${window.AtharTx("Email")}</th>
+              <th>${window.AtharTx("Role")}</th>
+              <th>${window.AtharTx("Preset Bundle")}</th>
+              <th>${window.AtharTx("Status")}</th>
+              <th>${window.AtharTx("Last Login")}</th>
+              <th style="text-align:right;">${window.AtharTx("Actions")}</th>
             </tr>
           </thead>
           <tbody>
             ${state.users.map(u => `
               <tr>
                 <td style="font-weight:700;">
-                  ${u.full_name}
+                  ${escapeHtml(u.full_name)}
                   ${u.must_change_password ? `<span class="badge badge-warning" style="font-size:9px; margin-inline-start:6px;">${t("default_password_flag")}</span>` : ''}
                 </td>
-                <td style="font-family:var(--font-mono);">${u.email}</td>
+                <td style="font-family:var(--font-mono);">${escapeHtml(u.email)}</td>
                 <td>${roleBadge(u)}</td>
                 <td><span style="font-weight:600;">${u.role === 'volunteer' ? '—' : (u.preset ? u.preset.toUpperCase() : 'FULL / SUPER')}</span></td>
                 <td><span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">${u.is_active ? 'Active' : 'Deactivated'}</span></td>
-                <td class="num-ltr">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '-'}</td>
+                <td class="num-ltr">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US") : '-'}</td>
                 <td>
                   <div class="row-actions-cell">
-                    ${u.role === 'super_admin' && App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">Super Admin (Permanent)</span>` : ''}
+                    ${u.role === 'super_admin' && App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">${window.AtharTx("Super Admin (Permanent)")}</span>` : ''}
                     ${u.role !== 'super_admin' ? `
                       <div class="action-menu-wrap">
                         <button type="button" class="btn btn-secondary btn-sm action-menu-trigger" data-action-menu="${u.id}" title="${App.currentLang === 'ar' ? 'المزيد' : 'More'}">${ic("more_vertical", 14)}</button>

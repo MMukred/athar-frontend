@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const { App, t, ic, showToast, navigateTo } = window.AtharCore;
+  const { App, t, ic, showToast, navigateTo, escapeHtml } = window.AtharCore;
 
   async function renderSettings(container) {
     const state = window.AtharStore.getState();
@@ -19,13 +19,13 @@
             <span>${t("nav_settings")}</span>
           </div>
           <h1 class="view-title">${t("settings_title")}</h1>
-          <p class="view-subtitle">Organization branding and system preferences</p>
+          <p class="view-subtitle">${window.AtharTx("Organization branding and system preferences")}</p>
         </div>
       </div>
 
       <div style="max-width: 640px;">
         <div class="card">
-          <h3 style="font-size:16px; margin-bottom:16px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">Branding & Organization</h3>
+          <h3 style="font-size:16px; margin-bottom:16px; border-bottom:1px solid var(--neutral-300); padding-bottom:8px;">${window.AtharTx("Branding & Organization")}</h3>
           <form id="settings-branding-form">
             <div class="form-field" style="margin-bottom:12px;">
               <label class="field-label">${t("org_name_en")}</label>
