@@ -654,7 +654,7 @@ window.AtharViews.showAttendanceScanStandalone) {
     const container = document.createElement("div");
     container.style.cssText = "position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden;";
     document.body.appendChild(container);
-    const colors = ["#1F6FEB", "#2DA44E", "#D29922", "#8A3FFC", "#EC4899", "#F59E0B"];
+    const colors = ["#1D2B46", "#C29E1A", "#2D5490", "#E9DDB4", "#7E640A", "#F7F3EA"];
     const count = 120;
     for (let i = 0; i < count; i++) {
       const p = document.createElement("div");

@@ -27,68 +27,67 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Marcellus&family=Readex+Pro:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/rtl.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 
 <body class="is-logged-out">
-  <!-- Login Screen -->
+  <!-- Login Screen — Athar Academy brand identity -->
   <div id="login-screen" class="login-screen" style="display:none;">
-    <div class="login-card">
-      <div class="login-header">
-        <img src="assets/logo-horizontal.svg" alt="Athar Academy" class="login-logo-horizontal logo-light">
-      <img src="assets/brand/logo-horizontal-white.svg" alt="Athar Academy" class="login-logo-horizontal logo-dark">
+
+    <!-- Brand panel -->
+    <aside class="login-hero" aria-label="أكاديمية أثر">
+      <div class="login-hero-photo" aria-hidden="true"></div>
+      <div class="login-hero-pattern" aria-hidden="true"></div>
+      <div class="login-hero-frame" aria-hidden="true"></div>
+
+      <div class="login-hero-inner">
+        <a href="https://athar.my" target="_blank" rel="noopener" class="login-hero-logo-link" title="athar.my">
+          <img src="assets/brand/logo-vertical-white.svg" alt="أكاديمية أثر — Athar Academy" class="login-hero-logo">
+        </a>
+        <span class="login-divider" aria-hidden="true"></span>
+        <p class="login-hero-slogan" id="login-hero-slogan">أنتَ أثرٌ طيّبٌ أينما حللت</p>
+        <p class="login-hero-lead" id="login-hero-lead">منصّة متطوعي أكاديمية أثر: سجّل ساعاتك، وتابع لجانك واجتماعاتك، واحصل على شهاداتك.</p>
+
+        <div class="login-hero-stats">
+          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="80">0</span><span class="login-hero-stat-label" id="login-stat-volunteers">متطوع</span></div>
+          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="1600">0</span><span class="login-hero-stat-label" id="login-stat-hours">ساعة تطوعية</span></div>
+          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="12">0</span><span class="login-hero-stat-label" id="login-stat-committees">لجنة</span></div>
+        </div>
+
+        <div class="login-hero-actions">
+          <a href="apply.html" class="login-hero-cta" id="login-hero-cta">تقدّم للتطوع الآن</a>
+          <a href="#public-verify" class="login-hero-verify" id="login-hero-verify">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span id="login-hero-verify-text">التحقق من شهادة</span>
+          </a>
+        </div>
       </div>
+      <div class="login-hero-strip" aria-hidden="true"></div>
+    </aside>
 
-      <form id="login-form" class="login-form" autocomplete="on">
-        <div class="login-field">
-          <label for="login-email" id="login-email-label">البريد الإلكتروني</label>
-          <input type="email" id="login-email" required autocomplete="username" dir="ltr">
-        </div>
-
-        <div class="login-field">
-          <label for="login-password" id="login-password-label">كلمة المرور</label>
-          <div class="password-wrapper">
-            <input type="password" id="login-password" required autocomplete="current-password" dir="ltr">
-            <button type="button" class="password-toggle" id="password-toggle"
-              aria-label="Show password" aria-pressed="false">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="login-row">
-          <label class="login-remember">
-            <input type="checkbox" id="login-remember">
-            <span id="login-remember-label">تذكرني</span>
-          </label>
-        </div>
-
-        <div id="login-error" class="login-error" style="display:none;"></div>
-
-        <button type="submit" class="btn btn-primary btn-lg login-submit" id="login-submit-btn">
-          تسجيل الدخول
-        </button>
-      </form>
-
-      <div class="login-footer">
-        <button type="button" id="login-theme-toggle" class="lang-toggle-btn theme-toggle-btn"
+    <!-- Sign-in panel -->
+    <main class="login-panel">
+      <div class="login-toolbar">
+        <button type="button" id="login-theme-toggle" class="login-tool-btn theme-toggle-btn"
           title="تبديل المظهر / Toggle Theme" aria-label="Toggle theme">
-          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="theme-icon theme-icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
           </svg>
-          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="theme-icon theme-icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
           </svg>
         </button>
-        <button type="button" id="login-lang-toggle" class="lang-toggle-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" id="login-lang-toggle" class="login-tool-btn login-lang-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="2" y1="12" x2="22" y2="12"></line>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -96,22 +95,64 @@
           <span id="login-lang-text">English</span>
         </button>
       </div>
-    </div>
-    <div class="login-hero">
-      <div class="login-hero-inner">
-        <img src="assets/logo.svg" alt="Athar Logo" class="login-hero-logo">
-        <h1 class="login-hero-title">أثر</h1>
-        <p class="login-hero-tagline">نظام إدارة المتطوعين واللجان</p>
-        <p class="login-hero-lead">انضم إلى مجتمع متطوعين يصنع أثراً حقيقياً في مجتمعه — سجّل ساعاتك، احصل على شهاداتك، وتابع تقدمك.</p>
-        <div class="login-hero-stats">
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="80">0</span><span class="login-hero-stat-label">متطوع</span></div>
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="1600">0</span><span class="login-hero-stat-label">ساعة تطوعية</span></div>
-          <div class="login-hero-stat"><span class="login-hero-stat-value" data-count="12">0</span><span class="login-hero-stat-label">لجنة</span></div>
+
+      <div class="login-card">
+        <div class="login-header">
+          <h1 class="login-title" id="login-title">أهلاً بعودتك</h1>
+          <span class="login-divider" aria-hidden="true"></span>
+          <p class="login-subtitle" id="login-subtitle">سجّل دخولك إلى نظام إدارة المتطوعين واللجان</p>
         </div>
-        <a href="apply.html" class="btn btn-primary btn-lg login-hero-cta">تقدّم للتطوع الآن ←</a>
-        <p class="login-hero-verify"><a href="#public-verify">التحقق من شهادة</a></p>
+
+        <form id="login-form" class="login-form" autocomplete="on">
+          <div class="login-field">
+            <label for="login-email" id="login-email-label">البريد الإلكتروني</label>
+            <div class="login-input">
+              <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg>
+              <input type="email" id="login-email" required autocomplete="username" dir="ltr" placeholder="name@example.com">
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="login-password" id="login-password-label">كلمة المرور</label>
+            <div class="login-input password-wrapper">
+              <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+              <input type="password" id="login-password" required autocomplete="current-password" dir="ltr" placeholder="••••••••">
+              <button type="button" class="password-toggle" id="password-toggle"
+                aria-label="Show password" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="login-row">
+            <label class="login-remember">
+              <input type="checkbox" id="login-remember">
+              <span id="login-remember-label">تذكرني</span>
+            </label>
+          </div>
+
+          <div id="login-error" class="login-error" role="alert" style="display:none;"></div>
+
+          <button type="submit" class="login-submit" id="login-submit-btn">تسجيل الدخول</button>
+        </form>
+
+        <p class="login-apply">
+          <span id="login-apply-question">لست متطوعاً بعد؟</span>
+          <a href="apply.html" id="login-apply-link">تقدّم للتطوع</a>
+        </p>
       </div>
-    </div>
+
+      <footer class="login-foot">
+        <span id="login-foot-text">© أكاديمية أثر</span>
+        <span class="login-foot-dot" aria-hidden="true"></span>
+        <a href="https://athar.my" target="_blank" rel="noopener" dir="ltr" class="login-site-link" id="login-site-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          athar.my
+        </a>
+        <span class="login-foot-dot login-foot-mobile" aria-hidden="true"></span>
+        <a href="#public-verify" class="login-foot-mobile" id="login-foot-verify">التحقق من شهادة</a>
+      </footer>
+    </main>
   </div>
 
   <div id="app" role="application" aria-label="Athar Management System">

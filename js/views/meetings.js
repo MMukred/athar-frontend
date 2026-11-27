@@ -118,7 +118,7 @@
         ? (App.currentLang === 'ar' ? `الاجتماعات (${meetingCount})` : `Meetings (${meetingCount})`)
         : (App.currentLang === 'ar' ? `الفعاليات (${eventCount})` : `Events (${eventCount})`)}
           </button>
-          ${canCreate ? `<button class="btn btn-primary" id="btn-add-session" style="${isEvent ? 'background:#8A3FFC;border-color:#8A3FFC;' : ''}">
+          ${canCreate ? `<button class="btn btn-primary" id="btn-add-session" style="${isEvent ? 'background:var(--event-color);border-color:var(--event-color);' : ''}">
             ${ic("plus", 14)} ${isEvent ? (App.currentLang === 'ar' ? 'فعالية جديدة' : 'New Event') : t("add_meeting")}
           </button>` : ''}
         </div>
@@ -402,7 +402,7 @@
     const backLabel = isEvent ? (App.currentLang === 'ar' ? 'الفعاليات' : 'Events') : t("nav_meetings");
     const canDelete = hasPermission("meetings", "delete");
     const canCreate = hasPermission("meetings", "create");
-    const kindColor = isEvent ? "#8A3FFC" : "var(--primary)";
+    const kindColor = isEvent ? "var(--event-color)" : "var(--primary)";
 
     container.innerHTML = `
       <div class="view-header">

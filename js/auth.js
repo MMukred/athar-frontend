@@ -212,14 +212,26 @@ window.AtharAuth = (function () {
       if (el) el.textContent = txt;
     };
 
-    setText("login-title", isAr ? "أثر" : "Athar");
-    setText("login-subtitle", isAr ? "نظام إدارة المتطوعين واللجان" : "Volunteer & Committees Management System");
+    setText("login-title", isAr ? "أهلاً بعودتك" : "Welcome back");
+    setText("login-subtitle", isAr ? "سجّل دخولك إلى نظام إدارة المتطوعين واللجان" : "Sign in to the Volunteer & Committees Management System");
+    setText("login-hero-slogan", isAr ? "أنتَ أثرٌ طيّبٌ أينما حللت" : "You are a good impact wherever you go");
+    setText("login-hero-lead", isAr
+      ? "منصّة متطوعي أكاديمية أثر: سجّل ساعاتك، وتابع لجانك واجتماعاتك، واحصل على شهاداتك."
+      : "The Athar Academy volunteer platform: log your hours, follow your committees and meetings, and receive your certificates.");
+    setText("login-stat-volunteers", isAr ? "متطوع" : "Volunteers");
+    setText("login-stat-hours", isAr ? "ساعة تطوعية" : "Volunteer hours");
+    setText("login-stat-committees", isAr ? "لجنة" : "Committees");
+    setText("login-hero-cta", isAr ? "تقدّم للتطوع الآن" : "Apply to volunteer");
+    setText("login-hero-verify-text", isAr ? "التحقق من شهادة" : "Verify a certificate");
+    setText("login-foot-verify", isAr ? "التحقق من شهادة" : "Verify a certificate");
+    setText("login-apply-question", isAr ? "لست متطوعاً بعد؟" : "Not a volunteer yet?");
+    setText("login-foot-text", isAr ? "© أكاديمية أثر" : "© Athar Academy");
     setText("login-email-label", isAr ? "البريد الإلكتروني" : "Email Address");
     setText("login-password-label", isAr ? "كلمة المرور" : "Password");
     setText("login-remember-label", isAr ? "تذكرني" : "Remember me");
     setText("login-submit-btn", isAr ? "تسجيل الدخول" : "Sign In");
     setText("login-lang-text", isAr ? "English" : "العربية");
-    setText("login-apply-link", isAr ? "تقدّم للتطوع ←" : "Apply to volunteer →");
+    setText("login-apply-link", isAr ? "تقدّم للتطوع" : "Apply to volunteer");
   }
 
   function showLoginScreen() {

@@ -1167,7 +1167,7 @@ const certTarget = Number(state.settings.certificate_ready_hours) || 50;
                       <span class="num-ltr">${count} vols (${percent}%)</span>
                     </div>
                     <div style="height:10px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
-                      <div style="width:${percent}%; height:100%; background:linear-gradient(90deg, var(--primary), #8A3FFC); border-radius:var(--radius-full);"></div>
+                      <div style="width:${percent}%; height:100%; background:var(--accent); border-radius:var(--radius-full);"></div>
                     </div>
                   </div>
                 `;
