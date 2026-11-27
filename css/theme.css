@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Athar Academy theme layer — دليل الهوية البصرية ١٤٤٨هـ
+   Visual-only overrides on top of style.css: font, colours, surfaces.
+   No layout or behaviour changes live here.
+   ========================================================================== */
+
+/* Tajawal (SIL OFL) — self-hosted in assets/fonts/tajawal */
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-arabic-400-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-arabic-500-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-arabic-700-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-arabic-800-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Tajawal";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../assets/fonts/tajawal/tajawal-latin-800-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/* ---------- Tokens: font + brand-aligned accents (light) ---------- */
+:root {
+  --font-en: "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-ar: "Tajawal", -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Tajawal", sans-serif;
+
+  --event-color: #2D5490;
+  --event-bg: #E7EDF6;
+  --primary-dark: #14233F;
+
+  --brand-navy: #1D2B46;
+  --brand-night: #14233F;
+  --brand-royal: #2D5490;
+  --brand-gold: #C29E1A;
+  --brand-gold-text: #7E640A;
+  --brand-gold-light: #E9DDB4;
+  --brand-ivory: #F7F3EA;
+  --brand-gradient: linear-gradient(180deg, #2D5490 0%, #1D2B46 55%, #14233F 100%);
+  --brand-pattern: url("../assets/brand/geo-white.png");
+
+}
+
+/* ---------- Tokens: dark mode on the brand's deep navy ---------- */
+[data-theme="dark"] {
+  --event-color: #8FB0E3;
+  --event-bg: #1A2C4F;
+  --info: #8FB0E3;
+  --info-light: #1A2C4F;
+
+  --neutral-600: #B3BBCB;
+  --neutral-500: #8E98AB;
+  --neutral-400: #6F7A8F;
+  --neutral-300: #2C3B5A;
+  --neutral-200: #243556;
+  --neutral-100: #1A2A48;
+  --neutral-50: #13213A;
+  --surface: #16243F;
+  --app-bg: #101C33;
+
+  --shadow-xs: 0 1px 2px rgba(5, 10, 22, 0.35);
+  --shadow-sm: 0 1px 3px rgba(5, 10, 22, 0.45), 0 1px 2px rgba(5, 10, 22, 0.35);
+  --shadow-md: 0 4px 12px rgba(5, 10, 22, 0.5), 0 1px 3px rgba(5, 10, 22, 0.35);
+  --shadow-lg: 0 10px 24px rgba(5, 10, 22, 0.6), 0 3px 6px rgba(5, 10, 22, 0.4);
+  --shadow-xl: 0 20px 40px rgba(5, 10, 22, 0.7);
+}
+
+[data-theme="dark"] .skeleton-row {
+  background: linear-gradient(90deg, #1A2A48 25%, #22355A 50%, #1A2A48 75%);
+  background-size: 200% 100%;
+}
+[data-theme="dark"] .card:hover { border-color: #3A4C70; }
+[data-theme="dark"] .star-rating .star { color: #34466A; }
+
+/* ---------- Sidebar: navy panel with gold active state ---------- */
+.sidebar {
+  background: var(--brand-navy);
+  border-right-color: transparent;
+}
+[dir="rtl"] .sidebar { border-left-color: transparent; }
+[data-theme="dark"] .sidebar { background: var(--brand-night); border-color: #22355A; }
+
+.nav-group-title { color: rgba(233, 221, 180, 0.55); }
+
+.nav-item { color: rgba(247, 243, 234, 0.74); }
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+}
+.nav-item.active,
+[data-theme="dark"] .nav-item.active {
+  background: rgba(194, 158, 26, 0.16);
+  color: #FFFFFF;
+  box-shadow: inset 3px 0 0 var(--brand-gold);
+}
+[dir="rtl"] .nav-item.active { box-shadow: inset -3px 0 0 var(--brand-gold); }
+.nav-item.active .nav-icon { color: var(--brand-gold); }
+
+.sidebar .nav-badge {
+  background: rgba(233, 221, 180, 0.14) !important;
+  color: var(--brand-gold-light) !important;
+  border: 0 !important;
+}
+.sidebar .nav-badge[style*="--warning"] {
+  background: var(--brand-gold) !important;
+  color: var(--brand-night) !important;
+}
+.sidebar-footer { border-top-color: rgba(233, 221, 180, 0.12); }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(233, 221, 180, 0.18); }
+
+/* ---------- Dashboard hero: approved navy gradient + faint pattern ---------- */
+.dash-hero {
+  background: var(--brand-gradient);
+  color: #FFFFFF;
+  box-shadow: 0 10px 28px -14px rgba(20, 35, 63, 0.55);
+}
+.dash-hero::before {
+  background: var(--brand-pattern) left bottom / 900px auto no-repeat;
+  opacity: 0.06;
+}
+.dash-hero-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(233, 221, 180, 0.25);
+  color: #FFFFFF;
+}
+
+/* ---------- Volunteer portal hero ---------- */
+.portal-hero {
+  background: var(--brand-gradient);
+  box-shadow: 0 22px 44px -24px rgba(20, 35, 63, 0.7);
+}
+.portal-hero::before,
+.portal-hero::after { opacity: 0.35; }
+
+/* ---------- Off-brand accents brought onto the palette ---------- */
+.kpi-committees .kpi-icon-badge,
+[data-theme="dark"] .kpi-committees .kpi-icon-badge {
+  background: var(--accent-subtle);
+  color: var(--brand-gold-text);
+}
+[data-theme="dark"] .kpi-committees .kpi-icon-badge { color: var(--brand-gold); }
+
+.badge-purple {
+  background: var(--event-bg);
+  color: var(--event-color);
+}
+[data-theme="dark"] .badge-purple {
+  background: var(--event-bg);
+  color: var(--event-color);
+  border-color: #2C4A7A;
+}
+
+.profile-avatar-lg,
+.portal-head-avatar { background: linear-gradient(135deg, var(--brand-navy), var(--brand-royal)); }
+.profile-progress > span { background: var(--brand-gold); }
+
+.fab-main {
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-royal) 100%);
+  box-shadow: 0 10px 24px -8px rgba(20, 35, 63, 0.55);
+}
+[data-theme="dark"] .fab-main {
+  background: var(--brand-gold);
+  color: var(--brand-night);
+}
+.sidebar-footer .org-name-text { color: rgba(233, 221, 180, 0.55) !important; }

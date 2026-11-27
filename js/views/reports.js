@@ -125,7 +125,7 @@
                     <span class="num-ltr">${count} (${pct}%)</span>
                   </div>
                   <div style="height:14px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden;">
-                    <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, var(--primary), #8A3FFC);"></div>
+                    <div style="width:${pct}%; height:100%; background:var(--accent);"></div>
                   </div>
                 </div>
               `;
