@@ -240,6 +240,7 @@ window.AtharAPI = (function () {
       me: () => get("/portal/me"),
       updateMe: (payload) => patch("/portal/me", payload),
       checkInAttendance: (token) => post("/portal/attendance/check-in", { token }),
+      rsvp: (meetingId, response, reason) => post(`/portal/meetings/${meetingId}/rsvp`, { response, reason }),
     },
 
     volunteers: {
@@ -283,6 +284,8 @@ window.AtharAPI = (function () {
       delete: (id) => del(`/meetings/${id}`),
       getRoster: (id) => get(`/meetings/${id}/roster`),
       getAttendanceQr: (id) => get(`/meetings/${id}/attendance-qr`),
+      rsvps: (id) => get(`/meetings/${id}/rsvps`),
+      rsvp: (id, response) => post(`/portal/meetings/${id}/rsvp`, { response }),
       saveRoster: (id, records, markCompleted = true) =>
         post(`/meetings/${id}/roster`, { records, markMeetingCompleted: markCompleted }),
       autoHours: (id, autoApprove = false) =>
@@ -340,6 +343,14 @@ window.AtharAPI = (function () {
     // =========================================================
     // Public endpoints — no authentication (application form)
     // =========================================================
+    // Ideas & suggestions box (volunteers, leads → admins)
+    suggestions: {
+      mine: () => get("/suggestions/mine"),
+      create: async (p) => (await post("/suggestions", p)).suggestion,
+      list: (params) => get(`/suggestions${qs(params)}`),
+      update: async (id, p) => (await patch(`/suggestions/${id}`, p)).suggestion,
+    },
+
     public: {
       committees: () => get("/public/committees", { skipAuth: true }),
       stats: () => get("/public/stats", { skipAuth: true }),

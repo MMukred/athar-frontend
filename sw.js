@@ -3,7 +3,7 @@
  * installed app opens instantly. API calls always go to the network and are
  * never cached. Bump VERSION on every release so phones pick up new files.
  */
-const VERSION = "athar-v2026-11-28";
+const VERSION = "athar-v2026-11-28b";
 const SHELL = [
   "./",
   "index.html",
@@ -30,6 +30,9 @@ const SHELL = [
   "js/translations.js",
   "js/ui-enhance.js",
   "js/absence-alert.js",
+  "js/rsvp.js",
+  "js/mobile-nav.js",
+  "js/profile-edit.js",
   "js/views/attendance-qr.js",
   "js/views/attendance-scan.js",
   "js/views/audit.js",
@@ -43,6 +46,7 @@ const SHELL = [
   "js/views/portal.js",
   "js/views/portal-impact.js",
   "js/views/applications.js",
+  "js/views/ideas.js",
   "js/views/certificates-bulk.js",
   "js/views/report-charts.js",
   "js/views/reports.js",

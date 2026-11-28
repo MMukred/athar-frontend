@@ -510,6 +510,8 @@
         </div>
       </div>
 
+      ${!isCompleted && !(App.currentUser && App.currentUser.role === "volunteer") ? '<div id="rsvp-panel"></div>' : ''}
+
       ${isEvent && isCompleted && attended.length > 0 ? `
         <div style="padding:12px 16px; background:${evalComplete ? 'var(--success-light)' : 'var(--warning-light)'}; border:1px solid ${evalComplete ? 'var(--success-border)' : 'var(--warning-border)'}; border-radius:var(--radius-md); margin-bottom:16px; font-size:13px; color:${evalComplete ? 'var(--success)' : 'var(--warning)'}; display:flex; align-items:center; gap:10px; font-weight:600;">
           ${ic(evalComplete ? "check_circle" : "alert", 18)}
@@ -712,11 +714,13 @@
       };
     });
 
+    if (window.AtharRSVP) window.AtharRSVP.mountPanel(container, meeting);
+
     // RSVP (volunteers only)
     const rsvpComing = document.getElementById("btn-rsvp-coming");
     const rsvpNot = document.getElementById("btn-rsvp-notcoming");
-    if (rsvpComing) rsvpComing.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "coming"); showToast("RSVP: coming", "success"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
-    if (rsvpNot) rsvpNot.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "not_coming"); showToast("RSVP: not coming", "warning"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
+    if (rsvpComing) rsvpComing.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "coming"); showToast(App.currentLang === "ar" ? "تم تأكيد حضورك" : "RSVP: coming", "success"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
+    if (rsvpNot) rsvpNot.onclick = async () => { try { await window.AtharAPI.meetings.rsvp(meetingId, "not_coming"); showToast(App.currentLang === "ar" ? "تم تسجيل اعتذارك" : "RSVP: not coming", "warning"); } catch (e) { showToast((e && e.message) || "RSVP failed", "error"); } };
 
     // Save attendance
     const saveBtn = document.getElementById("btn-save-attendance");
