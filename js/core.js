@@ -36,6 +36,7 @@ window.AtharCore = (function () {
     "dashboard": "dashboard",
     "volunteers": "volunteers",
     "applications": "applications",
+    "ideas": "ideas",
     "volunteer-profile": "volunteerProfile",
     "committees": "committees",
     "committee-detail": "committeeDetail",
@@ -551,7 +552,7 @@ window.AtharCore = (function () {
       return;
     }
 
-    if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "public-verify" && view !== "attendance-scan") {
+    if (App.currentUser && App.currentUser.role === "volunteer" && view !== "portal" && view !== "ideas" && view !== "public-verify" && view !== "attendance-scan") {
       view = "portal";
       params = {};
     }
@@ -615,6 +616,8 @@ window.AtharViews.showAttendanceScanStandalone) {
     if (!navContainer) return;
 
     const state = window.AtharStore.getState();
+    if (window.AtharIdeas) window.AtharIdeas.ensure();
+    if (window.AtharProfile) window.AtharProfile.precheck();
 
     // ---- Volunteer portal: single scoped destination ----
     // Volunteers never see committees/volunteers/admin modules; their account
@@ -628,7 +631,14 @@ window.AtharViews.showAttendanceScanStandalone) {
             <span class="nav-icon">${ic("user", 18, { strokeWidth: 2 })}</span>
             <span class="nav-label">${t("nav_portal") || (App.currentLang === "ar" ? "بوابتي" : "My Portal")}</span>
           </div>
-        </a>`;
+        </a>
+        ${window.AtharIdeas && window.AtharIdeas.isOn() ? `
+        <a class="nav-item ${App.currentView === "ideas" ? "active" : ""}" data-nav-target="ideas">
+          <div class="nav-item-content">
+            <span class="nav-icon">${ic("sparkles", 18, { strokeWidth: 2 })}</span>
+            <span class="nav-label">${App.currentLang === "ar" ? "صندوق الأفكار" : "Ideas box"}</span>
+          </div>
+        </a>` : ""}`;
       navContainer.querySelectorAll(".nav-item").forEach(el => {
         el.addEventListener("click", (e) => {
           e.preventDefault();
@@ -667,7 +677,12 @@ window.AtharViews.showAttendanceScanStandalone) {
           { id: "volunteers", label: t("nav_volunteers"), icon: "users", module: "volunteers", badgeHtml: badge(activeVolunteers, "info") },
           { id: "applications", label: App.currentLang === "ar" ? "طلبات التطوع" : "Applications", icon: "user_plus", module: "volunteers", perm: "edit", badgeHtml: badge(pendingApplications, "warn") },
           { id: "committees", label: t("nav_committees"), icon: "building", module: "committees", badgeHtml: badge(activeCommittees, "info") },
-          { id: "meetings", label: App.currentLang === "ar" ? "الاجتماعات والفعاليات" : "Meetings & Events", icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings + upcomingEvents, "info") }
+          { id: "meetings", label: App.currentLang === "ar" ? "الاجتماعات والفعاليات" : "Meetings & Events", icon: "calendar", module: "meetings", badgeHtml: badge(upcomingMeetings + upcomingEvents, "info") },
+          ...(window.AtharIdeas && window.AtharIdeas.isOn() ? [{
+            id: "ideas", icon: "sparkles", always: true,
+            label: window.AtharIdeas.isAdmin() ? (App.currentLang === "ar" ? "الأفكار والاقتراحات" : "Ideas & suggestions") : (App.currentLang === "ar" ? "صندوق الأفكار" : "Ideas box"),
+            badgeHtml: window.AtharIdeas.isAdmin() ? badge(window.AtharIdeas.newCount(), "warn") : ""
+          }] : [])
         ]
       },
       {
@@ -704,7 +719,7 @@ window.AtharViews.showAttendanceScanStandalone) {
 
     let html = "";
     navStructure.forEach(group => {
-      const accessibleItems = group.items.filter(item => hasPermission(item.module, item.perm || "view"));
+      const accessibleItems = group.items.filter(item => item.always || hasPermission(item.module, item.perm || "view"));
       if (accessibleItems.length === 0) return;
 
       html += `<div class="nav-group-title">${group.group}</div>`;

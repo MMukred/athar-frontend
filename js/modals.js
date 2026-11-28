@@ -875,12 +875,13 @@ window.AtharModals = (function () {
             <div style="display:flex; align-items:center; gap:14px; padding:12px; background:var(--neutral-50); border-radius:8px; margin-bottom:16px;">
               <div class="user-avatar" style="width:44px; height:44px; font-size:16px;">${escapeHtml(((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "?").charAt(0))}</div>
               <div style="flex:1;">
-                <div style="font-weight:700;">${escapeHtml((App.currentUser && (App.currentUser.full_name || App.currentUser.fullName)) || "")}</div>
+                <div style="font-weight:700;">${escapeHtml((App.currentUser && ((App.currentLang === "ar" && (App.currentUser.full_name_ar || App.currentUser.fullNameAr)) || App.currentUser.full_name || App.currentUser.fullName)) || "")}</div>
                 <div style="font-size:12px; color:var(--neutral-500);">${escapeHtml(App.currentUser.email)}</div>
                 <div style="font-size:11px; color:var(--neutral-500); margin-top:2px;">${isSuper ? t("super_admin") : (App.currentUser && App.currentUser.role === "committee_leader") ? (App.currentLang === "ar" ? "رئيس لجنة" : "Committee leader") : (App.currentUser && App.currentUser.role === "volunteer") ? (App.currentLang === "ar" ? "متطوع" : "Volunteer") : t("trusted_admin")}</div>
               </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
+              ${window.AtharProfile && window.AtharProfile.canEdit() ? `<button class="btn btn-primary" id="um-edit-profile" style="width:100%; justify-content:flex-start;">${ic("user", 15)} ${App.currentLang === "ar" ? "تعديل الملف الشخصي" : "Edit profile"}</button>` : ""}
               <button class="btn btn-secondary${App.currentUser?.must_change_password ? ' btn-must-change' : ''}" id="um-change-password" style="width:100%; justify-content:flex-start;">
                 ${ic("lock", 15)} ${t("change_password")}${App.currentUser?.must_change_password ? ` • ${t("default_password_flag")}` : ''}
               </button>
@@ -901,6 +902,8 @@ window.AtharModals = (function () {
     document.getElementById("um-close").onclick = close;
     document.getElementById("um-backdrop").onclick = (e) => { if (e.target.id === "um-backdrop") close(); };
     document.getElementById("um-change-password").onclick = () => { close(); openChangePasswordModal(false); };
+    const umEdit = document.getElementById("um-edit-profile");
+    if (umEdit) umEdit.onclick = () => { close(); window.AtharProfile.open(); };
     document.getElementById("um-logout").onclick = () => { close(); if (window.AtharAuth) window.AtharAuth.logout(); };
     const umTheme = document.getElementById("um-theme");
     if (umTheme) umTheme.onclick = () => { close(); const b = document.getElementById("theme-toggle-btn"); if (b) b.click(); };
