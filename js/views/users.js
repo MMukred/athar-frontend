@@ -96,7 +96,7 @@
                 <td>${roleBadge(u)}</td>
                 <td><span style="font-weight:600;">${u.role === 'volunteer' ? '—' : (u.preset ? u.preset.toUpperCase() : 'FULL / SUPER')}</span></td>
                 <td><span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">${u.is_active ? 'Active' : 'Deactivated'}</span></td>
-                <td class="num-ltr">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US") : '-'}</td>
+                <td class="num-ltr">${u.last_login_at ? new Date(u.last_login_at).toLocaleString(App.currentLang === "ar" ? "ar-u-ca-gregory-nu-latn" : "en-US") : '-'}</td>
                 <td>
                   <div class="row-actions-cell">
                     ${u.role === 'super_admin' && App.currentUser?.role !== 'super_admin' ? `<span style="font-size:11px; color:var(--neutral-400);">${window.AtharTx("Super Admin (Permanent)")}</span>` : ''}
